@@ -20,6 +20,7 @@
   --success:#16a34a; --warning:#ea580c; --extra:#ea580c; --descanso:#7c3aed; --comida:#0d9488;
   --trayecto:#0891b2; --danger:#dc2626; --danger-dark:#b91c1c; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.06);
   --shadow-lg:0 10px 30px rgba(16,24,40,.18); --radius:16px; --radius-sm:10px;
+  --festivo:#e11d48; --compensacion:#4f46e5;
   color-scheme:light;
 }
 [data-theme="dark"]{
@@ -28,6 +29,7 @@
   --success:#22c55e; --warning:#fb923c; --extra:#fb923c; --descanso:#a78bfa; --comida:#2dd4bf;
   --trayecto:#22d3ee; --danger:#f87171; --danger-dark:#ef4444; --shadow:0 1px 3px rgba(0,0,0,.4);
   --shadow-lg:0 10px 30px rgba(0,0,0,.5);
+  --festivo:#fb7185; --compensacion:#818cf8;
   color-scheme:dark;
 }
 *{box-sizing:border-box;}
@@ -211,8 +213,15 @@ button{font-family:inherit;}
 [data-theme="dark"] .cal-day.worked{background:#1e3a5f;color:#bfdbfe;}
 .cal-day.has-extra{background:#fed7aa;color:#7c2d12;}
 [data-theme="dark"] .cal-day.has-extra{background:#5a3410;color:#fdba74;}
+.cal-day.weekend{background:var(--surface);color:var(--muted);}
+.cal-day.festivo{background:rgba(225,29,72,.16);color:var(--festivo);font-weight:700;}
+.cal-day.vacaciones{background:rgba(22,163,74,.16);color:var(--success);font-weight:700;}
+.cal-day.compensacion{background:rgba(79,70,229,.16);color:var(--compensacion);font-weight:700;}
 .cal-day.today{outline:2px solid var(--primary);outline-offset:1px;}
 .cal-day .dot{width:4px;height:4px;border-radius:50%;background:currentColor;margin-top:2px;}
+.cal-legend{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:12px;}
+.cal-legend .li{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);}
+.cal-legend .sw{width:11px;height:11px;border-radius:4px;flex:none;}
 
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .summary-tile{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:13px;}
@@ -247,6 +256,29 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 .worker-card .wc-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
 .informe-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .informe-item .if-meta{color:var(--muted);}
+
+/* Impresión del calendario laboral (usado para "Guardar como PDF") */
+#printArea{display:none;}
+.print-cal-title{font:800 20px -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px;}
+.print-cal-sub{font:600 13px -apple-system,Segoe UI,Roboto,sans-serif;color:#555;margin-bottom:14px;}
+.print-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.print-cal-dow{text-align:center;font:700 11px -apple-system,Segoe UI,Roboto,sans-serif;color:#555;padding-bottom:4px;}
+.print-cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:4px 6px;font:600 12px -apple-system,Segoe UI,Roboto,sans-serif;border:1px solid #ddd;border-radius:4px;color:#111;overflow:hidden;}
+.print-cal-day.empty{border:none;}
+.print-cal-day.weekend{background:#f2f2f2;}
+.print-cal-day.festivo{background:#fbd7de;}
+.print-cal-day.vacaciones{background:#d6f0dc;}
+.print-cal-day.compensacion{background:#dcdafb;}
+.print-cal-day.worked{background:#dbeafe;}
+.print-cal-day.has-extra{background:#fde0c2;}
+.print-cal-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;font:600 11px -apple-system,Segoe UI,Roboto,sans-serif;color:#333;}
+.print-cal-legend .li{display:flex;align-items:center;gap:6px;}
+.print-cal-legend .sw{width:11px;height:11px;border-radius:3px;border:1px solid #0002;}
+@media print{
+  body *{visibility:hidden;}
+  #printArea, #printArea *{visibility:visible;}
+  #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:16px;}
+}
 </style>
 </head>
 <body>
@@ -304,6 +336,7 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 
 <div id="modalRoot"></div>
 <div id="toastRoot"></div>
+<div id="printArea"></div>
 <input type="file" id="fileImportBackup" accept="application/json" class="hidden">
 <input type="file" id="fileImportExcelEquipo" accept=".xlsx" class="hidden">
 
@@ -356,6 +389,25 @@ function fmtHMS(ms){
   return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
 }
 function hoursDecimal(ms){ return Math.round((ms/3600000)*100)/100; }
+
+const COLUMNAS_EXPORT = [
+  {id:'trabajador',  label:'Trabajador'},
+  {id:'fecha',       label:'Fecha'},
+  {id:'diaSemana',   label:'Día de la semana'},
+  {id:'horaEntrada', label:'Hora entrada'},
+  {id:'horaSalida',  label:'Hora salida'},
+  {id:'tiempoBruto', label:'Tiempo bruto (h)'},
+  {id:'descansos',   label:'Descansos (h)'},
+  {id:'comida',      label:'Comida (h)'},
+  {id:'horasEfectivas', label:'Horas efectivas'},
+  {id:'horasNormales',  label:'Horas normales'},
+  {id:'horasExtra',     label:'Horas extra'},
+  {id:'tiempoTrayectos', label:'Tiempo en trayectos (h)'},
+  {id:'km',          label:'Kilómetros'},
+  {id:'origen',      label:'Origen'},
+  {id:'destino',     label:'Destino'},
+  {id:'observaciones', label:'Observaciones'}
+];
 function esc(s){
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -373,6 +425,9 @@ function defaultConfig(){
     modoComida: 'manual',     // 'auto' (duración fija) | 'manual' | 'horario' (franja fija)
     trayectoComoTrabajo: false,
     tema: 'auto',             // 'claro' | 'oscuro' | 'auto'
+    avisoEntradaActivo: true,
+    avisoEntradaHora: '08:30',
+    exportColumnas: COLUMNAS_EXPORT.map(c => c.id),
     // La jornada normal de cada día se cuenta a partir de la hora real de
     // fichaje de entrada (no de un horario fijo de entrada/salida).
     dias: {
@@ -391,7 +446,8 @@ function defaultData(){
     version: 1, config: defaultConfig(), jornadas: [], trayectos: [],
     perfil: null,          // {nombre, passHash, rol:'trabajador'|'directivo'}
     sesionAbierta: false,  // se mantiene iniciada entre aperturas, como cualquier app del móvil
-    equipo: []             // solo lo usa el rol "directivo": informes importados de trabajadores
+    equipo: [],            // solo lo usa el rol "directivo": informes importados de trabajadores
+    calendarioLaboral: {}  // { 'YYYY-MM-DD': {tipo:'festivo'|'vacaciones'|'compensacion', nombre?, horas?} }
   };
 }
 
@@ -410,6 +466,9 @@ function loadData(){
     for(const dow of Object.keys(def.config.dias)){
       cfg.dias[dow] = Object.assign({}, def.config.dias[dow], diasGuardados[dow] || {});
     }
+    const idsValidos = COLUMNAS_EXPORT.map(c => c.id);
+    const columnasGuardadas = Array.isArray(cfg.exportColumnas) ? cfg.exportColumnas.filter(id => idsValidos.includes(id)) : [];
+    cfg.exportColumnas = columnasGuardadas.length ? columnasGuardadas : idsValidos;
     return {
       version: 1,
       config: cfg,
@@ -417,7 +476,8 @@ function loadData(){
       trayectos: Array.isArray(parsed.trayectos) ? parsed.trayectos : [],
       perfil: parsed.perfil || null,
       sesionAbierta: !!parsed.sesionAbierta,
-      equipo: Array.isArray(parsed.equipo) ? parsed.equipo : []
+      equipo: Array.isArray(parsed.equipo) ? parsed.equipo : [],
+      calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {}
     };
   }catch(e){
     console.error('Error cargando datos, se usará configuración por defecto.', e);
@@ -460,7 +520,8 @@ const UI = {
   tab: 'hoy',
   historico: { filtro: 'semana', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '' },
   resumen: { periodo: 'semana', mesRef: todayStr() },
-  bannerDismissed: false
+  bannerDismissed: false,
+  avisoDescartadoFecha: null
 };
 
 /* ----------------------------- Consultas de datos ------------------------ */
@@ -492,6 +553,52 @@ function jornadaNormalMsForFecha(fechaStr){
   const horas = (dia && dia.horas !== '' && dia.horas != null) ? Number(dia.horas) : Number(DATA.config.horasNormales);
   return Math.round((horas || 0) * 3600000);
 }
+
+/* ----------------------------- Calendario laboral (festivos / vacaciones / banco de horas) ---- */
+function diaCalendarioLaboral(fechaStr){ return DATA.calendarioLaboral[fechaStr] || null; }
+function marcarDiaCalendarioLaboral(fechaStr, tipo, nombre){
+  if(tipo === 'compensacion'){
+    DATA.calendarioLaboral[fechaStr] = { tipo, horas: hoursDecimal(jornadaNormalMsForFecha(fechaStr)) };
+  } else if(tipo === 'festivo'){
+    DATA.calendarioLaboral[fechaStr] = { tipo, nombre: (nombre || '').trim() || 'Festivo' };
+  } else {
+    DATA.calendarioLaboral[fechaStr] = { tipo: 'vacaciones' };
+  }
+  save();
+}
+function quitarMarcaCalendarioLaboral(fechaStr){
+  delete DATA.calendarioLaboral[fechaStr];
+  save();
+}
+function bancoHorasGeneradoMs(){
+  let total = 0;
+  DATA.jornadas.forEach(j => { total += calcJornada(j, Date.now()).extra; });
+  return total;
+}
+function bancoHorasCompensadoMs(){
+  let total = 0;
+  Object.values(DATA.calendarioLaboral).forEach(e => { if(e.tipo === 'compensacion') total += (Number(e.horas)||0) * 3600000; });
+  return total;
+}
+function bancoHorasSaldoMs(){ return bancoHorasGeneradoMs() - bancoHorasCompensadoMs(); }
+
+const FESTIVOS_NAVARRA = {
+  2026: [
+    {fecha:'2026-01-01', nombre:'Año Nuevo'},
+    {fecha:'2026-01-06', nombre:'Epifanía del Señor'},
+    {fecha:'2026-03-19', nombre:'San José'},
+    {fecha:'2026-04-02', nombre:'Jueves Santo'},
+    {fecha:'2026-04-03', nombre:'Viernes Santo'},
+    {fecha:'2026-04-06', nombre:'Lunes de Pascua'},
+    {fecha:'2026-05-01', nombre:'Día del Trabajo'},
+    {fecha:'2026-08-15', nombre:'Asunción de la Virgen'},
+    {fecha:'2026-10-12', nombre:'Fiesta Nacional de España'},
+    {fecha:'2026-11-02', nombre:'Todos los Santos (traslado)'},
+    {fecha:'2026-12-03', nombre:'San Francisco Javier'},
+    {fecha:'2026-12-08', nombre:'Inmaculada Concepción'},
+    {fecha:'2026-12-25', nombre:'Natividad del Señor'}
+  ]
+};
 
 // Franja horaria de comida preconfigurada (p.ej. 14:00-14:45) aplicada al
 // calendario de un día concreto. Si "fin" es menor o igual que "inicio" se
@@ -790,21 +897,53 @@ function jornadaAbiertaDeAyer(){
   if(!j) return null;
   return j.fecha !== todayStr() ? j : null;
 }
+/*
+ * Aviso de "todavía no has fichado". Solo se puede comprobar mientras la
+ * app está abierta (sin backend no hay forma de avisar con la app cerrada):
+ * se reevalúa cada segundo mientras el usuario tiene la app en pantalla.
+ */
+function debeAvisarFichaje(){
+  const cfg = DATA.config;
+  if(!cfg.avisoEntradaActivo) return false;
+  if(UI.avisoDescartadoFecha === todayStr()) return false;
+  const dia = diaConfigFor(todayStr());
+  if(!dia || dia.activo === false) return false;
+  if(diaCalendarioLaboral(todayStr())) return false;
+  if(jornadaDeFecha(todayStr()) || jornadaAbierta()) return false;
+  const [h, m] = (cfg.avisoEntradaHora || '08:30').split(':').map(Number);
+  const limite = new Date();
+  limite.setHours(h, m, 0, 0);
+  return Date.now() >= limite.getTime();
+}
 function renderBanner(){
   const el = document.getElementById('bannerAbierto');
   const j = jornadaAbiertaDeAyer();
-  if(!j || UI.bannerDismissed){ el.innerHTML=''; return; }
-  el.innerHTML = `
-    <div class="banner">
-      <b>⚠️ Tienes un fichaje abierto desde el ${esc(fmtDateShort(j.fecha))} (${esc(fmtTimeHM(j.entrada))})</b>
-      Elige qué quieres hacer. No se cerrará ni se inventará ninguna hora automáticamente.
-      <div class="btn-row">
-        <button class="btn btn-primary btn-sm" data-action="fichaje-abierto-cerrar-ahora" data-id="${j.id}">Fichar salida ahora</button>
-        <button class="btn btn-outline btn-sm" data-action="fichaje-abierto-manual" data-id="${j.id}">Indicar hora manual</button>
-      </div>
-      <div class="gap8"></div>
-      <button class="btn btn-soft btn-sm" data-action="fichaje-abierto-continuar">Continuar trabajando</button>
-    </div>`;
+  if(j && !UI.bannerDismissed){
+    el.innerHTML = `
+      <div class="banner">
+        <b>⚠️ Tienes un fichaje abierto desde el ${esc(fmtDateShort(j.fecha))} (${esc(fmtTimeHM(j.entrada))})</b>
+        Elige qué quieres hacer. No se cerrará ni se inventará ninguna hora automáticamente.
+        <div class="btn-row">
+          <button class="btn btn-primary btn-sm" data-action="fichaje-abierto-cerrar-ahora" data-id="${j.id}">Fichar salida ahora</button>
+          <button class="btn btn-outline btn-sm" data-action="fichaje-abierto-manual" data-id="${j.id}">Indicar hora manual</button>
+        </div>
+        <div class="gap8"></div>
+        <button class="btn btn-soft btn-sm" data-action="fichaje-abierto-continuar">Continuar trabajando</button>
+      </div>`;
+    return;
+  }
+  if(debeAvisarFichaje()){
+    el.innerHTML = `
+      <div class="banner">
+        <b>⏰ Son las ${esc(fmtTimeHM(Date.now()))} y todavía no has fichado entrada</b>
+        <div class="btn-row" style="margin-top:10px;">
+          <button class="btn btn-primary btn-sm" data-action="fichar-entrada">▶ Fichar entrada ahora</button>
+          <button class="btn btn-soft btn-sm" data-action="aviso-fichaje-descartar-hoy">No avisar más hoy</button>
+        </div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = '';
 }
 function fichajeAbiertoCerrarAhora(id){
   const j = getJornada(id);
@@ -968,7 +1107,8 @@ function renderHoy(){
 
 /* Actualiza sólo los números en vivo cada segundo, sin re-renderizar todo */
 function tickLive(){
-  if(UI.tab !== 'hoy') { renderBanner(); return; }
+  renderBanner();
+  if(UI.tab !== 'hoy') return;
   const j = jornadaAbierta();
   if(!j){ return; }
   const now = Date.now();
@@ -1280,6 +1420,117 @@ function verDia(fecha){
     ${trayectosHtml}
   `);
 }
+/*
+ * Modal del "calendario laboral": permite ver el fichaje de ese día (delega
+ * en verDia) y/o marcarlo como festivo, vacaciones o compensación de horas.
+ * Cada pulsación guarda al instante y vuelve a pintar este mismo modal.
+ */
+function abrirDiaCalendario(fecha){
+  const j = jornadaDeFecha(fecha);
+  const marca = diaCalendarioLaboral(fecha);
+  const tipo = marca ? marca.tipo : 'normal';
+
+  const resumenFichaje = j ? (() => {
+    const calc = calcJornada(j, Date.now());
+    return `
+    <div class="card-row"><span class="label">Fichaje</span><span class="value">${fmtTimeHM(j.entrada)} - ${j.salida?fmtTimeHM(j.salida):'(abierto)'}</span></div>
+    <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calc.efectivoTotal)}</span></div>
+    `;
+  })() : `<p style="color:var(--muted);font-size:13.5px;">Sin fichaje registrado este día.</p>`;
+
+  const saldoActual = bancoHorasSaldoMs();
+  const horasCompensacion = marca && marca.tipo === 'compensacion' ? marca.horas : hoursDecimal(jornadaNormalMsForFecha(fecha));
+
+  openModal(`
+    <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    ${resumenFichaje}
+    <button class="btn btn-soft btn-sm" style="margin:10px 0 4px;" data-action="ver-dia" data-fecha="${fecha}">📋 Ver / editar fichaje de este día</button>
+
+    <div class="section-title">Marcar este día como</div>
+    <div class="seg">
+      <button data-action="marcar-dia" data-tipo="normal" data-fecha="${fecha}" class="${tipo==='normal'?'active':''}">Normal</button>
+      <button data-action="marcar-dia" data-tipo="festivo" data-fecha="${fecha}" class="${tipo==='festivo'?'active':''}">Festivo</button>
+      <button data-action="marcar-dia" data-tipo="vacaciones" data-fecha="${fecha}" class="${tipo==='vacaciones'?'active':''}">Vacaciones</button>
+      <button data-action="marcar-dia" data-tipo="compensacion" data-fecha="${fecha}" class="${tipo==='compensacion'?'active':''}">Compensación</button>
+    </div>
+
+    ${tipo === 'festivo' ? `
+    <div class="field" style="margin-top:12px;">
+      <label>Nombre del festivo</label>
+      <input type="text" id="marcaNombreFestivo" data-fecha="${fecha}" value="${esc(marca.nombre||'Festivo')}">
+    </div>` : ''}
+
+    ${tipo === 'compensacion' ? `
+    <div class="field" style="margin-top:12px;">
+      <label>Horas a descontar del banco</label>
+      <input type="number" min="0" step="0.25" id="marcaHorasCompensacion" data-fecha="${fecha}" value="${horasCompensacion}">
+    </div>
+    <p style="font-size:12px;color:var(--muted);">Saldo actual del banco de horas (ya con esta compensación aplicada si está guardada): <b>${fmtHM(Math.abs(saldoActual))}${saldoActual<0?' (negativo)':''}</b>.</p>
+    ` : ''}
+  `);
+}
+
+async function cargarFestivosNavarra(){
+  const anio = new Date().getFullYear();
+  const lista = FESTIVOS_NAVARRA[anio];
+  if(!lista){
+    toast(`Todavía no tengo cargados los festivos oficiales de Navarra para ${anio}.`);
+    return;
+  }
+  const ok = await confirmDialog(
+    `Se añadirán ${lista.length} festivos oficiales de toda Navarra para ${anio} (sobrescribiendo lo que tuvieras marcado esos días). Recuerda añadir a mano las 2 fiestas locales de tu municipio y tus vacaciones.`,
+    'Cargar festivos', false
+  );
+  if(!ok) return;
+  lista.forEach(f => { DATA.calendarioLaboral[f.fecha] = { tipo:'festivo', nombre:f.nombre }; });
+  save();
+  toast(`${lista.length} festivos de Navarra ${anio} cargados`);
+  renderAll();
+}
+
+/* Genera una vista de impresión del mes visible y abre el diálogo de impresión (Guardar como PDF). */
+function exportarCalendarioPDF(){
+  const ref = parseDateLocal(UI.resumen.mesRef);
+  const firstDow = (new Date(ref.getFullYear(), ref.getMonth(), 1).getDay()+6)%7;
+  const totalDias = new Date(ref.getFullYear(), ref.getMonth()+1, 0).getDate();
+  const dowLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  let cells = dowLabels.map(d => `<div class="print-cal-dow">${d}</div>`).join('');
+  for(let i=0;i<firstDow;i++) cells += `<div class="print-cal-day empty"></div>`;
+  for(let d=1; d<=totalDias; d++){
+    const fecha = `${ref.getFullYear()}-${pad2(ref.getMonth()+1)}-${pad2(d)}`;
+    const marca = diaCalendarioLaboral(fecha);
+    const j = jornadaDeFecha(fecha);
+    const diaCfg = diaConfigFor(fecha);
+    let cls = 'print-cal-day';
+    let etiqueta = '';
+    if(marca){
+      cls += ' ' + marca.tipo;
+      etiqueta = marca.tipo === 'festivo' ? (marca.nombre||'Festivo') : (marca.tipo === 'vacaciones' ? 'Vacaciones' : `Comp. ${marca.horas}h`);
+    } else if(j){
+      const c = calcJornada(j, Date.now());
+      cls += c.extra>0 ? ' has-extra' : ' worked';
+    } else if(diaCfg && diaCfg.activo === false){
+      cls += ' weekend';
+    }
+    cells += `<div class="${cls}"><div>${d}</div>${etiqueta?`<div style="font-size:8px;font-weight:600;margin-top:2px;line-height:1.2;">${esc(etiqueta)}</div>`:''}</div>`;
+  }
+  const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
+  document.getElementById('printArea').innerHTML = `
+    <div class="print-cal-title">Calendario laboral · ${MONTH_NAMES[ref.getMonth()]} ${ref.getFullYear()}</div>
+    <div class="print-cal-sub">${esc(nombreTrabajador)}</div>
+    <div class="print-cal-grid">${cells}</div>
+    <div class="print-cal-legend">
+      <div class="li"><span class="sw" style="background:#dbeafe;"></span>Trabajado</div>
+      <div class="li"><span class="sw" style="background:#fde0c2;"></span>Con horas extra</div>
+      <div class="li"><span class="sw" style="background:#f2f2f2;"></span>Fin de semana</div>
+      <div class="li"><span class="sw" style="background:#fbd7de;"></span>Festivo</div>
+      <div class="li"><span class="sw" style="background:#d6f0dc;"></span>Vacaciones</div>
+      <div class="li"><span class="sw" style="background:#dcdafb;"></span>Compensación</div>
+    </div>
+  `;
+  setTimeout(() => window.print(), 50);
+}
+
 function crearJornadaManual(fecha){
   const d = parseDateLocal(fecha);
   d.setHours(8,0,0,0);
@@ -1420,17 +1671,37 @@ function renderResumen(){
   for(let i=0;i<firstDow;i++) calCells += `<div class="cal-day empty"></div>`;
   for(let d=1; d<=totalDias; d++){
     const fecha = `${ref.getFullYear()}-${pad2(ref.getMonth()+1)}-${pad2(d)}`;
+    const marca = diaCalendarioLaboral(fecha);
     const j = jornadaDeFecha(fecha);
+    const diaCfg = diaConfigFor(fecha);
     let cls = 'cal-day';
     if(fecha === hoy) cls += ' today';
-    if(j){
+    if(marca){
+      cls += ' ' + marca.tipo;
+    } else if(j){
       const c = calcJornada(j, Date.now());
       cls += c.extra>0 ? ' has-extra' : ' worked';
+    } else if(diaCfg && diaCfg.activo === false){
+      cls += ' weekend';
     }
-    calCells += `<div class="${cls}" data-action="ver-dia" data-fecha="${fecha}">${d}</div>`;
+    calCells += `<div class="${cls}" data-action="abrir-dia-calendario" data-fecha="${fecha}">${d}</div>`;
   }
 
+  const bancoSaldo = bancoHorasSaldoMs();
+  const bancoGenerado = bancoHorasGeneradoMs();
+  const bancoCompensado = bancoHorasCompensadoMs();
+
   el.innerHTML = `
+    <div class="card">
+      <h2>Banco de horas</h2>
+      <div class="summary-grid">
+        <div class="summary-tile"><b style="color:${bancoSaldo>=0?'var(--success)':'var(--danger)'}">${bancoSaldo<0?'-':''}${fmtHM(Math.abs(bancoSaldo))}</b><small>Saldo disponible</small></div>
+        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(bancoGenerado)}</b><small>Horas extra generadas</small></div>
+        <div class="summary-tile"><b style="color:var(--compensacion)">${fmtHM(bancoCompensado)}</b><small>Ya compensadas</small></div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Se calcula con todas las horas extra registradas hasta hoy, menos los días que hayas marcado como "Compensación de horas" en el calendario de abajo.</p>
+    </div>
+
     <div class="card">
       <h2>Resumen semanal (${fmtDateShort(semIni)} - ${fmtDateShort(semFin)})</h2>
       <div class="summary-grid">
@@ -1468,6 +1739,19 @@ function renderResumen(){
         </div>
       </div>
       <div class="cal-grid">${calCells}</div>
+      <div class="cal-legend">
+        <div class="li"><span class="sw" style="background:#dbeafe;"></span>Trabajado</div>
+        <div class="li"><span class="sw" style="background:#fed7aa;"></span>Con horas extra</div>
+        <div class="li"><span class="sw" style="background:var(--surface-2);border:1px solid var(--border);"></span>Fin de semana</div>
+        <div class="li"><span class="sw" style="background:var(--festivo);"></span>Festivo</div>
+        <div class="li"><span class="sw" style="background:var(--success);"></span>Vacaciones</div>
+        <div class="li"><span class="sw" style="background:var(--compensacion);"></span>Compensación</div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Toca cualquier día para ver su fichaje o marcarlo como festivo, vacaciones o compensación de horas.</p>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="btn btn-outline btn-sm" data-action="cargar-festivos-navarra">📅 Cargar festivos Navarra 2026</button>
+        <button class="btn btn-outline btn-sm" data-action="exportar-calendario-pdf">🖨 Exportar calendario a PDF</button>
+      </div>
     </div>
 
     <div class="card">
@@ -1505,12 +1789,12 @@ function periodoARango(periodo){
   return [UI.export?.rangoIni || hoy, UI.export?.rangoFin || hoy];
 }
 
-function construirFilasExportacion(ini, fin){
-  const headers = ['Trabajador','Fecha','Día de la semana','Hora entrada','Hora salida','Tiempo bruto (h)','Descansos (h)','Comida (h)',
-    'Horas efectivas','Horas normales','Horas extra','Tiempo en trayectos (h)','Kilómetros','Origen','Destino','Observaciones'];
+function construirFilasExportacion(ini, fin, columnas){
+  const idsSeleccionados = (columnas && columnas.length) ? columnas : COLUMNAS_EXPORT.map(c => c.id);
+  const colsDef = COLUMNAS_EXPORT.filter(c => idsSeleccionados.includes(c.id));
   const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
   const fechas = diasEnRango(ini, fin).sort();
-  const rows = [];
+  const filas = [];
   fechas.forEach(f => {
     const j = jornadaDeFecha(f);
     const trs = trayectosDeFecha(f).sort((a,b)=>a.inicio-b.inicio);
@@ -1518,24 +1802,39 @@ function construirFilasExportacion(ini, fin){
     if(j){
       const c = calcJornada(j, Date.now());
       const primerTrayecto = trs[0];
-      rows.push([
-        nombreTrabajador, f, dowName, fmtTimeHM(j.entrada), j.salida?fmtTimeHM(j.salida):'(abierto)',
-        hoursDecimal(c.bruto), hoursDecimal(c.descansosMs), hoursDecimal(c.comidasMs),
-        hoursDecimal(c.efectivoTotal), hoursDecimal(c.normal), hoursDecimal(c.extra),
-        hoursDecimal(c.trayectosMs), primerTrayecto ? (Number(primerTrayecto.km)||0) : 0,
-        primerTrayecto ? primerTrayecto.origen : '', primerTrayecto ? primerTrayecto.destino : '',
-        j.observaciones || ''
-      ]);
+      filas.push({
+        trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
+        horaEntrada: fmtTimeHM(j.entrada), horaSalida: j.salida ? fmtTimeHM(j.salida) : '(abierto)',
+        tiempoBruto: hoursDecimal(c.bruto), descansos: hoursDecimal(c.descansosMs), comida: hoursDecimal(c.comidasMs),
+        horasEfectivas: hoursDecimal(c.efectivoTotal), horasNormales: hoursDecimal(c.normal), horasExtra: hoursDecimal(c.extra),
+        tiempoTrayectos: hoursDecimal(c.trayectosMs), km: primerTrayecto ? (Number(primerTrayecto.km)||0) : 0,
+        origen: primerTrayecto ? primerTrayecto.origen : '', destino: primerTrayecto ? primerTrayecto.destino : '',
+        observaciones: j.observaciones || ''
+      });
       for(let i=1;i<trs.length;i++){
         const t = trs[i];
-        rows.push([nombreTrabajador, f, dowName, '', '', '', '', '', '', '', '', hoursDecimal((t.fin??Date.now())-t.inicio), Number(t.km)||0, t.origen||'', t.destino||'', t.observaciones||'']);
+        filas.push({
+          trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
+          horaEntrada: '', horaSalida: '', tiempoBruto: '', descansos: '', comida: '',
+          horasEfectivas: '', horasNormales: '', horasExtra: '',
+          tiempoTrayectos: hoursDecimal((t.fin??Date.now())-t.inicio), km: Number(t.km)||0,
+          origen: t.origen||'', destino: t.destino||'', observaciones: t.observaciones||''
+        });
       }
     } else if(trs.length){
-      trs.forEach((t,i) => {
-        rows.push([nombreTrabajador, f, dowName, '', '', '', '', '', '', '', '', hoursDecimal((t.fin??Date.now())-t.inicio), Number(t.km)||0, t.origen||'', t.destino||'', t.observaciones||'']);
+      trs.forEach(t => {
+        filas.push({
+          trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
+          horaEntrada: '', horaSalida: '', tiempoBruto: '', descansos: '', comida: '',
+          horasEfectivas: '', horasNormales: '', horasExtra: '',
+          tiempoTrayectos: hoursDecimal((t.fin??Date.now())-t.inicio), km: Number(t.km)||0,
+          origen: t.origen||'', destino: t.destino||'', observaciones: t.observaciones||''
+        });
       });
     }
   });
+  const headers = colsDef.map(c => c.label);
+  const rows = filas.map(obj => colsDef.map(c => obj[c.id]));
   return { headers, rows };
 }
 
@@ -1587,8 +1886,8 @@ async function descargarBlob(blob, filename, successMsg){
   toast(successMsg || 'Archivo descargado');
 }
 
-function exportarCSV(ini, fin){
-  const { headers, rows } = construirFilasExportacion(ini, fin);
+function exportarCSV(ini, fin, columnas){
+  const { headers, rows } = construirFilasExportacion(ini, fin, columnas);
   const sep = ';';
   const escCsv = v => {
     const s = String(v ?? '');
@@ -1684,8 +1983,8 @@ function buildXlsxBlob(sheetName, headers, rows){
   const zip = buildZipStore(files);
   return new Blob([zip], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
-function exportarXLSX(ini, fin){
-  const { headers, rows } = construirFilasExportacion(ini, fin);
+function exportarXLSX(ini, fin, columnas){
+  const { headers, rows } = construirFilasExportacion(ini, fin, columnas);
   const blob = buildXlsxBlob('Fichajes', headers, rows);
   descargarBlob(blob, nombreArchivo(ini, fin, 'xlsx'), 'Excel exportado');
 }
@@ -1903,6 +2202,7 @@ function exportarResumenEquipo(){
 
 function abrirModalExportar(tipo){
   UI.export = UI.export || { rangoIni: todayStr(), rangoFin: todayStr() };
+  const columnasActuales = DATA.config.exportColumnas;
   openModal(`
     <div class="modal-head"><h3>${tipo==='xlsx'?'Exportar a Excel':'Exportar a CSV'}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
     <div class="field">
@@ -1919,6 +2219,21 @@ function abrirModalExportar(tipo){
       <div class="field"><label>Desde</label><input type="date" id="expIni" value="${UI.export.rangoIni}"></div>
       <div class="field"><label>Hasta</label><input type="date" id="expFin" value="${UI.export.rangoFin}"></div>
     </div>
+    <div class="field">
+      <label>Campos a incluir</label>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px;">Por defecto se incluyen todos, igual que hasta ahora. Desmarca los que no necesites.</p>
+      <div class="btn-row" style="margin-bottom:10px;">
+        <button type="button" class="btn btn-soft btn-sm" data-action="export-cols-todos">Marcar todos</button>
+        <button type="button" class="btn btn-soft btn-sm" data-action="export-cols-ninguno">Desmarcar todos</button>
+      </div>
+      <div id="exportColsList" style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;">
+        ${COLUMNAS_EXPORT.map(c => `
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;padding:5px 0;">
+            <input type="checkbox" class="export-col-chk" value="${c.id}" ${columnasActuales.includes(c.id)?'checked':''}>
+            ${esc(c.label)}
+          </label>`).join('')}
+      </div>
+    </div>
     <button class="btn btn-primary btn-lg" data-action="confirmar-exportar" data-tipo="${tipo}">Descargar ${tipo==='xlsx'?'.xlsx':'.csv'}</button>
   `, {onOpen: () => {
       document.getElementById('selPeriodo').addEventListener('change', (e) => {
@@ -1932,9 +2247,13 @@ function confirmarExportar(tipo){
     UI.export.rangoIni = document.getElementById('expIni').value;
     UI.export.rangoFin = document.getElementById('expFin').value;
   }
+  const columnas = Array.from(document.querySelectorAll('.export-col-chk:checked')).map(chk => chk.value);
+  if(!columnas.length){ toast('Selecciona al menos un campo para exportar.'); return; }
+  DATA.config.exportColumnas = columnas;
+  save();
   const [ini, fin] = periodoARango(periodo);
   closeModal();
-  if(tipo === 'xlsx') exportarXLSX(ini, fin); else exportarCSV(ini, fin);
+  if(tipo === 'xlsx') exportarXLSX(ini, fin, columnas); else exportarCSV(ini, fin, columnas);
 }
 
 /* ----------------------------- Render: pestaña AJUSTES -------------------- */
@@ -2006,6 +2325,18 @@ function renderAjustes(){
     </div>
 
     <div class="card">
+      <h2>Aviso de fichaje</h2>
+      <div class="switch-row">
+        <div class="txt"><b>Avisarme si no he fichado entrada</b><small>Muestra un aviso dentro de la app si abres el móvil y aún no has fichado. Solo funciona mientras la app está abierta; no envía notificaciones ni depende de internet.</small></div>
+        <button class="switch ${c.avisoEntradaActivo?'on':''}" data-action="toggle-aviso-entrada"></button>
+      </div>
+      ${c.avisoEntradaActivo ? `
+      <div class="field" style="margin-top:12px;"><label>Avisar a partir de las</label><input type="time" id="cfgAvisoHora" value="${c.avisoEntradaHora}"></div>
+      <p style="font-size:12px;color:var(--muted);">Solo se aplica los días marcados como activos en "Jornada por día de la semana", y deja de avisar en cuanto fiches entrada ese día.</p>
+      ` : ''}
+    </div>
+
+    <div class="card">
       <h2>Trayectos</h2>
       <div class="switch-row">
         <div class="txt"><b>Contabilizar trayecto como tiempo trabajado</b><small>Si está desactivado, el tiempo en coche se contabiliza aparte.</small></div>
@@ -2044,26 +2375,7 @@ function renderAjustes(){
         voluntariamente Google Maps desde un trayecto. La aplicación no incluye analítica ni publicidad.
       </p>
     </div>
-
-    <button class="btn btn-primary btn-lg" data-action="guardar-ajustes" style="margin-bottom:20px;">Guardar configuración</button>
   `;
-}
-function guardarAjustesForm(){
-  const c = DATA.config;
-  const elDescansoMin = document.getElementById('cfgDescansoMin');
-  if(elDescansoMin) c.descansoMin = Number(elDescansoMin.value) || 0;
-  const elComidaMin = document.getElementById('cfgComidaMin');
-  if(elComidaMin) c.comidaMin = Number(elComidaMin.value) || 0;
-  const elComidaInicio = document.getElementById('cfgComidaInicio');
-  const elComidaFin = document.getElementById('cfgComidaFin');
-  if(elComidaInicio) c.comidaInicio = elComidaInicio.value || c.comidaInicio;
-  if(elComidaFin) c.comidaFin = elComidaFin.value || c.comidaFin;
-  document.querySelectorAll('[data-field="horas"]').forEach(inp => {
-    c.dias[inp.dataset.dow].horas = Math.max(0, Number(inp.value) || 0);
-  });
-  save();
-  toast('Configuración guardada');
-  renderAll();
 }
 
 /* ----------------------------- Backup --------------------------------- */
@@ -2088,11 +2400,17 @@ function importarBackupSeleccionado(file){
     for(const dow of Object.keys(def.config.dias)){
       diasFusionados[dow] = Object.assign({}, def.config.dias[dow], diasGuardados[dow] || {});
     }
+    const idsValidos = COLUMNAS_EXPORT.map(c => c.id);
+    const columnasGuardadas = Array.isArray(parsed.config.exportColumnas) ? parsed.config.exportColumnas.filter(id => idsValidos.includes(id)) : [];
     DATA = {
       version: 1,
-      config: Object.assign({}, def.config, parsed.config, {dias: diasFusionados}),
+      config: Object.assign({}, def.config, parsed.config, {dias: diasFusionados, exportColumnas: columnasGuardadas.length ? columnasGuardadas : idsValidos}),
       jornadas: parsed.jornadas,
-      trayectos: parsed.trayectos
+      trayectos: parsed.trayectos,
+      perfil: parsed.perfil || null,
+      sesionAbierta: !!parsed.sesionAbierta,
+      equipo: Array.isArray(parsed.equipo) ? parsed.equipo : [],
+      calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {}
     };
     save();
     toast('Copia de seguridad restaurada');
@@ -2104,10 +2422,11 @@ function importarBackupSeleccionado(file){
 
 /* ----------------------------- Acceso directo / icono ------------------- */
 /*
- * Genera un icono de app (canvas → PNG) y lo declara como apple-touch-icon
- * y en un manifest embebido como data URI, para que "Añadir a pantalla de
- * inicio" muestre un icono propio en vez de una captura de la página. No
- * requiere ningún archivo externo: todo se genera dentro de este HTML.
+ * Genera un icono de app (canvas → PNG) más nítido que el SVG estático y lo
+ * declara como apple-touch-icon. El manifest ("manifest.json", con sus
+ * icons y shortcuts) se sirve como archivo real y NO se toca aquí: si se
+ * sobrescribiera con uno generado en memoria, los accesos rápidos de
+ * "Fichar entrada/salida" del icono dejarían de funcionar.
  */
 function configurarAccesoDirecto(){
   try{
@@ -2126,16 +2445,6 @@ function configurarAccesoDirecto(){
     let touchIcon = document.querySelector('link[rel="apple-touch-icon"]');
     if(!touchIcon){ touchIcon = document.createElement('link'); touchIcon.rel = 'apple-touch-icon'; document.head.appendChild(touchIcon); }
     touchIcon.href = iconUrl;
-
-    const manifest = {
-      name: 'Control Horario', short_name: 'Fichaje', start_url: '.', display: 'standalone',
-      background_color: '#0f1115', theme_color: '#2563eb',
-      icons: [{ src: iconUrl, sizes: '512x512', type: 'image/png' }]
-    };
-    const manifestB64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
-    let manifestLink = document.querySelector('link[rel="manifest"]');
-    if(!manifestLink){ manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; document.head.appendChild(manifestLink); }
-    manifestLink.href = 'data:application/manifest+json;base64,' + manifestB64;
   }catch(e){ console.error('No se pudo generar el icono de acceso directo.', e); }
 }
 let _deferredInstallPrompt = null;
@@ -2264,6 +2573,23 @@ function arrancarAppPrincipal(){
   renderAll();
 }
 
+/*
+ * Fichaje directo desde los accesos rápidos del icono de la app
+ * (manifest "shortcuts" → ?accion=entrada / ?accion=salida). Reutiliza las
+ * mismas funciones y validaciones que los botones normales de la pestaña Hoy.
+ */
+function procesarAccesoDirecto(){
+  const params = new URLSearchParams(window.location.search);
+  const accion = params.get('accion');
+  if(accion === 'entrada') accionFicharEntrada();
+  else if(accion === 'salida') accionFicharSalida();
+  if(accion){
+    const url = new URL(window.location.href);
+    url.searchParams.delete('accion');
+    window.history.replaceState({}, '', url);
+  }
+}
+
 /* ----------------------------- Navegación / render general -------------- */
 function setTab(tab){
   UI.tab = tab;
@@ -2316,6 +2642,11 @@ document.addEventListener('click', async (e) => {
     case 'fichaje-abierto-manual': fichajeAbiertoManual(d.id); break;
     case 'confirmar-salida-manual-abierto': confirmarSalidaManualAbierto(d.id); break;
     case 'fichaje-abierto-continuar': UI.bannerDismissed = true; renderBanner(); break;
+    case 'aviso-fichaje-descartar-hoy': UI.avisoDescartadoFecha = todayStr(); renderBanner(); break;
+    case 'toggle-aviso-entrada':
+      DATA.config.avisoEntradaActivo = !DATA.config.avisoEntradaActivo;
+      save(); renderAll();
+      break;
 
     case 'filtro-historico':
       UI.historico.filtro = d.filtro;
@@ -2337,28 +2668,42 @@ document.addEventListener('click', async (e) => {
       renderResumen();
       break;
     }
+    case 'abrir-dia-calendario': abrirDiaCalendario(d.fecha); break;
+    case 'marcar-dia':
+      if(d.tipo === 'normal') quitarMarcaCalendarioLaboral(d.fecha);
+      else marcarDiaCalendarioLaboral(d.fecha, d.tipo);
+      renderAll();
+      abrirDiaCalendario(d.fecha);
+      break;
+    case 'cargar-festivos-navarra': await cargarFestivosNavarra(); break;
+    case 'exportar-calendario-pdf': exportarCalendarioPDF(); break;
     case 'abrir-exportar-excel': abrirModalExportar('xlsx'); break;
     case 'abrir-exportar-csv': abrirModalExportar('csv'); break;
     case 'confirmar-exportar': confirmarExportar(d.tipo); break;
+    case 'export-cols-todos':
+      document.querySelectorAll('.export-col-chk').forEach(chk => chk.checked = true);
+      break;
+    case 'export-cols-ninguno':
+      document.querySelectorAll('.export-col-chk').forEach(chk => chk.checked = false);
+      break;
 
     case 'toggle-dia-activo': break; // manejado en 'change'
     case 'toggle-dia-comida':
       DATA.config.dias[d.dow].comida = DATA.config.dias[d.dow].comida === false;
-      save(); renderAjustes(); renderAll();
+      save(); renderAll();
       break;
     case 'set-modo':
       DATA.config[d.campo] = d.valor;
-      save(); renderAjustes(); renderAll();
+      save(); renderAll();
       break;
     case 'toggle-trayecto-trabajo':
       DATA.config.trayectoComoTrabajo = !DATA.config.trayectoComoTrabajo;
-      save(); renderAjustes();
+      save(); renderAll();
       break;
     case 'set-tema':
       DATA.config.tema = d.valor;
-      save(); aplicarTema(); renderAjustes();
+      save(); aplicarTema(); renderAll();
       break;
-    case 'guardar-ajustes': guardarAjustesForm(); break;
 
     case 'exportar-backup': exportarBackup(); break;
     case 'importar-backup': document.getElementById('fileImportBackup').click(); break;
@@ -2389,7 +2734,41 @@ document.addEventListener('change', (e) => {
   if(e.target.id === 'rangoFinInput'){ UI.historico.rangoFin = e.target.value; renderHistorico(); }
   if(e.target.dataset && e.target.dataset.action === 'toggle-dia-activo'){
     DATA.config.dias[e.target.dataset.dow].activo = e.target.checked;
-    save(); renderAjustes();
+    save(); renderAll();
+  }
+  if(e.target.dataset && e.target.dataset.field === 'horas'){
+    DATA.config.dias[e.target.dataset.dow].horas = Math.max(0, Number(e.target.value) || 0);
+    save(); renderAll();
+  }
+  if(e.target.id === 'cfgDescansoMin'){
+    DATA.config.descansoMin = Math.max(0, Number(e.target.value) || 0);
+    save(); renderAll();
+  }
+  if(e.target.id === 'cfgComidaMin'){
+    DATA.config.comidaMin = Math.max(0, Number(e.target.value) || 0);
+    save(); renderAll();
+  }
+  if(e.target.id === 'cfgComidaInicio'){
+    DATA.config.comidaInicio = e.target.value || DATA.config.comidaInicio;
+    save(); renderAll();
+  }
+  if(e.target.id === 'cfgComidaFin'){
+    DATA.config.comidaFin = e.target.value || DATA.config.comidaFin;
+    save(); renderAll();
+  }
+  if(e.target.id === 'cfgAvisoHora'){
+    DATA.config.avisoEntradaHora = e.target.value || DATA.config.avisoEntradaHora;
+    save(); renderAll();
+  }
+  if(e.target.id === 'marcaNombreFestivo'){
+    const fecha = e.target.dataset.fecha;
+    if(DATA.calendarioLaboral[fecha]) DATA.calendarioLaboral[fecha].nombre = e.target.value.trim() || 'Festivo';
+    save(); renderAll();
+  }
+  if(e.target.id === 'marcaHorasCompensacion'){
+    const fecha = e.target.dataset.fecha;
+    if(DATA.calendarioLaboral[fecha]) DATA.calendarioLaboral[fecha].horas = Math.max(0, Number(e.target.value)||0);
+    save(); renderAll();
   }
   if(e.target.id === 'fileImportBackup' && e.target.files[0]){
     importarBackupSeleccionado(e.target.files[0]);
@@ -2427,6 +2806,7 @@ function init(){
   aplicarTema();
   if(sesionActiva()){
     arrancarAppPrincipal();
+    procesarAccesoDirecto();
   } else {
     document.getElementById('authScreen').classList.remove('hidden');
     renderAuthScreen();
