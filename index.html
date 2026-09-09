@@ -1,0 +1,2449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Control Horario</title>
+<meta name="description" content="Control horario y fichaje de trabajo personal, 100% local.">
+<meta name="theme-color" content="#2563eb">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fichaje">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f2f4f8; --surface:#ffffff; --surface-2:#f7f8fb; --text:#171a21; --muted:#6b7280;
+  --border:#e5e7eb; --primary:#2563eb; --primary-dark:#1d4ed8; --primary-contrast:#ffffff;
+  --success:#16a34a; --warning:#ea580c; --extra:#ea580c; --descanso:#7c3aed; --comida:#0d9488;
+  --trayecto:#0891b2; --danger:#dc2626; --danger-dark:#b91c1c; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.06);
+  --shadow-lg:0 10px 30px rgba(16,24,40,.18); --radius:16px; --radius-sm:10px;
+  color-scheme:light;
+}
+[data-theme="dark"]{
+  --bg:#0f1115; --surface:#181b22; --surface-2:#20242e; --text:#f1f3f6; --muted:#9aa1ad;
+  --border:#2b3040; --primary:#3b82f6; --primary-dark:#2563eb; --primary-contrast:#ffffff;
+  --success:#22c55e; --warning:#fb923c; --extra:#fb923c; --descanso:#a78bfa; --comida:#2dd4bf;
+  --trayecto:#22d3ee; --danger:#f87171; --danger-dark:#ef4444; --shadow:0 1px 3px rgba(0,0,0,.4);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none;
+  padding-bottom:calc(78px + env(safe-area-inset-bottom));
+}
+#app{max-width:560px;margin:0 auto;padding:16px 16px 24px;position:relative;}
+h1,h2,h3,p{margin:0;}
+button{font-family:inherit;}
+.hidden{display:none !important;}
+
+/* Header */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 16px;}
+.app-header .brand{display:flex;align-items:center;gap:10px;}
+.app-header .brand-logo{width:34px;height:34px;border-radius:9px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.app-header h1{font-size:17px;font-weight:700;}
+.header-date{font-size:12px;color:var(--muted);}
+
+/* Tabs container */
+.tab-panel{display:none;animation:fade .18s ease;}
+.tab-panel.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+/* Cards */
+.card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px;border:1px solid var(--border);}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;margin-bottom:12px;}
+.card-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.card-row:last-child{border-bottom:none;}
+.card-row .label{color:var(--muted);font-size:13.5px;display:flex;align-items:center;gap:6px;}
+.card-row .value{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;}
+
+/* Status hero */
+.hero{background:linear-gradient(160deg,var(--primary),var(--primary-dark));color:#fff;border-radius:20px;padding:22px 20px;box-shadow:var(--shadow-lg);margin-bottom:14px;position:relative;overflow:hidden;}
+.hero.estado-descanso{background:linear-gradient(160deg,var(--descanso),#5b21b6);}
+.hero.estado-comida{background:linear-gradient(160deg,var(--comida),#0f766e);}
+.hero.estado-trayecto{background:linear-gradient(160deg,var(--trayecto),#0e7490);}
+.hero.estado-fuera{background:linear-gradient(160deg,#64748b,#475569);}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.badge-estado{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.02em;}
+.badge-estado .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+.hero-fecha{font-size:12.5px;opacity:.85;}
+.hero-timer{font-size:44px;font-weight:800;letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1;margin:4px 0 2px;}
+.hero-timer-label{font-size:12.5px;opacity:.85;margin-bottom:14px;}
+.hero-extra{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;margin-top:6px;}
+.hero-extra strong{font-size:20px;font-variant-numeric:tabular-nums;}
+.hero-extra span{font-size:11.5px;opacity:.85;display:block;}
+.hero-sub{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.hero-sub .item{background:rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;}
+.hero-sub .item b{display:block;font-size:17px;font-variant-numeric:tabular-nums;}
+.hero-sub .item small{font-size:11px;opacity:.85;}
+
+/* Progress bar */
+.progress-wrap{margin-top:16px;}
+.progress-track{background:rgba(255,255,255,.22);border-radius:999px;height:12px;overflow:hidden;}
+.progress-fill{height:100%;background:#fff;border-radius:999px;transition:width .4s ease;}
+.progress-fill.extra{background:var(--extra);}
+.progress-text{font-size:11.5px;margin-top:6px;opacity:.9;display:flex;justify-content:space-between;}
+
+/* Buttons */
+.btn{border:none;border-radius:14px;padding:16px 18px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;transition:transform .08s ease, filter .15s ease;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-outline{background:var(--surface);color:var(--text);border:1.5px solid var(--border);}
+.btn-soft{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
+.btn-descanso{background:var(--descanso);color:#fff;}
+.btn-comida{background:var(--comida);color:#fff;}
+.btn-trayecto{background:var(--trayecto);color:#fff;}
+.btn-lg{padding:20px;font-size:18px;border-radius:18px;}
+.btn-sm{padding:9px 12px;font-size:13px;border-radius:10px;width:auto;font-weight:600;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-row.single{grid-template-columns:1fr;}
+.icon-btn{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text);}
+
+/* Banner aviso */
+.banner{background:#fef3c7;border:1px solid #fcd34d;color:#78350f;border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;}
+[data-theme="dark"] .banner{background:#3a2f10;border-color:#7c5e12;color:#fde68a;}
+.banner b{display:block;margin-bottom:8px;font-size:14.5px;}
+.banner .btn-row{margin-top:10px;}
+
+/* Nav */
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);
+  display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:40;
+  max-width:560px;margin:0 auto;}
+.tabbar-item{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;color:var(--muted);font-size:10.5px;font-weight:600;border-radius:10px;cursor:pointer;}
+.tabbar-item .ic{font-size:20px;line-height:1;}
+.tabbar-item.active{color:var(--primary);}
+
+/* Forms */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px;}
+.field input[type=text],.field input[type=number],.field input[type=time],.field input[type=date],
+.field input[type=datetime-local],.field select,.field textarea{
+  width:100%;padding:12px 13px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface-2);
+  color:var(--text);font-size:15px;font-family:inherit;
+}
+.field textarea{resize:vertical;min-height:64px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.switch-row:last-child{border-bottom:none;}
+.switch-row .txt b{display:block;font-size:14px;}
+.switch-row .txt small{color:var(--muted);font-size:12px;}
+.switch{position:relative;width:46px;height:27px;background:var(--border);border-radius:999px;border:none;cursor:pointer;flex:none;}
+.switch.on{background:var(--primary);}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;background:#fff;border-radius:50%;transition:left .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.switch.on::after{left:22px;}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:3px;gap:3px;}
+.seg button{flex:1;border:none;background:none;padding:9px 6px;border-radius:8px;font-size:12.5px;font-weight:700;color:var(--muted);cursor:pointer;}
+.seg button.active{background:var(--primary);color:#fff;}
+
+/* Day rows for dia-config */
+.dia-row{display:grid;grid-template-columns:24px 1fr 56px 18px 32px;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.dia-row:last-child{border-bottom:none;}
+.dia-row .dname{font-size:13px;font-weight:700;}
+.dia-row .dunit{font-size:11.5px;color:var(--muted);}
+.dia-row input[type=time]{padding:8px;font-size:13px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text);width:100%;}
+.dia-row input[type=number]{padding:8px;font-size:13px;border-radius:8px;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text);width:100%;}
+.dia-row input[type=number]:disabled{opacity:.45;}
+.dia-comida-btn{width:30px;height:30px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface-2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.4;}
+.dia-comida-btn.on{opacity:1;border-color:var(--comida);background:rgba(13,148,136,.12);}
+.dia-comida-btn:disabled{cursor:not-allowed;opacity:.25;}
+
+/* History list */
+.hist-filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+.chip{flex:none;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;}
+.chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.search-box{margin-bottom:12px;}
+.day-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:var(--shadow);}
+.day-item:active{transform:scale(.99);}
+.day-item .di-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.day-item .di-date{font-weight:700;font-size:14.5px;text-transform:capitalize;}
+.day-item .di-date small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;text-transform:none;}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;}
+.pill.extra{background:#ffedd5;color:#9a3412;}
+[data-theme="dark"] .pill.extra{background:#4a2a0f;color:#fdba74;}
+.pill.open{background:#dbeafe;color:#1e40af;}
+[data-theme="dark"] .pill.open{background:#1e3a5f;color:#93c5fd;}
+.di-stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);}
+.di-stats b{color:var(--text);font-variant-numeric:tabular-nums;}
+.empty-state{text-align:center;padding:40px 12px;color:var(--muted);}
+.empty-state .ic{font-size:38px;margin-bottom:10px;}
+
+/* Trayecto list */
+.trayecto-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:var(--shadow);}
+.trayecto-item .tr-route{font-weight:700;font-size:14.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.trayecto-item .tr-meta{font-size:12.5px;color:var(--muted);margin-bottom:10px;}
+.trayecto-item .tr-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,17,21,.55);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
+.modal-overlay.center{align-items:center;padding:16px;}
+.modal-box{background:var(--surface);border-radius:20px 20px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-lg);}
+.modal-overlay.center .modal-box{border-radius:20px;max-height:85vh;}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.modal-head h3{font-size:17px;font-weight:800;}
+.modal-close{background:var(--surface-2);border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--text);}
+.mini-list-item{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:9px;}
+.mini-list-item .mli-top{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:700;margin-bottom:6px;}
+.mli-actions{display:flex;gap:6px;margin-top:8px;}
+.section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin:18px 0 10px;}
+.section-title:first-child{margin-top:0;}
+
+/* Toast */
+#toastRoot{position:fixed;top:calc(14px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;width:calc(100% - 32px);max-width:520px;align-items:center;}
+.toast{background:#111827;color:#fff;padding:12px 18px;border-radius:12px;font-size:13.5px;font-weight:600;box-shadow:var(--shadow-lg);animation:toastIn .2s ease;text-align:center;max-width:100%;}
+[data-theme="dark"] .toast{background:#2c3140;}
+@keyframes toastIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+.cal-dow{text-align:center;font-size:10.5px;color:var(--muted);font-weight:700;padding-bottom:4px;}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;font-size:12px;background:var(--surface-2);color:var(--text);border:1px solid transparent;cursor:pointer;position:relative;}
+.cal-day.empty{background:none;cursor:default;}
+.cal-day.worked{background:#dbeafe;color:#1e3a8a;font-weight:700;}
+[data-theme="dark"] .cal-day.worked{background:#1e3a5f;color:#bfdbfe;}
+.cal-day.has-extra{background:#fed7aa;color:#7c2d12;}
+[data-theme="dark"] .cal-day.has-extra{background:#5a3410;color:#fdba74;}
+.cal-day.today{outline:2px solid var(--primary);outline-offset:1px;}
+.cal-day .dot{width:4px;height:4px;border-radius:50%;background:currentColor;margin-top:2px;}
+
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.summary-tile{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:13px;}
+.summary-tile b{display:block;font-size:19px;font-variant-numeric:tabular-nums;}
+.summary-tile small{color:var(--muted);font-size:11.5px;}
+
+footer.appfoot{text-align:center;color:var(--muted);font-size:11px;padding:22px 8px 4px;line-height:1.6;}
+a.link{color:var(--primary);text-decoration:none;font-weight:600;}
+.gap8{height:8px;}
+
+/* Auth screen */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+.auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:var(--shadow-lg);}
+.auth-logo{width:52px;height:52px;border-radius:14px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
+.auth-card h2{font-size:19px;font-weight:800;text-align:center;margin-bottom:4px;}
+.auth-card .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:20px;}
+.auth-card .field{margin-bottom:12px;}
+.auth-error{background:#fee2e2;color:#991b1b;border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:12px;}
+[data-theme="dark"] .auth-error{background:#3f1d1d;color:#fca5a5;}
+.role-pick{display:flex;gap:10px;margin-bottom:16px;}
+.role-opt{flex:1;border:1.5px solid var(--border);background:var(--surface-2);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;}
+.role-opt.active{border-color:var(--primary);background:rgba(37,99,235,.08);}
+.role-opt .ic{font-size:22px;display:block;margin-bottom:6px;}
+.role-opt b{display:block;font-size:13px;}
+.role-opt small{color:var(--muted);font-size:11px;}
+.auth-switch{text-align:center;margin-top:14px;font-size:12.5px;color:var(--muted);}
+
+/* Equipo (directivo) */
+.worker-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);}
+.worker-card .wc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.worker-card .wc-name{font-weight:800;font-size:15.5px;display:flex;align-items:center;gap:8px;}
+.worker-card .wc-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+.informe-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.informe-item .if-meta{color:var(--muted);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="authScreen" class="hidden"></div>
+
+  <div id="mainApp" class="hidden">
+    <div class="app-header">
+      <div class="brand">
+        <div class="brand-logo">⏱</div>
+        <div>
+          <h1>Control Horario</h1>
+          <div class="header-date" id="headerClock">--</div>
+        </div>
+      </div>
+      <button class="icon-btn" id="themeQuickToggle" title="Cambiar tema">🌓</button>
+    </div>
+
+    <div id="bannerAbierto"></div>
+
+    <!-- TAB: HOY -->
+    <section class="tab-panel" id="tab-hoy" data-panel="hoy"></section>
+
+    <!-- TAB: HISTORICO -->
+    <section class="tab-panel" id="tab-historico" data-panel="historico"></section>
+
+    <!-- TAB: TRAYECTOS -->
+    <section class="tab-panel" id="tab-trayectos" data-panel="trayectos"></section>
+
+    <!-- TAB: RESUMEN -->
+    <section class="tab-panel" id="tab-resumen" data-panel="resumen"></section>
+
+    <!-- TAB: EQUIPO (solo perfil directivo) -->
+    <section class="tab-panel" id="tab-equipo" data-panel="equipo"></section>
+
+    <!-- TAB: AJUSTES -->
+    <section class="tab-panel" id="tab-ajustes" data-panel="ajustes"></section>
+
+    <footer class="appfoot">
+      Todos tus datos se guardan únicamente en este dispositivo.<br>
+      Control Horario · 100% local y sin conexión
+    </footer>
+  </div>
+</div>
+
+<nav class="tabbar hidden" id="tabbar">
+  <button class="tabbar-item" data-tab="hoy"><span class="ic">🏠</span>Hoy</button>
+  <button class="tabbar-item" data-tab="historico"><span class="ic">📅</span>Histórico</button>
+  <button class="tabbar-item" data-tab="trayectos"><span class="ic">🚗</span>Trayectos</button>
+  <button class="tabbar-item" data-tab="resumen"><span class="ic">📊</span>Resumen</button>
+  <button class="tabbar-item hidden" id="tabbarEquipoBtn" data-tab="equipo"><span class="ic">🧑‍🤝‍🧑</span>Equipo</button>
+  <button class="tabbar-item" data-tab="ajustes"><span class="ic">⚙️</span>Ajustes</button>
+</nav>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+<input type="file" id="fileImportBackup" accept="application/json" class="hidden">
+<input type="file" id="fileImportExcelEquipo" accept=".xlsx" class="hidden">
+
+<script>
+'use strict';
+/* =========================================================================
+   CONTROL HORARIO — aplicación autocontenida (HTML + CSS + JS)
+   Todos los datos se guardan en localStorage. No requiere servidor.
+   ========================================================================= */
+
+/* ----------------------------- Utilidades ----------------------------- */
+const STORAGE_KEY = 'controlHorario_data_v1';
+const DOW_NAMES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DOW_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function pad2(n){ return String(Math.trunc(n)).padStart(2,'0'); }
+function uid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+}
+function todayStr(d = new Date()){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function parseDateLocal(s){ const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function addDays(dateStr, n){ const d = parseDateLocal(dateStr); d.setDate(d.getDate()+n); return todayStr(d); }
+function toDatetimeLocalValue(ts){
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+function fromDatetimeLocalValue(v){ const t = new Date(v).getTime(); return isNaN(t) ? null : t; }
+function fmtTimeHM(ts){ if(ts==null) return '--:--'; const d = new Date(ts); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function fmtDateHuman(s){
+  const d = parseDateLocal(s);
+  return `${DOW_NAMES[d.getDay()]} ${d.getDate()} de ${MONTH_NAMES[d.getMonth()]}`;
+}
+function fmtDateShort(s){
+  const d = parseDateLocal(s);
+  return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
+}
+// Duración en HH:MM (redondeo al minuto, sin negativos)
+function fmtHM(ms){
+  ms = Math.max(0, ms || 0);
+  const totalMin = Math.round(ms/60000);
+  return `${pad2(Math.floor(totalMin/60))}:${pad2(totalMin%60)}`;
+}
+// Duración en HH:MM:SS para contadores en vivo
+function fmtHMS(ms){
+  ms = Math.max(0, ms || 0);
+  const totalSec = Math.floor(ms/1000);
+  const h = Math.floor(totalSec/3600), m = Math.floor((totalSec%3600)/60), s = totalSec%60;
+  return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+}
+function hoursDecimal(ms){ return Math.round((ms/3600000)*100)/100; }
+function esc(s){
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function clamp(n, lo, hi){ return Math.min(hi, Math.max(lo, n)); }
+
+/* ----------------------------- Modelo de datos -------------------------- */
+function defaultConfig(){
+  return {
+    horasNormales: 8,
+    descansoMin: 15,
+    comidaMin: 45,
+    comidaInicio: '14:00',
+    comidaFin: '14:45',
+    modoDescanso: 'manual',   // 'auto' | 'manual'
+    modoComida: 'manual',     // 'auto' (duración fija) | 'manual' | 'horario' (franja fija)
+    trayectoComoTrabajo: false,
+    tema: 'auto',             // 'claro' | 'oscuro' | 'auto'
+    // La jornada normal de cada día se cuenta a partir de la hora real de
+    // fichaje de entrada (no de un horario fijo de entrada/salida).
+    dias: {
+      1: {activo:true,  horas:8.5, comida:true},
+      2: {activo:true,  horas:8.5, comida:true},
+      3: {activo:true,  horas:8.5, comida:true},
+      4: {activo:true,  horas:8.5, comida:true},
+      5: {activo:true,  horas:6,   comida:true},
+      6: {activo:false, horas:0,   comida:true},
+      0: {activo:false, horas:0,   comida:true}
+    }
+  };
+}
+function defaultData(){
+  return {
+    version: 1, config: defaultConfig(), jornadas: [], trayectos: [],
+    perfil: null,          // {nombre, passHash, rol:'trabajador'|'directivo'}
+    sesionAbierta: false,  // se mantiene iniciada entre aperturas, como cualquier app del móvil
+    equipo: []             // solo lo usa el rol "directivo": informes importados de trabajadores
+  };
+}
+
+let DATA = loadData();
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    // Fusión defensiva por si faltan campos (versiones futuras / datos parciales)
+    const def = defaultData();
+    const cfg = Object.assign({}, def.config, parsed.config || {});
+    const diasGuardados = (parsed.config && parsed.config.dias) || {};
+    cfg.dias = {};
+    for(const dow of Object.keys(def.config.dias)){
+      cfg.dias[dow] = Object.assign({}, def.config.dias[dow], diasGuardados[dow] || {});
+    }
+    return {
+      version: 1,
+      config: cfg,
+      jornadas: Array.isArray(parsed.jornadas) ? parsed.jornadas : [],
+      trayectos: Array.isArray(parsed.trayectos) ? parsed.trayectos : [],
+      perfil: parsed.perfil || null,
+      sesionAbierta: !!parsed.sesionAbierta,
+      equipo: Array.isArray(parsed.equipo) ? parsed.equipo : []
+    };
+  }catch(e){
+    console.error('Error cargando datos, se usará configuración por defecto.', e);
+    return defaultData();
+  }
+}
+function persist(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+}
+function save(){ persist(); }
+
+/*
+ * ---------------------------------------------------------------------
+ * Identificación de usuario (perfil trabajador / directivo)
+ * ---------------------------------------------------------------------
+ * Importante: esto es una app 100% local, sin servidor. La contraseña
+ * solo sirve para identificar quién usa el dispositivo y evitar que
+ * alguien cambie el perfil o los datos por error — NO es un sistema de
+ * seguridad real (quien tenga acceso físico al dispositivo y sepa
+ * inspeccionar el código podría llegar a los datos). Aun así, la
+ * contraseña se guarda como huella SHA-256, nunca en texto plano.
+ */
+async function hashPassword(pass){
+  try{
+    const bytes = new TextEncoder().encode(pass);
+    const buf = await crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }catch(e){
+    // Fallback muy simple si SubtleCrypto no está disponible (navegadores muy antiguos).
+    let h = 0;
+    for(let i=0;i<pass.length;i++){ h = ((h<<5)-h+pass.charCodeAt(i))|0; }
+    return 'fallback-' + h;
+  }
+}
+function sesionActiva(){ return !!(DATA.perfil && DATA.sesionAbierta); }
+function esDirectivo(){ return !!(DATA.perfil && DATA.perfil.rol === 'directivo'); }
+
+/* ----------------------------- Estado UI -------------------------------- */
+const UI = {
+  tab: 'hoy',
+  historico: { filtro: 'semana', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '' },
+  resumen: { periodo: 'semana', mesRef: todayStr() },
+  bannerDismissed: false
+};
+
+/* ----------------------------- Consultas de datos ------------------------ */
+function jornadaAbierta(){ return DATA.jornadas.find(j => j.salida == null) || null; }
+function trayectoAbierto(){ return DATA.trayectos.find(t => t.fin == null) || null; }
+function descansoAbierto(j){ return j ? j.descansos.find(d => d.fin == null) || null : null; }
+function comidaAbierta(j){ return j ? j.comidas.find(c => c.fin == null) || null : null; }
+function getJornada(id){ return DATA.jornadas.find(j => j.id === id) || null; }
+function getTrayecto(id){ return DATA.trayectos.find(t => t.id === id) || null; }
+function trayectosDeFecha(fecha){ return DATA.trayectos.filter(t => t.fecha === fecha); }
+function jornadaDeFecha(fecha){ return DATA.jornadas.find(j => j.fecha === fecha) || null; }
+
+function sumIntervals(list, now){
+  let total = 0;
+  for(const it of list){
+    const fin = it.fin == null ? now : it.fin;
+    total += Math.max(0, fin - it.inicio);
+  }
+  return total;
+}
+
+function diaConfigFor(fechaStr){
+  const dow = parseDateLocal(fechaStr).getDay();
+  return DATA.config.dias[dow] || null;
+}
+function jornadaNormalMsForFecha(fechaStr){
+  const dia = diaConfigFor(fechaStr);
+  if(dia && dia.activo === false) return 0;
+  const horas = (dia && dia.horas !== '' && dia.horas != null) ? Number(dia.horas) : Number(DATA.config.horasNormales);
+  return Math.round((horas || 0) * 3600000);
+}
+
+// Franja horaria de comida preconfigurada (p.ej. 14:00-14:45) aplicada al
+// calendario de un día concreto. Si "fin" es menor o igual que "inicio" se
+// interpreta que la franja cruza la medianoche.
+function comidaHorarioParaFecha(fechaStr){
+  const cfg = DATA.config;
+  const d = parseDateLocal(fechaStr);
+  const [hi, mi] = (cfg.comidaInicio || '14:00').split(':').map(Number);
+  const [hf, mf] = (cfg.comidaFin || '14:45').split(':').map(Number);
+  const inicio = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hi, mi).getTime();
+  let fin = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hf, mf).getTime();
+  if(fin <= inicio) fin += 24*3600000;
+  return { inicio, fin };
+}
+function overlapMs(aIni, aFin, bIni, bFin){
+  return Math.max(0, Math.min(aFin, bFin) - Math.max(aIni, bIni));
+}
+
+/*
+ * Motor de cálculo. Usa SIEMPRE timestamps reales (ms desde época), nunca
+ * resta de strings "HH:MM", por lo que gestiona correctamente turnos
+ * nocturnos, cambios de día y jornadas de cualquier duración.
+ *
+ *   TIEMPO BRUTO     = salida - entrada
+ *   TIEMPO NO TRAB.  = descansos + comida
+ *   TIEMPO EFECTIVO  = bruto - noTrabajado (+ trayectos si se configuró así)
+ *   HORAS NORMALES   = min(efectivo, jornadaConfigurada)
+ *   HORAS EXTRA      = max(0, efectivo - jornadaConfigurada)
+ */
+function calcJornada(j, now = Date.now()){
+  const entrada = j.entrada;
+  const salidaReal = j.salida;
+  const abierta = salidaReal == null;
+  const finParaCalculo = abierta ? now : salidaReal;
+  const bruto = Math.max(0, finParaCalculo - entrada);
+
+  const cfg = DATA.config;
+  let descansosMs, comidasMs;
+  const diaAplicaComida = diaConfigFor(j.fecha)?.comida !== false;
+
+  if(cfg.modoDescanso === 'auto'){
+    descansosMs = Math.min(bruto, (cfg.descansoMin || 0) * 60000);
+  } else {
+    descansosMs = sumIntervals(j.descansos, now);
+  }
+  if(!diaAplicaComida && cfg.modoComida !== 'manual'){
+    comidasMs = 0;
+  } else if(cfg.modoComida === 'auto'){
+    comidasMs = Math.min(Math.max(0, bruto - descansosMs), (cfg.comidaMin || 0) * 60000);
+  } else if(cfg.modoComida === 'horario'){
+    const franja = comidaHorarioParaFecha(j.fecha);
+    comidasMs = overlapMs(entrada, finParaCalculo, franja.inicio, franja.fin);
+  } else {
+    comidasMs = sumIntervals(j.comidas, now);
+  }
+
+  const efectivoBase = Math.max(0, bruto - descansosMs - comidasMs);
+  const trayectos = trayectosDeFecha(j.fecha);
+  const trayectosMs = sumIntervals(trayectos, now);
+  const efectivoTotal = efectivoBase + (cfg.trayectoComoTrabajo ? trayectosMs : 0);
+
+  const normalMax = jornadaNormalMsForFecha(j.fecha);
+  const normal = Math.min(efectivoTotal, normalMax);
+  const extra = Math.max(0, efectivoTotal - normalMax);
+
+  return {
+    bruto, descansosMs, comidasMs, efectivoBase, trayectosMs, efectivoTotal,
+    normalMax, normal, extra, abierta,
+    dAbierto: descansoAbierto(j), cAbierta: comidaAbierta(j)
+  };
+}
+
+function estadoActual(){
+  const tOpen = trayectoAbierto();
+  if(tOpen) return 'trayecto';
+  const j = jornadaAbierta();
+  if(!j) return 'fuera';
+  if(descansoAbierto(j)) return 'descanso';
+  if(comidaAbierta(j)) return 'comida';
+  if(DATA.config.modoComida === 'horario' && diaConfigFor(j.fecha)?.comida !== false){
+    const franja = comidaHorarioParaFecha(j.fecha);
+    const now = Date.now();
+    if(now >= franja.inicio && now < franja.fin) return 'comida';
+  }
+  return 'trabajando';
+}
+
+/* ----------------------------- Toast / confirmaciones -------------------- */
+function toast(msg, ms = 2600){
+  const root = document.getElementById('toastRoot');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  root.appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity .25s ease'; el.style.opacity = '0'; setTimeout(()=>el.remove(), 250); }, ms);
+}
+
+function openModal(html, opts = {}){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `<div class="modal-overlay ${opts.center ? 'center':''}" id="activeModalOverlay"><div class="modal-box">${html}</div></div>`;
+  const overlay = document.getElementById('activeModalOverlay');
+  overlay.addEventListener('click', (e) => { if(e.target === overlay && !opts.persistent) closeModal(); });
+  if(opts.onOpen) opts.onOpen(overlay);
+}
+function closeModal(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = '';
+}
+function confirmDialog(message, okLabel = 'Eliminar', danger = true){
+  return new Promise(resolve => {
+    openModal(`
+      <div class="modal-head"><h3>Confirmar</h3><button class="modal-close" data-action="cerrar-confirm">✕</button></div>
+      <p style="margin-bottom:18px;color:var(--muted);font-size:14.5px;line-height:1.5;">${esc(message)}</p>
+      <div class="btn-row">
+        <button class="btn btn-outline" data-action="cancelar-confirm">Cancelar</button>
+        <button class="btn ${danger?'btn-danger':'btn-primary'}" data-action="aceptar-confirm">${esc(okLabel)}</button>
+      </div>
+    `, {center:true, persistent:true});
+    document.getElementById('activeModalOverlay').addEventListener('click', (e) => {
+      const act = e.target.closest('[data-action]');
+      if(!act) return;
+      if(act.dataset.action === 'aceptar-confirm'){ closeModal(); resolve(true); }
+      else if(act.dataset.action === 'cancelar-confirm' || act.dataset.action === 'cerrar-confirm'){ closeModal(); resolve(false); }
+    });
+  });
+}
+
+/* ----------------------------- Acciones: fichaje -------------------------- */
+function accionFicharEntrada(){
+  if(jornadaAbierta()){ toast('Ya tienes un fichaje abierto.'); return; }
+  const now = Date.now();
+  DATA.jornadas.push({
+    id: uid(), fecha: todayStr(new Date(now)), entrada: now, salida: null,
+    descansos: [], comidas: [], observaciones: ''
+  });
+  save();
+  toast(`Entrada registrada a las ${fmtTimeHM(now)}`);
+  renderAll();
+}
+function accionFicharSalida(){
+  const j = jornadaAbierta();
+  if(!j){ toast('No hay ningún fichaje abierto.'); return; }
+  if(descansoAbierto(j)){ toast('Finaliza el descanso antes de fichar la salida.'); return; }
+  if(comidaAbierta(j)){ toast('Finaliza la comida antes de fichar la salida.'); return; }
+  const now = Date.now();
+  if(now < j.entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
+  j.salida = now;
+  save();
+  const calc = calcJornada(j, now);
+  toast(`Salida registrada a las ${fmtTimeHM(now)}` + (calc.extra > 0 ? ` · ${fmtHM(calc.extra)} de horas extra` : ''));
+  renderAll();
+}
+function accionIniciarDescanso(){
+  const j = jornadaAbierta();
+  if(!j){ toast('Primero debes fichar la entrada.'); return; }
+  if(descansoAbierto(j)){ toast('Ya hay un descanso en curso.'); return; }
+  if(comidaAbierta(j)){ toast('Finaliza la comida antes de iniciar un descanso.'); return; }
+  j.descansos.push({ id: uid(), inicio: Date.now(), fin: null });
+  save();
+  toast('Descanso iniciado');
+  renderAll();
+}
+function accionFinalizarDescanso(){
+  const j = jornadaAbierta();
+  const d = descansoAbierto(j);
+  if(!d){ toast('No hay ningún descanso en curso.'); return; }
+  d.fin = Date.now();
+  save();
+  toast(`Descanso de ${fmtHM(d.fin - d.inicio)} registrado`);
+  renderAll();
+}
+function accionIniciarComida(){
+  const j = jornadaAbierta();
+  if(!j){ toast('Primero debes fichar la entrada.'); return; }
+  if(comidaAbierta(j)){ toast('Ya hay una comida en curso.'); return; }
+  if(descansoAbierto(j)){ toast('Finaliza el descanso antes de iniciar la comida.'); return; }
+  j.comidas.push({ id: uid(), inicio: Date.now(), fin: null });
+  save();
+  toast('Comida iniciada');
+  renderAll();
+}
+function accionFinalizarComida(){
+  const j = jornadaAbierta();
+  const c = comidaAbierta(j);
+  if(!c){ toast('No hay ninguna comida en curso.'); return; }
+  c.fin = Date.now();
+  save();
+  toast(`Comida de ${fmtHM(c.fin - c.inicio)} registrada`);
+  renderAll();
+}
+
+/* ----------------------------- Acciones: trayectos ------------------------ */
+function abrirFormularioTrayecto(){
+  openModal(`
+    <div class="modal-head"><h3>Iniciar trayecto</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field">
+      <label>Origen</label>
+      <input type="text" id="frmOrigen" placeholder="Ej. Barcelona">
+      <div class="gap8"></div>
+      <button class="btn btn-soft btn-sm" data-action="usar-ubicacion" data-target="frmOrigen">📍 Usar mi ubicación actual</button>
+    </div>
+    <div class="field">
+      <label>Destino</label>
+      <input type="text" id="frmDestino" placeholder="Ej. Sabadell">
+    </div>
+    <div class="field">
+      <label>Motivo</label>
+      <input type="text" id="frmMotivo" placeholder="Ej. Visita a cliente">
+    </div>
+    <div class="field">
+      <label>Kilómetros (opcional)</label>
+      <input type="number" id="frmKm" min="0" step="0.1" placeholder="Si los conoces">
+    </div>
+    <div class="field">
+      <label>Observaciones</label>
+      <textarea id="frmObs" placeholder="Opcional"></textarea>
+    </div>
+    <button class="btn btn-trayecto btn-lg" data-action="confirmar-iniciar-trayecto">🚗 Iniciar trayecto</button>
+  `, {onOpen: () => document.getElementById('frmOrigen').focus()});
+}
+function confirmarIniciarTrayecto(){
+  if(trayectoAbierto()){ toast('Ya tienes un trayecto en curso.'); return; }
+  const origen = document.getElementById('frmOrigen').value.trim();
+  const destino = document.getElementById('frmDestino').value.trim();
+  const motivo = document.getElementById('frmMotivo').value.trim();
+  const km = document.getElementById('frmKm').value;
+  const obs = document.getElementById('frmObs').value.trim();
+  const now = Date.now();
+  DATA.trayectos.push({
+    id: uid(), fecha: todayStr(new Date(now)), inicio: now, fin: null,
+    origen, destino, motivo, km: km === '' ? null : Number(km), observaciones: obs
+  });
+  save();
+  closeModal();
+  toast('Trayecto iniciado');
+  renderAll();
+}
+function abrirFormularioFinalizarTrayecto(){
+  const t = trayectoAbierto();
+  if(!t) return;
+  openModal(`
+    <div class="modal-head"><h3>Finalizar trayecto</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">${esc(t.origen||'Origen')} → ${esc(t.destino||'Destino')}</p>
+    <div class="field">
+      <label>Kilómetros (opcional)</label>
+      <input type="number" id="frmKmFin" min="0" step="0.1" value="${t.km ?? ''}">
+    </div>
+    <div class="field">
+      <label>Observaciones</label>
+      <textarea id="frmObsFin">${esc(t.observaciones||'')}</textarea>
+    </div>
+    <button class="btn btn-danger btn-lg" data-action="confirmar-finalizar-trayecto" data-id="${t.id}">⏹ Finalizar trayecto</button>
+  `);
+}
+function confirmarFinalizarTrayecto(id){
+  const t = getTrayecto(id);
+  if(!t || t.fin != null) return;
+  const km = document.getElementById('frmKmFin').value;
+  const obs = document.getElementById('frmObsFin').value.trim();
+  t.fin = Date.now();
+  t.km = km === '' ? t.km : Number(km);
+  t.observaciones = obs;
+  save();
+  closeModal();
+  toast(`Trayecto finalizado · ${fmtHM(t.fin - t.inicio)}`);
+  renderAll();
+}
+function usarUbicacionActual(targetId){
+  if(!navigator.geolocation){ toast('Este navegador no admite geolocalización.'); return; }
+  toast('Obteniendo ubicación…');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const input = document.getElementById(targetId);
+      if(input) input.value = `${lat},${lng}`;
+      toast('Ubicación aplicada (coordenadas)');
+    },
+    err => { toast('No se pudo obtener la ubicación: ' + err.message); },
+    { enableHighAccuracy:true, timeout:10000 }
+  );
+}
+function abrirEnGoogleMaps(id){
+  const t = getTrayecto(id);
+  if(!t) return;
+  const origen = (t.origen||'').trim();
+  const destino = (t.destino||'').trim();
+  if(!origen || !destino){ toast('Indica origen y destino para abrir la ruta en Maps.'); return; }
+  const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origen)}&destination=${encodeURIComponent(destino)}&travelmode=driving`;
+  window.open(url, '_blank', 'noopener');
+}
+
+/* ----------------------------- Fichaje abierto de días anteriores -------- */
+function jornadaAbiertaDeAyer(){
+  const j = jornadaAbierta();
+  if(!j) return null;
+  return j.fecha !== todayStr() ? j : null;
+}
+function renderBanner(){
+  const el = document.getElementById('bannerAbierto');
+  const j = jornadaAbiertaDeAyer();
+  if(!j || UI.bannerDismissed){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div class="banner">
+      <b>⚠️ Tienes un fichaje abierto desde el ${esc(fmtDateShort(j.fecha))} (${esc(fmtTimeHM(j.entrada))})</b>
+      Elige qué quieres hacer. No se cerrará ni se inventará ninguna hora automáticamente.
+      <div class="btn-row">
+        <button class="btn btn-primary btn-sm" data-action="fichaje-abierto-cerrar-ahora" data-id="${j.id}">Fichar salida ahora</button>
+        <button class="btn btn-outline btn-sm" data-action="fichaje-abierto-manual" data-id="${j.id}">Indicar hora manual</button>
+      </div>
+      <div class="gap8"></div>
+      <button class="btn btn-soft btn-sm" data-action="fichaje-abierto-continuar">Continuar trabajando</button>
+    </div>`;
+}
+function fichajeAbiertoCerrarAhora(id){
+  const j = getJornada(id);
+  if(!j) return;
+  j.salida = Date.now();
+  save();
+  toast('Salida registrada a las ' + fmtTimeHM(j.salida));
+  renderAll();
+}
+function fichajeAbiertoManual(id){
+  const j = getJornada(id);
+  if(!j) return;
+  openModal(`
+    <div class="modal-head"><h3>Indicar hora real de salida</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field">
+      <label>Fecha y hora de salida</label>
+      <input type="datetime-local" id="frmSalidaManual" value="${toDatetimeLocalValue(Date.now())}">
+    </div>
+    <button class="btn btn-primary btn-lg" data-action="confirmar-salida-manual-abierto" data-id="${j.id}">Guardar salida</button>
+  `);
+}
+function confirmarSalidaManualAbierto(id){
+  const j = getJornada(id);
+  const ts = fromDatetimeLocalValue(document.getElementById('frmSalidaManual').value);
+  if(ts == null){ toast('Fecha inválida.'); return; }
+  if(ts < j.entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
+  j.salida = ts;
+  save();
+  closeModal();
+  toast('Salida registrada a las ' + fmtTimeHM(ts));
+  renderAll();
+}
+
+/* ----------------------------- Render: pestaña HOY ------------------------ */
+function renderHoy(){
+  const el = document.getElementById('tab-hoy');
+  const now = Date.now();
+  const j = jornadaAbierta();
+  const estado = estadoActual();
+  const cfg = DATA.config;
+
+  let heroClass = 'estado-fuera';
+  let heroLabel = 'FUERA DEL TRABAJO';
+  if(estado==='trabajando'){ heroClass=''; heroLabel='TRABAJANDO'; }
+  else if(estado==='descanso'){ heroClass='estado-descanso'; heroLabel='EN DESCANSO'; }
+  else if(estado==='comida'){ heroClass='estado-comida'; heroLabel='EN COMIDA'; }
+  else if(estado==='trayecto'){ heroClass='estado-trayecto'; heroLabel='EN TRAYECTO'; }
+
+  let heroTimerValue = '00:00:00';
+  let heroTimerLabel = 'Sin fichaje abierto';
+  let extraBlock = '';
+  let progressPct = 0, progressExtra = false, progressLabel = '';
+  let subStats = '';
+
+  if(j){
+    const calc = calcJornada(j, now);
+    const desdeEntrada = now - j.entrada;
+    heroTimerValue = fmtHMS(desdeEntrada);
+    heroTimerLabel = `Trabajando desde las ${fmtTimeHM(j.entrada)}`;
+    if(estado==='descanso') heroTimerLabel = `En descanso desde las ${fmtTimeHM(calc.dAbierto.inicio)}`;
+    if(estado==='comida'){
+      heroTimerLabel = calc.cAbierta
+        ? `En comida desde las ${fmtTimeHM(calc.cAbierta.inicio)}`
+        : `En comida (horario ${DATA.config.comidaInicio}–${DATA.config.comidaFin})`;
+    }
+
+    progressPct = calc.normalMax > 0 ? clamp((calc.efectivoTotal/calc.normalMax)*100, 0, 100) : 0;
+    progressExtra = calc.extra > 0;
+    progressLabel = `${fmtHM(calc.efectivoTotal)} / ${fmtHM(calc.normalMax)}`;
+
+    extraBlock = `
+      <div class="hero-extra">
+        <div>
+          <strong id="liveExtra">${fmtHMS(calc.extra)}</strong>
+          <span>HORAS EXTRA${calc.extra>0 ? ' · en aumento' : ''}</span>
+        </div>
+      </div>`;
+
+    const restante = Math.max(0, calc.normalMax - calc.efectivoTotal);
+    // Si la comida es de horario fijo, se descuenta entera para la estimación
+    // aunque el tramo todavía no haya llegado (se sabe que ocurrirá).
+    const comidaParaEstimacion = (DATA.config.modoComida === 'horario' && diaConfigFor(j.fecha)?.comida !== false)
+      ? (comidaHorarioParaFecha(j.fecha).fin - comidaHorarioParaFecha(j.fecha).inicio)
+      : calc.comidasMs;
+    const estimadaFin = j.entrada + calc.normalMax + calc.descansosMs + comidaParaEstimacion;
+
+    subStats = `
+      <div class="hero-sub">
+        <div class="item"><b id="liveEfectivo">${fmtHM(calc.efectivoTotal)}</b><small>Trabajo efectivo</small></div>
+        <div class="item"><b>${fmtHM(calc.normalMax)}</b><small>Jornada prevista</small></div>
+        <div class="item"><b id="liveRestante">${calc.extra>0 ? '00:00' : fmtHM(restante)}</b><small>Tiempo restante</small></div>
+        <div class="item"><b>${calc.abierta ? fmtTimeHM(estimadaFin) : fmtTimeHM(j.salida)}</b><small>${calc.abierta?'Fin estimado':'Hora de salida'}</small></div>
+      </div>`;
+  } else {
+    heroTimerValue = '—';
+  }
+
+  const heroHtml = `
+    <div class="hero ${heroClass}" id="heroBox">
+      <div class="hero-top">
+        <span class="badge-estado"><span class="dot"></span>${heroLabel}</span>
+        <span class="hero-fecha">${esc(fmtDateHuman(todayStr()))}</span>
+      </div>
+      <div class="hero-timer" id="heroTimer">${heroTimerValue}</div>
+      <div class="hero-timer-label">${esc(heroTimerLabel)}</div>
+      ${j ? extraBlock : ''}
+      ${j ? subStats : `<p style="opacity:.9;font-size:14px;">Pulsa «Fichar entrada» para empezar tu jornada.</p>`}
+      ${j ? `
+      <div class="progress-wrap">
+        <div class="progress-track"><div class="progress-fill ${progressExtra?'extra':''}" id="progressFill" style="width:${progressPct}%"></div></div>
+        <div class="progress-text"><span id="progressLabel">${progressLabel}</span><span>${progressExtra?'⚡ Horas extra':''}</span></div>
+      </div>` : ''}
+    </div>`;
+
+  // Botones de acción principal
+  let mainBtn;
+  if(!j){
+    mainBtn = `<button class="btn btn-primary btn-lg" data-action="fichar-entrada">▶ FICHAR ENTRADA</button>`;
+  } else {
+    mainBtn = `<button class="btn btn-danger btn-lg" data-action="fichar-salida">⏹ FICHAR SALIDA</button>`;
+  }
+
+  let descansoBtn = '', comidaBtn = '';
+  if(j && cfg.modoDescanso === 'manual'){
+    const d = descansoAbierto(j);
+    descansoBtn = d
+      ? `<button class="btn btn-danger" data-action="finalizar-descanso">⏸ FINALIZAR DESCANSO</button>`
+      : `<button class="btn btn-descanso" data-action="iniciar-descanso" ${comidaAbierta(j)?'disabled':''}>☕ INICIAR DESCANSO</button>`;
+  }
+  if(j && cfg.modoComida === 'manual' && diaConfigFor(j.fecha)?.comida !== false){
+    const c = comidaAbierta(j);
+    comidaBtn = c
+      ? `<button class="btn btn-danger" data-action="finalizar-comida">⏸ FINALIZAR COMIDA</button>`
+      : `<button class="btn btn-comida" data-action="iniciar-comida" ${descansoAbierto(j)?'disabled':''}>🍽 INICIAR COMIDA</button>`;
+  }
+
+  const detalle = j ? (() => {
+    const calc = calcJornada(j, now);
+    const kmHoy = trayectosDeFecha(j.fecha).reduce((s,t)=> s + (Number(t.km)||0), 0);
+    return `
+    <div class="card">
+      <h2>Detalle de hoy</h2>
+      <div class="card-row"><span class="label">Hora entrada</span><span class="value">${fmtTimeHM(j.entrada)}</span></div>
+      <div class="card-row"><span class="label">Descansos</span><span class="value">${fmtHM(calc.descansosMs)}</span></div>
+      <div class="card-row"><span class="label">Comida${DATA.config.modoComida==='horario' ? ` (${DATA.config.comidaInicio}-${DATA.config.comidaFin})` : ''}</span><span class="value">${fmtHM(calc.comidasMs)}</span></div>
+      <div class="card-row"><span class="label">Tiempo en coche</span><span class="value">${fmtHM(calc.trayectosMs)}${kmHoy>0?` · ${kmHoy} km`:''}</span></div>
+      <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calc.normal)}</span></div>
+      <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calc.extra)}</span></div>
+    </div>`;
+  })() : '';
+
+  el.innerHTML = `
+    ${heroHtml}
+    <div class="card" style="box-shadow:none;border:none;background:none;padding:0;margin-bottom:14px;">
+      <div class="btn-row single" style="margin-bottom:10px;">${mainBtn}</div>
+      <div class="btn-row">${descansoBtn}${comidaBtn}</div>
+    </div>
+    ${detalle}
+  `;
+}
+
+/* Actualiza sólo los números en vivo cada segundo, sin re-renderizar todo */
+function tickLive(){
+  if(UI.tab !== 'hoy') { renderBanner(); return; }
+  const j = jornadaAbierta();
+  if(!j){ return; }
+  const now = Date.now();
+  const calc = calcJornada(j, now);
+  const heroTimer = document.getElementById('heroTimer');
+  const liveExtra = document.getElementById('liveExtra');
+  const liveEfectivo = document.getElementById('liveEfectivo');
+  const liveRestante = document.getElementById('liveRestante');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  if(heroTimer){
+    const estado = estadoActual();
+    if(estado==='descanso' && calc.dAbierto) heroTimer.textContent = fmtHMS(now - calc.dAbierto.inicio);
+    else if(estado==='comida' && calc.cAbierta) heroTimer.textContent = fmtHMS(now - calc.cAbierta.inicio);
+    else heroTimer.textContent = fmtHMS(now - j.entrada);
+  }
+  if(liveExtra) liveExtra.textContent = fmtHMS(calc.extra);
+  if(liveEfectivo) liveEfectivo.textContent = fmtHM(calc.efectivoTotal);
+  if(liveRestante) liveRestante.textContent = calc.extra>0 ? '00:00' : fmtHM(Math.max(0, calc.normalMax-calc.efectivoTotal));
+  if(progressFill){
+    const pct = calc.normalMax>0 ? clamp((calc.efectivoTotal/calc.normalMax)*100,0,100) : 0;
+    progressFill.style.width = pct+'%';
+    progressFill.classList.toggle('extra', calc.extra>0);
+  }
+  if(progressLabel) progressLabel.textContent = `${fmtHM(calc.efectivoTotal)} / ${fmtHM(calc.normalMax)}`;
+  // Aviso al alcanzar la jornada prevista (una sola vez)
+  if(calc.extra > 0 && !j._avisoExtraDado){
+    j._avisoExtraDado = true;
+    toast('Has completado tu jornada normal. Estás acumulando horas extra.');
+  }
+  renderBanner();
+}
+
+/* ----------------------------- Render: pestaña TRAYECTOS ------------------ */
+function renderTrayectos(){
+  const el = document.getElementById('tab-trayectos');
+  const tOpen = trayectoAbierto();
+  const now = Date.now();
+
+  let openCard = '';
+  if(tOpen){
+    openCard = `
+      <div class="hero estado-trayecto">
+        <div class="hero-top">
+          <span class="badge-estado"><span class="dot"></span>EN TRAYECTO</span>
+          <span class="hero-fecha">${esc(fmtDateHuman(tOpen.fecha))}</span>
+        </div>
+        <div class="hero-timer" id="trayTimer">${fmtHMS(now - tOpen.inicio)}</div>
+        <div class="hero-timer-label">${esc(tOpen.origen||'Origen')} → ${esc(tOpen.destino||'Destino')}</div>
+      </div>
+      <button class="btn btn-danger btn-lg" style="margin-bottom:16px" data-action="abrir-finalizar-trayecto">⏹ FINALIZAR TRAYECTO</button>
+    `;
+  } else {
+    openCard = `<button class="btn btn-trayecto btn-lg" style="margin-bottom:16px" data-action="abrir-iniciar-trayecto">🚗 INICIAR TRAYECTO</button>`;
+  }
+
+  const todos = [...DATA.trayectos].sort((a,b)=> b.inicio - a.inicio).slice(0, 40);
+  const totalHoyMs = sumIntervals(trayectosDeFecha(todayStr()), now);
+  const kmHoy = trayectosDeFecha(todayStr()).reduce((s,t)=>s+(Number(t.km)||0),0);
+
+  const lista = todos.length ? todos.map(t => `
+    <div class="trayecto-item">
+      <div class="tr-route">🚗 ${esc(t.origen||'Origen')} → ${esc(t.destino||'Destino')}</div>
+      <div class="tr-meta">${esc(fmtDateShort(t.fecha))} · ${fmtTimeHM(t.inicio)} - ${t.fin?fmtTimeHM(t.fin):'en curso'} · ${fmtHM((t.fin??now)-t.inicio)}${t.km?` · ${t.km} km`:''}${t.motivo?` · ${esc(t.motivo)}`:''}</div>
+      <div class="tr-actions">
+        <button class="btn btn-soft btn-sm" data-action="abrir-maps" data-id="${t.id}">🗺 Abrir en Google Maps</button>
+        <button class="btn btn-soft btn-sm" data-action="editar-trayecto" data-id="${t.id}">✎ Editar</button>
+        <button class="btn btn-outline btn-sm" data-action="eliminar-trayecto" data-id="${t.id}" style="color:var(--danger);border-color:var(--danger)">🗑</button>
+      </div>
+    </div>
+  `).join('') : `<div class="empty-state"><div class="ic">🚗</div>Todavía no has registrado ningún trayecto.</div>`;
+
+  el.innerHTML = `
+    ${openCard}
+    <div class="card">
+      <h2>Hoy</h2>
+      <div class="card-row"><span class="label">Tiempo en coche</span><span class="value">${fmtHM(totalHoyMs)}</span></div>
+      <div class="card-row"><span class="label">Kilómetros</span><span class="value">${kmHoy} km</span></div>
+    </div>
+    <div class="section-title">Trayectos recientes</div>
+    ${lista}
+  `;
+}
+function tickTrayecto(){
+  if(UI.tab !== 'trayectos') return;
+  const t = trayectoAbierto();
+  const elTimer = document.getElementById('trayTimer');
+  if(t && elTimer) elTimer.textContent = fmtHMS(Date.now() - t.inicio);
+}
+
+function abrirFormEditarTrayecto(id){
+  const t = getTrayecto(id);
+  if(!t) return;
+  openModal(`
+    <div class="modal-head"><h3>Editar trayecto</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field-row">
+      <div class="field"><label>Inicio</label><input type="datetime-local" id="edInicio" value="${toDatetimeLocalValue(t.inicio)}"></div>
+      <div class="field"><label>Fin</label><input type="datetime-local" id="edFin" value="${t.fin?toDatetimeLocalValue(t.fin):''}"></div>
+    </div>
+    <div class="field"><label>Origen</label><input type="text" id="edOrigen" value="${esc(t.origen||'')}"></div>
+    <div class="field"><label>Destino</label><input type="text" id="edDestino" value="${esc(t.destino||'')}"></div>
+    <div class="field"><label>Motivo</label><input type="text" id="edMotivo" value="${esc(t.motivo||'')}"></div>
+    <div class="field"><label>Kilómetros</label><input type="number" step="0.1" id="edKm" value="${t.km ?? ''}"></div>
+    <div class="field"><label>Observaciones</label><textarea id="edObs">${esc(t.observaciones||'')}</textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" data-action="eliminar-trayecto" data-id="${t.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
+      <button class="btn btn-primary" data-action="guardar-trayecto-editado" data-id="${t.id}">Guardar</button>
+    </div>
+  `);
+}
+function guardarTrayectoEditado(id){
+  const t = getTrayecto(id);
+  if(!t) return;
+  const ini = fromDatetimeLocalValue(document.getElementById('edInicio').value);
+  const finVal = document.getElementById('edFin').value;
+  const fin = finVal ? fromDatetimeLocalValue(finVal) : null;
+  if(ini == null){ toast('Fecha de inicio inválida.'); return; }
+  if(fin != null && fin < ini){ toast('El fin no puede ser anterior al inicio.'); return; }
+  t.inicio = ini;
+  t.fin = fin;
+  t.fecha = todayStr(new Date(ini));
+  t.origen = document.getElementById('edOrigen').value.trim();
+  t.destino = document.getElementById('edDestino').value.trim();
+  t.motivo = document.getElementById('edMotivo').value.trim();
+  const km = document.getElementById('edKm').value;
+  t.km = km === '' ? null : Number(km);
+  t.observaciones = document.getElementById('edObs').value.trim();
+  save();
+  closeModal();
+  toast('Trayecto actualizado');
+  renderAll();
+}
+async function eliminarTrayecto(id){
+  const ok = await confirmDialog('¿Eliminar este trayecto? Esta acción no se puede deshacer.');
+  if(!ok) return;
+  DATA.trayectos = DATA.trayectos.filter(t => t.id !== id);
+  save();
+  closeModal();
+  toast('Trayecto eliminado');
+  renderAll();
+}
+
+/* ----------------------------- Render: pestaña HISTORICO ------------------ */
+function rangoParaFiltro(){
+  const f = UI.historico.filtro;
+  const hoy = todayStr();
+  if(f === 'hoy') return [hoy, hoy];
+  if(f === 'semana'){
+    const d = parseDateLocal(hoy);
+    const dow = (d.getDay()+6)%7; // lunes=0
+    const ini = addDays(hoy, -dow);
+    const fin = addDays(ini, 6);
+    return [ini, fin];
+  }
+  if(f === 'mes'){
+    const d = parseDateLocal(hoy);
+    const ini = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-01`;
+    const finD = new Date(d.getFullYear(), d.getMonth()+1, 0);
+    return [ini, todayStr(finD)];
+  }
+  if(f === 'mesAnterior'){
+    const d = parseDateLocal(hoy);
+    const m = new Date(d.getFullYear(), d.getMonth()-1, 1);
+    const ini = todayStr(m);
+    const finD = new Date(m.getFullYear(), m.getMonth()+1, 0);
+    return [ini, todayStr(finD)];
+  }
+  return [UI.historico.rangoIni, UI.historico.rangoFin];
+}
+
+function diasEnRango(ini, fin){
+  const set = new Set();
+  DATA.jornadas.forEach(j => { if(j.fecha >= ini && j.fecha <= fin) set.add(j.fecha); });
+  DATA.trayectos.forEach(t => { if(t.fecha >= ini && t.fecha <= fin) set.add(t.fecha); });
+  return [...set].sort((a,b)=> b < a ? -1 : b > a ? 1 : 0);
+}
+
+function statsDia(fecha){
+  const j = jornadaDeFecha(fecha);
+  const trs = trayectosDeFecha(fecha);
+  const now = Date.now();
+  let calc = null;
+  if(j) calc = calcJornada(j, now);
+  const trayectosMs = sumIntervals(trs, now);
+  const km = trs.reduce((s,t)=> s + (Number(t.km)||0), 0);
+  return { j, trs, calc, trayectosMs, km };
+}
+
+function renderHistorico(){
+  const el = document.getElementById('tab-historico');
+  const [ini, fin] = rangoParaFiltro();
+  const filtros = [
+    ['hoy','Hoy'], ['semana','Esta semana'], ['mes','Este mes'], ['mesAnterior','Mes anterior'], ['rango','Rango']
+  ];
+  const chips = filtros.map(([k,l]) => `<button class="chip ${UI.historico.filtro===k?'active':''}" data-action="filtro-historico" data-filtro="${k}">${l}</button>`).join('');
+
+  const rangoInputs = UI.historico.filtro === 'rango' ? `
+    <div class="field-row" style="margin-bottom:12px;">
+      <div class="field" style="margin-bottom:0;"><label>Desde</label><input type="date" id="rangoIniInput" value="${UI.historico.rangoIni}"></div>
+      <div class="field" style="margin-bottom:0;"><label>Hasta</label><input type="date" id="rangoFinInput" value="${UI.historico.rangoFin}"></div>
+    </div>` : '';
+
+  let fechas = diasEnRango(ini, fin);
+  const q = UI.historico.busqueda.trim().toLowerCase();
+  if(q){
+    fechas = fechas.filter(f => {
+      const {j, trs} = statsDia(f);
+      const hay = [f, j?.observaciones||'', ...trs.map(t=>`${t.origen} ${t.destino} ${t.motivo} ${t.observaciones}`)].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  const items = fechas.length ? fechas.map(f => {
+    const {j, calc, trayectosMs, km} = statsDia(f);
+    const extraPill = calc && calc.extra > 0 ? `<span class="pill extra">+${fmtHM(calc.extra)} extra</span>` : '';
+    const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
+    return `
+    <div class="day-item" data-action="ver-dia" data-fecha="${f}">
+      <div class="di-top">
+        <div class="di-date">${esc(fmtDateHuman(f))}<small>${esc(fmtDateShort(f))}</small></div>
+        <div>${extraPill}${openPill}</div>
+      </div>
+      <div class="di-stats">
+        <span>Entrada <b>${j?fmtTimeHM(j.entrada):'--:--'}</b></span>
+        <span>Salida <b>${j&&j.salida?fmtTimeHM(j.salida):'--:--'}</b></span>
+        <span>Efectivas <b>${calc?fmtHM(calc.efectivoTotal):'00:00'}</b></span>
+        <span>Coche <b>${fmtHM(trayectosMs)}${km?` (${km} km)`:''}</b></span>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state"><div class="ic">📭</div>No hay registros en este periodo.</div>`;
+
+  el.innerHTML = `
+    <div class="hist-filters">${chips}</div>
+    ${rangoInputs}
+    <div class="field search-box">
+      <input type="text" placeholder="Buscar en el histórico…" id="buscadorHistorico" value="${esc(UI.historico.busqueda)}">
+    </div>
+    ${items}
+  `;
+}
+
+/* Modal de detalle / edición de un día completo */
+function verDia(fecha){
+  const j = jornadaDeFecha(fecha);
+  const trs = trayectosDeFecha(fecha).sort((a,b)=>a.inicio-b.inicio);
+  const calc = j ? calcJornada(j, Date.now()) : null;
+
+  const filaJornada = j ? `
+    <div class="field-row">
+      <div class="field"><label>Entrada</label><input type="datetime-local" id="edJEntrada" value="${toDatetimeLocalValue(j.entrada)}"></div>
+      <div class="field"><label>Salida</label><input type="datetime-local" id="edJSalida" value="${j.salida?toDatetimeLocalValue(j.salida):''}"></div>
+    </div>
+    <div class="field"><label>Observaciones del día</label><textarea id="edJObs">${esc(j.observaciones||'')}</textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" data-action="eliminar-jornada" data-id="${j.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar jornada</button>
+      <button class="btn btn-primary" data-action="guardar-jornada-editada" data-id="${j.id}">Guardar</button>
+    </div>
+    <div class="section-title">Resumen</div>
+    <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calc.efectivoTotal)}</span></div>
+    <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calc.normal)}</span></div>
+    <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calc.extra)}</span></div>
+  ` : `<p style="color:var(--muted);font-size:14px;">No hay fichaje de entrada/salida este día.</p>
+       <button class="btn btn-soft" data-action="crear-jornada-manual" data-fecha="${fecha}">+ Añadir fichaje para este día</button>`;
+
+  const descansosHtml = j ? `
+    <div class="section-title">Descansos</div>
+    ${j.descansos.length ? j.descansos.map(d => `
+      <div class="mini-list-item">
+        <div class="mli-top"><span>☕ ${fmtTimeHM(d.inicio)} - ${d.fin?fmtTimeHM(d.fin):'en curso'}</span><span>${fmtHM((d.fin??Date.now())-d.inicio)}</span></div>
+        <div class="mli-actions">
+          <button class="btn btn-soft btn-sm" data-action="editar-intervalo" data-tipo="descanso" data-jid="${j.id}" data-iid="${d.id}">Editar</button>
+          <button class="btn btn-outline btn-sm" data-action="eliminar-intervalo" data-tipo="descanso" data-jid="${j.id}" data-iid="${d.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
+        </div>
+      </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin descansos registrados.</p>`}
+    <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="descanso" data-jid="${j.id}">+ Añadir descanso</button>
+  ` : '';
+
+  const comidasHtml = j ? `
+    <div class="section-title">Comida</div>
+    ${j.comidas.length ? j.comidas.map(c => `
+      <div class="mini-list-item">
+        <div class="mli-top"><span>🍽 ${fmtTimeHM(c.inicio)} - ${c.fin?fmtTimeHM(c.fin):'en curso'}</span><span>${fmtHM((c.fin??Date.now())-c.inicio)}</span></div>
+        <div class="mli-actions">
+          <button class="btn btn-soft btn-sm" data-action="editar-intervalo" data-tipo="comida" data-jid="${j.id}" data-iid="${c.id}">Editar</button>
+          <button class="btn btn-outline btn-sm" data-action="eliminar-intervalo" data-tipo="comida" data-jid="${j.id}" data-iid="${c.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
+        </div>
+      </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin comidas registradas.</p>`}
+    <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="comida" data-jid="${j.id}">+ Añadir comida</button>
+  ` : '';
+
+  const trayectosHtml = `
+    <div class="section-title">Trayectos</div>
+    ${trs.length ? trs.map(t => `
+      <div class="mini-list-item">
+        <div class="mli-top"><span>🚗 ${esc(t.origen||'?')} → ${esc(t.destino||'?')}</span><span>${fmtHM((t.fin??Date.now())-t.inicio)}</span></div>
+        <div class="mli-actions">
+          <button class="btn btn-soft btn-sm" data-action="editar-trayecto" data-id="${t.id}">Editar</button>
+          <button class="btn btn-outline btn-sm" data-action="eliminar-trayecto" data-id="${t.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
+        </div>
+      </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin trayectos este día.</p>`}
+    <button class="btn btn-soft btn-sm" data-action="agregar-trayecto-dia" data-fecha="${fecha}">+ Añadir trayecto</button>
+  `;
+
+  openModal(`
+    <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    ${filaJornada}
+    ${descansosHtml}
+    ${comidasHtml}
+    ${trayectosHtml}
+  `);
+}
+function crearJornadaManual(fecha){
+  const d = parseDateLocal(fecha);
+  d.setHours(8,0,0,0);
+  DATA.jornadas.push({ id: uid(), fecha, entrada: d.getTime(), salida: null, descansos:[], comidas:[], observaciones:'' });
+  save();
+  closeModal();
+  toast('Fichaje creado, edítalo con los datos correctos.');
+  renderAll();
+  verDia(fecha);
+}
+function guardarJornadaEditada(id){
+  const j = getJornada(id);
+  if(!j) return;
+  const entrada = fromDatetimeLocalValue(document.getElementById('edJEntrada').value);
+  const salidaVal = document.getElementById('edJSalida').value;
+  const salida = salidaVal ? fromDatetimeLocalValue(salidaVal) : null;
+  if(entrada == null){ toast('Fecha de entrada inválida.'); return; }
+  if(salida != null && salida < entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
+  j.entrada = entrada;
+  j.salida = salida;
+  j.fecha = todayStr(new Date(entrada));
+  j.observaciones = document.getElementById('edJObs').value.trim();
+  save();
+  closeModal();
+  toast('Jornada actualizada');
+  renderAll();
+}
+async function eliminarJornada(id){
+  const ok = await confirmDialog('¿Eliminar este fichaje completo (entrada, salida, descansos y comidas)? Esta acción no se puede deshacer.');
+  if(!ok) return;
+  DATA.jornadas = DATA.jornadas.filter(j => j.id !== id);
+  save();
+  closeModal();
+  toast('Jornada eliminada');
+  renderAll();
+}
+function agregarIntervalo(tipo, jid){
+  const j = getJornada(jid);
+  if(!j) return;
+  const now = Date.now();
+  const item = { id: uid(), inicio: now - 15*60000, fin: now };
+  (tipo==='descanso' ? j.descansos : j.comidas).push(item);
+  save();
+  toast((tipo==='descanso'?'Descanso':'Comida') + ' añadido, edítalo si hace falta.');
+  verDia(j.fecha);
+}
+function editarIntervalo(tipo, jid, iid){
+  const j = getJornada(jid);
+  const item = (tipo==='descanso'?j.descansos:j.comidas).find(x=>x.id===iid);
+  if(!item) return;
+  openModal(`
+    <div class="modal-head"><h3>Editar ${tipo}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field"><label>Inicio</label><input type="datetime-local" id="edIntIni" value="${toDatetimeLocalValue(item.inicio)}"></div>
+    <div class="field"><label>Fin</label><input type="datetime-local" id="edIntFin" value="${item.fin?toDatetimeLocalValue(item.fin):''}"></div>
+    <button class="btn btn-primary btn-lg" data-action="guardar-intervalo-editado" data-tipo="${tipo}" data-jid="${jid}" data-iid="${iid}">Guardar</button>
+  `);
+}
+function guardarIntervaloEditado(tipo, jid, iid){
+  const j = getJornada(jid);
+  const item = (tipo==='descanso'?j.descansos:j.comidas).find(x=>x.id===iid);
+  if(!item) return;
+  const ini = fromDatetimeLocalValue(document.getElementById('edIntIni').value);
+  const finVal = document.getElementById('edIntFin').value;
+  const fin = finVal ? fromDatetimeLocalValue(finVal) : null;
+  if(ini == null){ toast('Fecha de inicio inválida.'); return; }
+  if(fin != null && fin < ini){ toast('El fin no puede ser anterior al inicio.'); return; }
+  item.inicio = ini; item.fin = fin;
+  save();
+  closeModal();
+  toast('Registro actualizado');
+  renderAll();
+  verDia(j.fecha);
+}
+async function eliminarIntervalo(tipo, jid, iid){
+  const ok = await confirmDialog('¿Eliminar este registro?');
+  if(!ok) return;
+  const j = getJornada(jid);
+  if(tipo==='descanso') j.descansos = j.descansos.filter(x=>x.id!==iid);
+  else j.comidas = j.comidas.filter(x=>x.id!==iid);
+  save();
+  toast('Registro eliminado');
+  renderAll();
+  verDia(j.fecha);
+}
+function agregarTrayectoDia(fecha){
+  const d = parseDateLocal(fecha); d.setHours(9,0,0,0);
+  const inicio = d.getTime();
+  DATA.trayectos.push({ id: uid(), fecha, inicio, fin: inicio+30*60000, origen:'', destino:'', motivo:'', km:null, observaciones:'' });
+  save();
+  toast('Trayecto añadido, edítalo con los datos correctos.');
+  renderAll();
+  verDia(fecha);
+}
+
+/* ----------------------------- Render: pestaña RESUMEN -------------------- */
+function agregarRango(ini, fin){
+  const now = Date.now();
+  let efectivo=0, normal=0, extra=0, descansos=0, comidas=0, trayectosMs=0, km=0, diasTrabajados=new Set();
+  DATA.jornadas.forEach(j => {
+    if(j.fecha < ini || j.fecha > fin) return;
+    const c = calcJornada(j, now);
+    efectivo += c.efectivoTotal; normal += c.normal; extra += c.extra;
+    descansos += c.descansosMs; comidas += c.comidasMs;
+    diasTrabajados.add(j.fecha);
+  });
+  DATA.trayectos.forEach(t => {
+    if(t.fecha < ini || t.fecha > fin) return;
+    trayectosMs += Math.max(0,(t.fin??now)-t.inicio);
+    km += Number(t.km)||0;
+  });
+  return { efectivo, normal, extra, descansos, comidas, trayectosMs, km, dias: diasTrabajados.size };
+}
+
+function renderResumen(){
+  const el = document.getElementById('tab-resumen');
+  const hoy = todayStr();
+  const dHoy = parseDateLocal(hoy);
+
+  // Semana actual (lunes-domingo)
+  const dow = (dHoy.getDay()+6)%7;
+  const semIni = addDays(hoy, -dow), semFin = addDays(semIni, 6);
+  const rSem = agregarRango(semIni, semFin);
+
+  // Mes actual
+  const mesIni = `${dHoy.getFullYear()}-${pad2(dHoy.getMonth()+1)}-01`;
+  const mesFinD = new Date(dHoy.getFullYear(), dHoy.getMonth()+1, 0);
+  const mesFin = todayStr(mesFinD);
+  const rMes = agregarRango(mesIni, mesFin);
+  const mediaMes = rMes.dias>0 ? rMes.efectivo/rMes.dias : 0;
+
+  // Calendario del mes de referencia
+  const ref = parseDateLocal(UI.resumen.mesRef);
+  const firstDow = (new Date(ref.getFullYear(), ref.getMonth(), 1).getDay()+6)%7;
+  const totalDias = new Date(ref.getFullYear(), ref.getMonth()+1, 0).getDate();
+  let calCells = '';
+  const dowLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  calCells += dowLabels.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<firstDow;i++) calCells += `<div class="cal-day empty"></div>`;
+  for(let d=1; d<=totalDias; d++){
+    const fecha = `${ref.getFullYear()}-${pad2(ref.getMonth()+1)}-${pad2(d)}`;
+    const j = jornadaDeFecha(fecha);
+    let cls = 'cal-day';
+    if(fecha === hoy) cls += ' today';
+    if(j){
+      const c = calcJornada(j, Date.now());
+      cls += c.extra>0 ? ' has-extra' : ' worked';
+    }
+    calCells += `<div class="${cls}" data-action="ver-dia" data-fecha="${fecha}">${d}</div>`;
+  }
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>Resumen semanal (${fmtDateShort(semIni)} - ${fmtDateShort(semFin)})</h2>
+      <div class="summary-grid">
+        <div class="summary-tile"><b>${fmtHM(rSem.efectivo)}</b><small>Horas trabajadas</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.normal)}</b><small>Horas normales</small></div>
+        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rSem.extra)}</b><small>Horas extra</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.descansos)}</b><small>Descansos</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.comidas)}</b><small>Comidas</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.trayectosMs)}</b><small>Tiempo en coche</small></div>
+      </div>
+      <div class="card-row" style="margin-top:6px;"><span class="label">Kilómetros</span><span class="value">${rSem.km} km</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Resumen mensual (${MONTH_NAMES[dHoy.getMonth()]})</h2>
+      <div class="summary-grid">
+        <div class="summary-tile"><b>${rMes.dias}</b><small>Días trabajados</small></div>
+        <div class="summary-tile"><b>${fmtHM(mediaMes)}</b><small>Media horas/día</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.normal)}</b><small>Horas normales</small></div>
+        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rMes.extra)}</b><small>Horas extra</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.descansos)}</b><small>Descansos</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.comidas)}</b><small>Comida</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.trayectosMs)}</b><small>Trayectos</small></div>
+        <div class="summary-tile"><b>${rMes.km} km</b><small>Kilómetros</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Calendario</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="icon-btn" data-action="cal-mes" data-dir="-1">‹</button>
+          <span style="font-size:13px;font-weight:700;min-width:110px;text-align:center;">${MONTH_NAMES[ref.getMonth()]} ${ref.getFullYear()}</span>
+          <button class="icon-btn" data-action="cal-mes" data-dir="1">›</button>
+        </div>
+      </div>
+      <div class="cal-grid">${calCells}</div>
+    </div>
+
+    <div class="card">
+      <h2>Exportar datos</h2>
+      <div class="btn-row">
+        <button class="btn btn-primary" data-action="abrir-exportar-excel">📊 EXPORTAR A EXCEL</button>
+        <button class="btn btn-outline" data-action="abrir-exportar-csv">📄 Exportar CSV</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ----------------------------- Exportación --------------------------------- */
+function periodoARango(periodo){
+  const hoy = todayStr();
+  if(periodo === 'mesActual'){
+    const d = parseDateLocal(hoy);
+    return [`${d.getFullYear()}-${pad2(d.getMonth()+1)}-01`, todayStr(new Date(d.getFullYear(), d.getMonth()+1, 0))];
+  }
+  if(periodo === 'mesAnterior'){
+    const d = parseDateLocal(hoy);
+    const m = new Date(d.getFullYear(), d.getMonth()-1, 1);
+    return [todayStr(m), todayStr(new Date(m.getFullYear(), m.getMonth()+1, 0))];
+  }
+  if(periodo === 'semanaActual'){
+    const d = parseDateLocal(hoy);
+    const dow = (d.getDay()+6)%7;
+    const ini = addDays(hoy, -dow);
+    return [ini, addDays(ini,6)];
+  }
+  if(periodo === 'anioCompleto'){
+    const d = parseDateLocal(hoy);
+    return [`${d.getFullYear()}-01-01`, `${d.getFullYear()}-12-31`];
+  }
+  return [UI.export?.rangoIni || hoy, UI.export?.rangoFin || hoy];
+}
+
+function construirFilasExportacion(ini, fin){
+  const headers = ['Trabajador','Fecha','Día de la semana','Hora entrada','Hora salida','Tiempo bruto (h)','Descansos (h)','Comida (h)',
+    'Horas efectivas','Horas normales','Horas extra','Tiempo en trayectos (h)','Kilómetros','Origen','Destino','Observaciones'];
+  const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
+  const fechas = diasEnRango(ini, fin).sort();
+  const rows = [];
+  fechas.forEach(f => {
+    const j = jornadaDeFecha(f);
+    const trs = trayectosDeFecha(f).sort((a,b)=>a.inicio-b.inicio);
+    const dowName = DOW_NAMES[parseDateLocal(f).getDay()];
+    if(j){
+      const c = calcJornada(j, Date.now());
+      const primerTrayecto = trs[0];
+      rows.push([
+        nombreTrabajador, f, dowName, fmtTimeHM(j.entrada), j.salida?fmtTimeHM(j.salida):'(abierto)',
+        hoursDecimal(c.bruto), hoursDecimal(c.descansosMs), hoursDecimal(c.comidasMs),
+        hoursDecimal(c.efectivoTotal), hoursDecimal(c.normal), hoursDecimal(c.extra),
+        hoursDecimal(c.trayectosMs), primerTrayecto ? (Number(primerTrayecto.km)||0) : 0,
+        primerTrayecto ? primerTrayecto.origen : '', primerTrayecto ? primerTrayecto.destino : '',
+        j.observaciones || ''
+      ]);
+      for(let i=1;i<trs.length;i++){
+        const t = trs[i];
+        rows.push([nombreTrabajador, f, dowName, '', '', '', '', '', '', '', '', hoursDecimal((t.fin??Date.now())-t.inicio), Number(t.km)||0, t.origen||'', t.destino||'', t.observaciones||'']);
+      }
+    } else if(trs.length){
+      trs.forEach((t,i) => {
+        rows.push([nombreTrabajador, f, dowName, '', '', '', '', '', '', '', '', hoursDecimal((t.fin??Date.now())-t.inicio), Number(t.km)||0, t.origen||'', t.destino||'', t.observaciones||'']);
+      });
+    }
+  });
+  return { headers, rows };
+}
+
+function nombreArchivo(ini, fin, ext){
+  const nombre = DATA.perfil ? '_' + DATA.perfil.nombre.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ-]/g,'') : '';
+  if(ini === fin) return `fichajes${nombre}_${ini}.${ext}`;
+  const d1 = parseDateLocal(ini), d2 = parseDateLocal(fin);
+  if(d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth()){
+    return `fichajes${nombre}_${d1.getFullYear()}_${pad2(d1.getMonth()+1)}.${ext}`;
+  }
+  return `fichajes${nombre}_${ini}_a_${fin}.${ext}`;
+}
+/*
+ * Descarga de archivos. Cuando la app se ejecuta dentro del visor de
+ * Artifacts de Claude, el navegador sandboxeado bloquea las descargas
+ * mediante <a download>, así que se usa la capacidad "downloads" del
+ * anfitrión si está disponible. Si la app se abre como archivo HTML
+ * normal (doble clic, servidor propio), esa capacidad no existe y se
+ * usa la descarga estándar del navegador.
+ */
+let _downloadsCap = null, _downloadsCapTried = false;
+async function getDownloadsCapability(){
+  if(_downloadsCapTried) return _downloadsCap;
+  _downloadsCapTried = true;
+  try{
+    if(window.claude && typeof window.claude.use === 'function'){
+      _downloadsCap = await window.claude.use('downloads');
+    }
+  }catch(e){ _downloadsCap = null; }
+  return _downloadsCap;
+}
+async function descargarBlob(blob, filename, successMsg){
+  const cap = await getDownloadsCapability();
+  if(cap){
+    try{
+      await cap.save({ filename, data: blob });
+      toast(successMsg || 'Archivo guardado');
+    }catch(e){
+      if(e && e.code === 'declined'){ return; }
+      toast('No se pudo guardar el archivo' + (e && e.message ? ': ' + e.message : '.'));
+    }
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast(successMsg || 'Archivo descargado');
+}
+
+function exportarCSV(ini, fin){
+  const { headers, rows } = construirFilasExportacion(ini, fin);
+  const sep = ';';
+  const escCsv = v => {
+    const s = String(v ?? '');
+    return /[;"\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  };
+  const lines = [headers.map(escCsv).join(sep), ...rows.map(r => r.map(escCsv).join(sep))];
+  const csv = '﻿' + lines.join('\r\n');
+  descargarBlob(new Blob([csv], {type:'text/csv;charset=utf-8'}), nombreArchivo(ini, fin, 'csv'), 'CSV exportado');
+}
+
+/* ---- Generador XLSX autocontenido (ZIP sin compresión + Open XML) ---- */
+function crc32(bytes){
+  let table = crc32._t;
+  if(!table){
+    table = crc32._t = new Uint32Array(256);
+    for(let n=0;n<256;n++){
+      let c=n;
+      for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+      table[n]=c>>>0;
+    }
+  }
+  let crc = 0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) crc = table[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+class ByteWriter{
+  constructor(){ this.chunks=[]; this.length=0; }
+  bytes(a){ this.chunks.push(a); this.length+=a.length; }
+  u16(v){ this.bytes(Uint8Array.of(v&0xFF,(v>>>8)&0xFF)); }
+  u32(v){ this.bytes(Uint8Array.of(v&0xFF,(v>>>8)&0xFF,(v>>>16)&0xFF,(v>>>24)&0xFF)); }
+  str(s){ this.bytes(new TextEncoder().encode(s)); }
+  out(){ const o=new Uint8Array(this.length); let off=0; for(const c of this.chunks){o.set(c,off);off+=c.length;} return o; }
+}
+function buildZipStore(files){
+  const w = new ByteWriter();
+  const central = [];
+  const time=0, date=0x21;
+  for(const f of files){
+    const nameBytes = new TextEncoder().encode(f.name);
+    const crc = crc32(f.data);
+    const offset = w.length;
+    w.u32(0x04034b50); w.u16(20); w.u16(0); w.u16(0); w.u16(time); w.u16(date);
+    w.u32(crc); w.u32(f.data.length); w.u32(f.data.length);
+    w.u16(nameBytes.length); w.u16(0);
+    w.bytes(nameBytes); w.bytes(f.data);
+    central.push({nameBytes, crc, size:f.data.length, offset});
+  }
+  const cdStart = w.length;
+  for(const e of central){
+    w.u32(0x02014b50); w.u16(20); w.u16(20); w.u16(0); w.u16(0); w.u16(time); w.u16(date);
+    w.u32(e.crc); w.u32(e.size); w.u32(e.size);
+    w.u16(e.nameBytes.length); w.u16(0); w.u16(0); w.u16(0); w.u16(0); w.u32(0); w.u32(e.offset);
+    w.bytes(e.nameBytes);
+  }
+  const cdSize = w.length - cdStart;
+  w.u32(0x06054b50); w.u16(0); w.u16(0); w.u16(central.length); w.u16(central.length);
+  w.u32(cdSize); w.u32(cdStart); w.u16(0);
+  return w.out();
+}
+function escXml(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
+function colName(n){ let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
+function buildSheetXml(headers, rows){
+  const headerCells = headers.map((h,i)=>`<c r="${colName(i)}1" t="inlineStr" s="1"><is><t xml:space="preserve">${escXml(h)}</t></is></c>`).join('');
+  let xml = `<row r="1">${headerCells}</row>`;
+  rows.forEach((row, ri) => {
+    const r = ri+2;
+    const cells = row.map((val, ci) => {
+      const ref = colName(ci)+r;
+      if(typeof val === 'number' && isFinite(val)) return `<c r="${ref}"><v>${val}</v></c>`;
+      const s = val==null ? '' : String(val);
+      return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${escXml(s)}</t></is></c>`;
+    }).join('');
+    xml += `<row r="${r}">${cells}</row>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${xml}</sheetData></worksheet>`;
+}
+function buildXlsxBlob(sheetName, headers, rows){
+  const enc = new TextEncoder();
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${escXml(sheetName).slice(0,31)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>`;
+  const sheet = buildSheetXml(headers, rows);
+  const files = [
+    {name:'[Content_Types].xml', data:enc.encode(contentTypes)},
+    {name:'_rels/.rels', data:enc.encode(rootRels)},
+    {name:'xl/workbook.xml', data:enc.encode(workbook)},
+    {name:'xl/_rels/workbook.xml.rels', data:enc.encode(workbookRels)},
+    {name:'xl/styles.xml', data:enc.encode(styles)},
+    {name:'xl/worksheets/sheet1.xml', data:enc.encode(sheet)}
+  ];
+  const zip = buildZipStore(files);
+  return new Blob([zip], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function exportarXLSX(ini, fin){
+  const { headers, rows } = construirFilasExportacion(ini, fin);
+  const blob = buildXlsxBlob('Fichajes', headers, rows);
+  descargarBlob(blob, nombreArchivo(ini, fin, 'xlsx'), 'Excel exportado');
+}
+
+/* ---------------------------------------------------------------------
+ * Lectura de un .xlsx (solo perfil directivo, pestaña "Equipo")
+ * Solo sabe leer archivos generados por esta misma app (ZIP sin
+ * compresión / método STORE). Si el archivo se abrió y volvió a guardar
+ * con Excel/LibreOffice, estos recomprimen con DEFLATE y no se podrá
+ * leer: se avisa claramente en vez de fallar en silencio.
+ * ------------------------------------------------------------------- */
+function extraerEntradaZip(bytes, nombreBuscado){
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const len = bytes.length;
+  let eocd = -1;
+  const limite = Math.max(0, len - 65557);
+  for(let i = len - 22; i >= limite; i--){
+    if(view.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error('No es un archivo .xlsx válido.');
+  const numRegistros = view.getUint16(eocd + 10, true);
+  let ptr = view.getUint32(eocd + 16, true);
+  for(let i = 0; i < numRegistros; i++){
+    if(view.getUint32(ptr, true) !== 0x02014b50) throw new Error('Estructura del .xlsx inesperada.');
+    const compSize = view.getUint32(ptr + 20, true);
+    const nameLen = view.getUint16(ptr + 28, true);
+    const extraLen = view.getUint16(ptr + 30, true);
+    const commentLen = view.getUint16(ptr + 32, true);
+    const localOffset = view.getUint32(ptr + 42, true);
+    const nombre = new TextDecoder().decode(bytes.subarray(ptr + 46, ptr + 46 + nameLen));
+    if(nombre === nombreBuscado){
+      const lfMethod = view.getUint16(localOffset + 8, true);
+      const lfNameLen = view.getUint16(localOffset + 26, true);
+      const lfExtraLen = view.getUint16(localOffset + 28, true);
+      if(lfMethod !== 0) throw new Error('Este Excel usa compresión no soportada (¿se guardó desde Excel/LibreOffice? Importa el archivo original descargado desde la app).');
+      const dataStart = localOffset + 30 + lfNameLen + lfExtraLen;
+      return bytes.subarray(dataStart, dataStart + compSize);
+    }
+    ptr += 46 + nameLen + extraLen + commentLen;
+  }
+  throw new Error('El archivo no contiene los datos esperados (¿es un Excel exportado por esta app?).');
+}
+function parseXlsxRows(arrayBuffer){
+  const bytes = new Uint8Array(arrayBuffer);
+  const xmlBytes = extraerEntradaZip(bytes, 'xl/worksheets/sheet1.xml');
+  const xml = new TextDecoder('utf-8').decode(xmlBytes);
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if(doc.querySelector('parsererror')) throw new Error('No se pudo leer el contenido del Excel.');
+  const filas = Array.from(doc.getElementsByTagName('row')).map(rowEl =>
+    Array.from(rowEl.getElementsByTagName('c')).map(c => {
+      if(c.getAttribute('t') === 'inlineStr'){
+        const tEl = c.getElementsByTagName('t')[0];
+        return tEl ? tEl.textContent : '';
+      }
+      const vEl = c.getElementsByTagName('v')[0];
+      if(!vEl) return '';
+      const num = Number(vEl.textContent);
+      return isNaN(num) ? vEl.textContent : num;
+    })
+  );
+  if(!filas.length) throw new Error('El Excel está vacío.');
+  return { headers: filas[0].map(h => String(h).trim()), rows: filas.slice(1) };
+}
+
+let _pendienteImportEquipo = null;
+async function importarExcelEquipo(file){
+  try{
+    const buf = await file.arrayBuffer();
+    const { headers, rows } = parseXlsxRows(buf);
+    const idx = nombre => headers.indexOf(nombre);
+    const cols = {
+      trabajador: idx('Trabajador'), fecha: idx('Fecha'),
+      horasNormales: idx('Horas normales'), horasExtra: idx('Horas extra'),
+      horasEfectivas: idx('Horas efectivas'), km: idx('Kilómetros')
+    };
+    if(cols.fecha < 0 || cols.horasNormales < 0 || cols.horasExtra < 0){
+      toast('Este archivo no tiene el formato esperado. Importa el .xlsx que la app exporta desde "Resumen".');
+      return;
+    }
+    let nombreDetectado = '';
+    if(cols.trabajador >= 0){
+      const fila = rows.find(r => r[cols.trabajador]);
+      if(fila) nombreDetectado = String(fila[cols.trabajador]).trim();
+    }
+    _pendienteImportEquipo = { rows, cols, archivoNombre: file.name };
+    const diasDetectados = rows.filter(r => r[cols.fecha]).length;
+    openModal(`
+      <div class="modal-head"><h3>Importar informe</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+      <div class="field"><label>Nombre del trabajador</label><input type="text" id="impNombreTrabajador" value="${esc(nombreDetectado)}" placeholder="Nombre y apellidos"></div>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">Se han detectado ${diasDetectados} días en «${esc(file.name)}».</p>
+      <button class="btn btn-primary btn-lg" data-action="confirmar-importar-equipo">Guardar informe</button>
+    `, {onOpen: () => document.getElementById('impNombreTrabajador').focus()});
+  }catch(e){
+    toast('No se pudo importar: ' + e.message);
+  }
+}
+function confirmarImportarEquipo(){
+  const nombre = document.getElementById('impNombreTrabajador').value.trim();
+  if(!nombre){ toast('Escribe el nombre del trabajador.'); return; }
+  const { rows, cols, archivoNombre } = _pendienteImportEquipo;
+  let horasNormalesMs = 0, horasExtraMs = 0, efectivoMs = 0, km = 0, dias = 0;
+  let fechaMin = null, fechaMax = null;
+  const filas = [];
+  rows.forEach(r => {
+    const fecha = r[cols.fecha];
+    if(!fecha) return; // fila adicional de un trayecto sin jornada propia ese día
+    dias++;
+    const hn = Number(r[cols.horasNormales]) || 0;
+    const he = Number(r[cols.horasExtra]) || 0;
+    const hef = cols.horasEfectivas >= 0 ? (Number(r[cols.horasEfectivas]) || 0) : (hn + he);
+    horasNormalesMs += Math.round(hn * 3600000);
+    horasExtraMs += Math.round(he * 3600000);
+    efectivoMs += Math.round(hef * 3600000);
+    if(cols.km >= 0) km += Number(r[cols.km]) || 0;
+    if(!fechaMin || fecha < fechaMin) fechaMin = fecha;
+    if(!fechaMax || fecha > fechaMax) fechaMax = fecha;
+    filas.push({ fecha, horasNormales: hn, horasExtra: he, horasEfectivas: hef });
+  });
+  if(!dias){ toast('El archivo no contiene ningún día con fichaje.'); return; }
+  DATA.equipo.push({
+    id: uid(), nombreTrabajador: nombre, archivoNombre, fechaImportacion: Date.now(),
+    fechaMin, fechaMax, filas,
+    totales: { horasNormalesMs, horasExtraMs, efectivoMs, km, dias }
+  });
+  save();
+  closeModal();
+  toast(`Informe de ${nombre} importado (${dias} días).`);
+  renderEquipo();
+}
+async function eliminarInforme(id){
+  const ok = await confirmDialog('¿Eliminar este informe importado?');
+  if(!ok) return;
+  DATA.equipo = DATA.equipo.filter(i => i.id !== id);
+  save();
+  toast('Informe eliminado');
+  renderEquipo();
+}
+async function eliminarTrabajadorEquipo(nombre){
+  const ok = await confirmDialog(`¿Eliminar TODOS los informes importados de ${nombre}? Esta acción no se puede deshacer.`);
+  if(!ok) return;
+  DATA.equipo = DATA.equipo.filter(i => i.nombreTrabajador.trim().toLowerCase() !== nombre.trim().toLowerCase());
+  save();
+  toast('Trabajador eliminado del equipo');
+  renderEquipo();
+}
+function agruparEquipo(){
+  const grupos = {};
+  DATA.equipo.forEach(inf => {
+    const key = inf.nombreTrabajador.trim().toLowerCase();
+    if(!grupos[key]) grupos[key] = { nombre: inf.nombreTrabajador, informes: [] };
+    grupos[key].informes.push(inf);
+  });
+  return Object.values(grupos).sort((a,b) => a.nombre.localeCompare(b.nombre));
+}
+function renderEquipo(){
+  const el = document.getElementById('tab-equipo');
+  if(!esDirectivo()){
+    el.innerHTML = `<div class="empty-state"><div class="ic">🔒</div>Esta sección solo está disponible para el perfil directivo.</div>`;
+    return;
+  }
+  const trabajadores = agruparEquipo();
+  const cards = trabajadores.map(w => {
+    const totalNormal = w.informes.reduce((s,i)=>s+i.totales.horasNormalesMs,0);
+    const totalExtra = w.informes.reduce((s,i)=>s+i.totales.horasExtraMs,0);
+    const totalKm = w.informes.reduce((s,i)=>s+i.totales.km,0);
+    const totalDias = w.informes.reduce((s,i)=>s+i.totales.dias,0);
+    const iniciales = w.nombre.split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+    const informesHtml = w.informes.slice().sort((a,b)=>b.fechaImportacion-a.fechaImportacion).map(inf => `
+      <div class="informe-item">
+        <span>${inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} – ${fmtDateShort(inf.fechaMax)}` : esc(inf.archivoNombre)} · ${inf.totales.dias} días</span>
+        <span class="if-meta">Extra ${fmtHM(inf.totales.horasExtraMs)}</span>
+        <button class="icon-btn" data-action="eliminar-informe" data-id="${inf.id}" title="Eliminar este informe">🗑</button>
+      </div>`).join('');
+    return `
+    <div class="worker-card">
+      <div class="wc-top">
+        <div class="wc-name"><span class="wc-avatar">${esc(iniciales)}</span>${esc(w.nombre)}</div>
+        <button class="icon-btn" data-action="eliminar-trabajador" data-nombre="${esc(w.nombre)}" title="Eliminar de la lista">🗑</button>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-tile"><b>${fmtHM(totalNormal)}</b><small>Horas normales</small></div>
+        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(totalExtra)}</b><small>Horas extra acumuladas</small></div>
+        <div class="summary-tile"><b>${totalDias}</b><small>Días importados</small></div>
+        <div class="summary-tile"><b>${totalKm} km</b><small>Kilómetros</small></div>
+      </div>
+      <div class="section-title">Informes recibidos</div>
+      ${informesHtml}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>Importar informe de un trabajador</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Importa el Excel que te envíe cada trabajador (el mismo que descargan desde su pestaña Resumen). Puedes importar varios periodos del mismo trabajador para ir acumulando sus horas extra.</p>
+      <button class="btn btn-primary btn-lg" data-action="importar-excel-equipo">📥 Importar Excel de un trabajador</button>
+    </div>
+    ${cards || `<div class="empty-state"><div class="ic">🧑‍🤝‍🧑</div>Todavía no has importado ningún Excel.</div>`}
+    ${trabajadores.length ? `<button class="btn btn-outline btn-lg" data-action="exportar-resumen-equipo" style="margin-bottom:20px;">📊 Exportar resumen del equipo</button>` : ''}
+  `;
+}
+function exportarResumenEquipo(){
+  const trabajadores = agruparEquipo();
+  const headers = ['Trabajador','Nº de informes','Días acumulados','Horas normales','Horas extra acumuladas','Kilómetros','Periodo más antiguo','Periodo más reciente'];
+  const rows = trabajadores.map(w => {
+    const totalNormal = w.informes.reduce((s,i)=>s+i.totales.horasNormalesMs,0);
+    const totalExtra = w.informes.reduce((s,i)=>s+i.totales.horasExtraMs,0);
+    const totalKm = w.informes.reduce((s,i)=>s+i.totales.km,0);
+    const totalDias = w.informes.reduce((s,i)=>s+i.totales.dias,0);
+    const fechas = w.informes.flatMap(i => [i.fechaMin, i.fechaMax]).filter(Boolean).sort();
+    return [w.nombre, w.informes.length, totalDias, hoursDecimal(totalNormal), hoursDecimal(totalExtra), totalKm, fechas[0]||'', fechas[fechas.length-1]||''];
+  });
+  const blob = buildXlsxBlob('Equipo', headers, rows);
+  descargarBlob(blob, `resumen_equipo_${todayStr()}.xlsx`, 'Resumen del equipo exportado');
+}
+
+function abrirModalExportar(tipo){
+  UI.export = UI.export || { rangoIni: todayStr(), rangoFin: todayStr() };
+  openModal(`
+    <div class="modal-head"><h3>${tipo==='xlsx'?'Exportar a Excel':'Exportar a CSV'}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field">
+      <label>Periodo</label>
+      <select id="selPeriodo">
+        <option value="mesActual">Mes actual</option>
+        <option value="mesAnterior">Mes anterior</option>
+        <option value="semanaActual">Semana actual</option>
+        <option value="anioCompleto">Año completo</option>
+        <option value="rango">Rango personalizado</option>
+      </select>
+    </div>
+    <div class="field-row hidden" id="rangoExportRow">
+      <div class="field"><label>Desde</label><input type="date" id="expIni" value="${UI.export.rangoIni}"></div>
+      <div class="field"><label>Hasta</label><input type="date" id="expFin" value="${UI.export.rangoFin}"></div>
+    </div>
+    <button class="btn btn-primary btn-lg" data-action="confirmar-exportar" data-tipo="${tipo}">Descargar ${tipo==='xlsx'?'.xlsx':'.csv'}</button>
+  `, {onOpen: () => {
+      document.getElementById('selPeriodo').addEventListener('change', (e) => {
+        document.getElementById('rangoExportRow').classList.toggle('hidden', e.target.value !== 'rango');
+      });
+    }});
+}
+function confirmarExportar(tipo){
+  const periodo = document.getElementById('selPeriodo').value;
+  if(periodo === 'rango'){
+    UI.export.rangoIni = document.getElementById('expIni').value;
+    UI.export.rangoFin = document.getElementById('expFin').value;
+  }
+  const [ini, fin] = periodoARango(periodo);
+  closeModal();
+  if(tipo === 'xlsx') exportarXLSX(ini, fin); else exportarCSV(ini, fin);
+}
+
+/* ----------------------------- Render: pestaña AJUSTES -------------------- */
+function renderAjustes(){
+  const el = document.getElementById('tab-ajustes');
+  const c = DATA.config;
+  const diasFilas = [1,2,3,4,5,6,0].map(dow => {
+    const d = c.dias[dow];
+    return `
+    <div class="dia-row">
+      <input type="checkbox" data-action="toggle-dia-activo" data-dow="${dow}" ${d.activo?'checked':''}>
+      <span class="dname">${DOW_SHORT[dow]}</span>
+      <input type="number" min="0" step="0.25" data-field="horas" data-dow="${dow}" value="${d.horas}" ${d.activo?'':'disabled'}>
+      <span class="dunit">h</span>
+      <button type="button" class="dia-comida-btn ${d.comida!==false?'on':''}" data-action="toggle-dia-comida" data-dow="${dow}" title="¿Paras a comer este día?" ${d.activo?'':'disabled'}>🍽</button>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card">
+      <h2>Mi perfil</h2>
+      <div class="card-row"><span class="label">Nombre</span><span class="value">${esc(DATA.perfil?.nombre||'')}</span></div>
+      <div class="card-row"><span class="label">Tipo de perfil</span><span class="value">${DATA.perfil?.rol==='directivo'?'Directivo':'Trabajador'}</span></div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-outline" data-action="cerrar-sesion">Cerrar sesión</button>
+        <button class="btn btn-outline" data-action="pedir-reset-perfil" style="color:var(--danger);border-color:var(--danger)">Restablecer perfil</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Jornada por día de la semana</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">No hace falta fijar una hora de entrada y salida: en cuanto fichas la entrada, la app cuenta las horas de esa jornada a partir de ese momento. Aquí solo indicas cuántas horas normales tiene cada día. El icono 🍽 indica si ese día paras a comer (si lo desactivas, ese día no se descuenta ni se pide registrar comida).</p>
+      ${diasFilas}
+    </div>
+
+    <div class="card">
+      <h2>Descanso y comida</h2>
+      <div class="field">
+        <label>Modo del descanso</label>
+        <div class="seg">
+          <button data-action="set-modo" data-campo="modoDescanso" data-valor="manual" class="${c.modoDescanso==='manual'?'active':''}">Manual</button>
+          <button data-action="set-modo" data-campo="modoDescanso" data-valor="auto" class="${c.modoDescanso==='auto'?'active':''}">Automático</button>
+        </div>
+      </div>
+      ${c.modoDescanso==='auto' ? `
+      <div class="field"><label>Descanso habitual (min)</label><input type="number" id="cfgDescansoMin" min="0" value="${c.descansoMin}"></div>
+      ` : ''}
+
+      <div class="field" style="margin-top:16px;">
+        <label>Modo de la comida</label>
+        <div class="seg">
+          <button data-action="set-modo" data-campo="modoComida" data-valor="manual" class="${c.modoComida==='manual'?'active':''}">Manual</button>
+          <button data-action="set-modo" data-campo="modoComida" data-valor="auto" class="${c.modoComida==='auto'?'active':''}">Duración fija</button>
+          <button data-action="set-modo" data-campo="modoComida" data-valor="horario" class="${c.modoComida==='horario'?'active':''}">Horario fijo</button>
+        </div>
+      </div>
+      ${c.modoComida==='auto' ? `
+      <div class="field"><label>Comida habitual (min)</label><input type="number" id="cfgComidaMin" min="0" value="${c.comidaMin}"></div>
+      <p style="font-size:12px;color:var(--muted);">Se descuenta esta duración fija cada jornada, sin importar a qué hora comas.</p>
+      ` : ''}
+      ${c.modoComida==='horario' ? `
+      <div class="field-row">
+        <div class="field"><label>Comida desde</label><input type="time" id="cfgComidaInicio" value="${c.comidaInicio}"></div>
+        <div class="field"><label>Comida hasta</label><input type="time" id="cfgComidaFin" value="${c.comidaFin}"></div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);">Ese tramo horario se descuenta automáticamente cada día como comida, sin tener que pulsar «Iniciar/Finalizar comida». Solo tendrás que fichar entrada y salida.</p>
+      ` : ''}
+      ${c.modoComida==='manual' ? `<p style="font-size:12px;color:var(--muted);">Registras cada comida a mano con «Iniciar comida» / «Finalizar comida» en la pestaña Hoy.</p>` : ''}
+    </div>
+
+    <div class="card">
+      <h2>Trayectos</h2>
+      <div class="switch-row">
+        <div class="txt"><b>Contabilizar trayecto como tiempo trabajado</b><small>Si está desactivado, el tiempo en coche se contabiliza aparte.</small></div>
+        <button class="switch ${c.trayectoComoTrabajo?'on':''}" data-action="toggle-trayecto-trabajo"></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Acceso directo</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Añade un icono en la pantalla de inicio de tu móvil para abrir la app con un toque, como cualquier otra aplicación.</p>
+      <button class="btn btn-primary" data-action="instalar-app">📱 Añadir a pantalla de inicio</button>
+    </div>
+
+    <div class="card">
+      <h2>Apariencia</h2>
+      <div class="seg">
+        <button data-action="set-tema" data-valor="claro" class="${c.tema==='claro'?'active':''}">☀️ Claro</button>
+        <button data-action="set-tema" data-valor="oscuro" class="${c.tema==='oscuro'?'active':''}">🌙 Oscuro</button>
+        <button data-action="set-tema" data-valor="auto" class="${c.tema==='auto'?'active':''}">🔄 Automático</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Copia de seguridad</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Todos tus datos están guardados únicamente en este dispositivo (localStorage). Exporta una copia periódicamente por seguridad.</p>
+      <div class="btn-row">
+        <button class="btn btn-outline" data-action="exportar-backup">⬇ Exportar copia</button>
+        <button class="btn btn-outline" data-action="importar-backup">⬆ Importar copia</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Privacidad</h2>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">
+        Ningún dato (horarios, trayectos, ubicaciones, histórico) sale de este dispositivo, salvo que tú mismo abras
+        voluntariamente Google Maps desde un trayecto. La aplicación no incluye analítica ni publicidad.
+      </p>
+    </div>
+
+    <button class="btn btn-primary btn-lg" data-action="guardar-ajustes" style="margin-bottom:20px;">Guardar configuración</button>
+  `;
+}
+function guardarAjustesForm(){
+  const c = DATA.config;
+  const elDescansoMin = document.getElementById('cfgDescansoMin');
+  if(elDescansoMin) c.descansoMin = Number(elDescansoMin.value) || 0;
+  const elComidaMin = document.getElementById('cfgComidaMin');
+  if(elComidaMin) c.comidaMin = Number(elComidaMin.value) || 0;
+  const elComidaInicio = document.getElementById('cfgComidaInicio');
+  const elComidaFin = document.getElementById('cfgComidaFin');
+  if(elComidaInicio) c.comidaInicio = elComidaInicio.value || c.comidaInicio;
+  if(elComidaFin) c.comidaFin = elComidaFin.value || c.comidaFin;
+  document.querySelectorAll('[data-field="horas"]').forEach(inp => {
+    c.dias[inp.dataset.dow].horas = Math.max(0, Number(inp.value) || 0);
+  });
+  save();
+  toast('Configuración guardada');
+  renderAll();
+}
+
+/* ----------------------------- Backup --------------------------------- */
+function exportarBackup(){
+  const json = JSON.stringify(DATA, null, 2);
+  descargarBlob(new Blob([json], {type:'application/json'}), `backup_fichaje_${todayStr()}.json`, 'Copia de seguridad exportada');
+}
+function importarBackupSeleccionado(file){
+  const reader = new FileReader();
+  reader.onload = async () => {
+    let parsed;
+    try{ parsed = JSON.parse(reader.result); }
+    catch(e){ toast('El archivo no es un JSON válido.'); return; }
+    if(!parsed || !Array.isArray(parsed.jornadas) || !Array.isArray(parsed.trayectos) || !parsed.config){
+      toast('El archivo no tiene el formato esperado.'); return;
+    }
+    const ok = await confirmDialog('Vas a sobrescribir TODOS los datos actuales con los de esta copia de seguridad. ¿Continuar?', 'Restaurar', true);
+    if(!ok) return;
+    const def = defaultData();
+    const diasGuardados = parsed.config.dias || {};
+    const diasFusionados = {};
+    for(const dow of Object.keys(def.config.dias)){
+      diasFusionados[dow] = Object.assign({}, def.config.dias[dow], diasGuardados[dow] || {});
+    }
+    DATA = {
+      version: 1,
+      config: Object.assign({}, def.config, parsed.config, {dias: diasFusionados}),
+      jornadas: parsed.jornadas,
+      trayectos: parsed.trayectos
+    };
+    save();
+    toast('Copia de seguridad restaurada');
+    aplicarTema();
+    renderAll();
+  };
+  reader.readAsText(file);
+}
+
+/* ----------------------------- Acceso directo / icono ------------------- */
+/*
+ * Genera un icono de app (canvas → PNG) y lo declara como apple-touch-icon
+ * y en un manifest embebido como data URI, para que "Añadir a pantalla de
+ * inicio" muestre un icono propio en vez de una captura de la página. No
+ * requiere ningún archivo externo: todo se genera dentro de este HTML.
+ */
+function configurarAccesoDirecto(){
+  try{
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#2563eb';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(0,0,512,512,112); ctx.fill(); }
+    else { ctx.fillRect(0,0,512,512); }
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 34; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(256,266,150,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(256,266); ctx.lineTo(256,158); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(256,266); ctx.lineTo(332,306); ctx.stroke();
+    const iconUrl = canvas.toDataURL('image/png');
+
+    let touchIcon = document.querySelector('link[rel="apple-touch-icon"]');
+    if(!touchIcon){ touchIcon = document.createElement('link'); touchIcon.rel = 'apple-touch-icon'; document.head.appendChild(touchIcon); }
+    touchIcon.href = iconUrl;
+
+    const manifest = {
+      name: 'Control Horario', short_name: 'Fichaje', start_url: '.', display: 'standalone',
+      background_color: '#0f1115', theme_color: '#2563eb',
+      icons: [{ src: iconUrl, sizes: '512x512', type: 'image/png' }]
+    };
+    const manifestB64 = btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
+    let manifestLink = document.querySelector('link[rel="manifest"]');
+    if(!manifestLink){ manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; document.head.appendChild(manifestLink); }
+    manifestLink.href = 'data:application/manifest+json;base64,' + manifestB64;
+  }catch(e){ console.error('No se pudo generar el icono de acceso directo.', e); }
+}
+let _deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); _deferredInstallPrompt = e; });
+async function instalarApp(){
+  if(_deferredInstallPrompt){
+    _deferredInstallPrompt.prompt();
+    await _deferredInstallPrompt.userChoice;
+    _deferredInstallPrompt = null;
+  } else {
+    mostrarInstruccionesInstalacion();
+  }
+}
+function mostrarInstruccionesInstalacion(){
+  openModal(`
+    <div class="modal-head"><h3>Añadir a la pantalla de inicio</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="section-title">Android (Chrome)</div>
+    <p style="font-size:13.5px;color:var(--muted);line-height:1.6;">Toca el menú ⋮ (arriba a la derecha) y elige «Añadir a pantalla de inicio» o «Instalar aplicación».</p>
+    <div class="section-title">iPhone (Safari)</div>
+    <p style="font-size:13.5px;color:var(--muted);line-height:1.6;">Toca el icono de compartir (el cuadrado con la flecha hacia arriba, abajo en la barra) y elige «Añadir a pantalla de inicio».</p>
+  `, {center:true});
+}
+
+/* ----------------------------- Tema ------------------------------------ */
+function aplicarTema(){
+  const tema = DATA.config.tema;
+  let resolved = tema;
+  if(tema === 'auto'){
+    resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'oscuro' : 'claro';
+  }
+  document.documentElement.setAttribute('data-theme', resolved === 'oscuro' ? 'dark' : 'light');
+}
+if(window.matchMedia){
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if(DATA.config.tema === 'auto') aplicarTema();
+  });
+}
+
+/* ----------------------------- Pantalla de identificación ---------------- */
+let _rolElegido = 'trabajador';
+function renderAuthScreen(){
+  const el = document.getElementById('authScreen');
+  if(!DATA.perfil){
+    el.innerHTML = `
+      <div class="auth-wrap"><div class="auth-card">
+        <div class="auth-logo">⏱</div>
+        <h2>Crea tu perfil</h2>
+        <div class="sub">Este dispositivo aún no tiene ningún perfil configurado.</div>
+        <div id="authErrorBox"></div>
+        <div class="role-pick">
+          <div class="role-opt ${_rolElegido==='trabajador'?'active':''}" data-action="elegir-rol" data-rol="trabajador">
+            <span class="ic">🧑‍🔧</span><b>Trabajador</b><small>Ficho mis horas</small>
+          </div>
+          <div class="role-opt ${_rolElegido==='directivo'?'active':''}" data-action="elegir-rol" data-rol="directivo">
+            <span class="ic">🧑‍💼</span><b>Directivo</b><small>Reviso al equipo</small>
+          </div>
+        </div>
+        <div class="field"><label>Tu nombre</label><input type="text" id="authNombre" placeholder="Ej. María López" autocomplete="name"></div>
+        <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 4 caracteres" autocomplete="new-password"></div>
+        <div class="field"><label>Repite la contraseña</label><input type="password" id="authPass2" autocomplete="new-password"></div>
+        <button class="btn btn-primary btn-lg" data-action="crear-perfil">Empezar</button>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;">La contraseña solo identifica este perfil en este dispositivo; no se envía a ningún sitio.</p>
+      </div></div>`;
+  } else {
+    el.innerHTML = `
+      <div class="auth-wrap"><div class="auth-card">
+        <div class="auth-logo">⏱</div>
+        <h2>Hola, ${esc(DATA.perfil.nombre)}</h2>
+        <div class="sub">${DATA.perfil.rol==='directivo' ? 'Perfil directivo' : 'Perfil trabajador'} · introduce tu contraseña</div>
+        <div id="authErrorBox"></div>
+        <div class="field"><label>Contraseña</label><input type="password" id="authPassLogin" autocomplete="current-password"></div>
+        <button class="btn btn-primary btn-lg" data-action="iniciar-sesion">Entrar</button>
+        <div class="auth-switch"><a class="link" href="#" data-action="pedir-reset-perfil">¿No eres tú? Restablecer perfil de este dispositivo</a></div>
+      </div></div>`;
+    document.getElementById('authPassLogin')?.addEventListener('keydown', e => { if(e.key === 'Enter') iniciarSesion(); });
+  }
+}
+function mostrarErrorAuth(msg){
+  const box = document.getElementById('authErrorBox');
+  if(box) box.innerHTML = `<div class="auth-error">${esc(msg)}</div>`;
+}
+async function crearPerfil(){
+  const nombre = document.getElementById('authNombre').value.trim();
+  const pass = document.getElementById('authPass').value;
+  const pass2 = document.getElementById('authPass2').value;
+  if(!nombre){ mostrarErrorAuth('Escribe tu nombre.'); return; }
+  if(pass.length < 4){ mostrarErrorAuth('La contraseña debe tener al menos 4 caracteres.'); return; }
+  if(pass !== pass2){ mostrarErrorAuth('Las contraseñas no coinciden.'); return; }
+  const passHash = await hashPassword(pass);
+  DATA.perfil = { nombre, passHash, rol: _rolElegido };
+  DATA.sesionAbierta = true;
+  save();
+  arrancarAppPrincipal();
+}
+async function iniciarSesion(){
+  const pass = document.getElementById('authPassLogin').value;
+  const hash = await hashPassword(pass);
+  if(hash !== DATA.perfil.passHash){ mostrarErrorAuth('Contraseña incorrecta.'); return; }
+  DATA.sesionAbierta = true;
+  save();
+  arrancarAppPrincipal();
+}
+function cerrarSesion(){
+  DATA.sesionAbierta = false;
+  save();
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('tabbar').classList.add('hidden');
+  document.getElementById('authScreen').classList.remove('hidden');
+  renderAuthScreen();
+}
+async function pedirResetPerfil(){
+  const ok = await confirmDialog('Esto borra el nombre/contraseña de este dispositivo (tus fichajes NO se borran). Tendrás que crear el perfil de nuevo. ¿Continuar?', 'Restablecer', true);
+  if(!ok) return;
+  DATA.perfil = null;
+  DATA.sesionAbierta = false;
+  save();
+  renderAuthScreen();
+}
+function arrancarAppPrincipal(){
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('tabbar').classList.remove('hidden');
+  document.getElementById('tabbarEquipoBtn').classList.toggle('hidden', !esDirectivo());
+  aplicarTema();
+  setTab('hoy');
+  renderAll();
+}
+
+/* ----------------------------- Navegación / render general -------------- */
+function setTab(tab){
+  UI.tab = tab;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
+  document.querySelectorAll('.tabbar-item').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  renderTabContent(tab);
+  window.scrollTo(0,0);
+}
+function renderTabContent(tab){
+  if(tab === 'hoy') renderHoy();
+  else if(tab === 'historico') renderHistorico();
+  else if(tab === 'trayectos') renderTrayectos();
+  else if(tab === 'resumen') renderResumen();
+  else if(tab === 'equipo') renderEquipo();
+  else if(tab === 'ajustes') renderAjustes();
+}
+function renderAll(){
+  renderBanner();
+  renderTabContent(UI.tab);
+  document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' · ' + fmtTimeHM(Date.now());
+}
+
+/* ----------------------------- Delegación de eventos --------------------- */
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('[data-action]');
+  if(!t) return;
+  const a = t.dataset.action;
+  const d = t.dataset;
+
+  switch(a){
+    case 'fichar-entrada': accionFicharEntrada(); break;
+    case 'fichar-salida': accionFicharSalida(); break;
+    case 'iniciar-descanso': accionIniciarDescanso(); break;
+    case 'finalizar-descanso': accionFinalizarDescanso(); break;
+    case 'iniciar-comida': accionIniciarComida(); break;
+    case 'finalizar-comida': accionFinalizarComida(); break;
+
+    case 'abrir-iniciar-trayecto': abrirFormularioTrayecto(); break;
+    case 'confirmar-iniciar-trayecto': confirmarIniciarTrayecto(); break;
+    case 'abrir-finalizar-trayecto': abrirFormularioFinalizarTrayecto(); break;
+    case 'confirmar-finalizar-trayecto': confirmarFinalizarTrayecto(d.id); break;
+    case 'usar-ubicacion': usarUbicacionActual(d.target); break;
+    case 'abrir-maps': abrirEnGoogleMaps(d.id); break;
+    case 'editar-trayecto': abrirFormEditarTrayecto(d.id); break;
+    case 'guardar-trayecto-editado': guardarTrayectoEditado(d.id); break;
+    case 'eliminar-trayecto': await eliminarTrayecto(d.id); break;
+    case 'agregar-trayecto-dia': agregarTrayectoDia(d.fecha); break;
+
+    case 'fichaje-abierto-cerrar-ahora': fichajeAbiertoCerrarAhora(d.id); break;
+    case 'fichaje-abierto-manual': fichajeAbiertoManual(d.id); break;
+    case 'confirmar-salida-manual-abierto': confirmarSalidaManualAbierto(d.id); break;
+    case 'fichaje-abierto-continuar': UI.bannerDismissed = true; renderBanner(); break;
+
+    case 'filtro-historico':
+      UI.historico.filtro = d.filtro;
+      renderHistorico();
+      break;
+    case 'ver-dia': verDia(d.fecha); break;
+    case 'crear-jornada-manual': crearJornadaManual(d.fecha); break;
+    case 'guardar-jornada-editada': guardarJornadaEditada(d.id); break;
+    case 'eliminar-jornada': await eliminarJornada(d.id); break;
+    case 'agregar-intervalo': agregarIntervalo(d.tipo, d.jid); break;
+    case 'editar-intervalo': editarIntervalo(d.tipo, d.jid, d.iid); break;
+    case 'guardar-intervalo-editado': guardarIntervaloEditado(d.tipo, d.jid, d.iid); break;
+    case 'eliminar-intervalo': await eliminarIntervalo(d.tipo, d.jid, d.iid); break;
+
+    case 'cal-mes': {
+      const ref = parseDateLocal(UI.resumen.mesRef);
+      const nuevo = new Date(ref.getFullYear(), ref.getMonth()+Number(d.dir), 1);
+      UI.resumen.mesRef = todayStr(nuevo);
+      renderResumen();
+      break;
+    }
+    case 'abrir-exportar-excel': abrirModalExportar('xlsx'); break;
+    case 'abrir-exportar-csv': abrirModalExportar('csv'); break;
+    case 'confirmar-exportar': confirmarExportar(d.tipo); break;
+
+    case 'toggle-dia-activo': break; // manejado en 'change'
+    case 'toggle-dia-comida':
+      DATA.config.dias[d.dow].comida = DATA.config.dias[d.dow].comida === false;
+      save(); renderAjustes(); renderAll();
+      break;
+    case 'set-modo':
+      DATA.config[d.campo] = d.valor;
+      save(); renderAjustes(); renderAll();
+      break;
+    case 'toggle-trayecto-trabajo':
+      DATA.config.trayectoComoTrabajo = !DATA.config.trayectoComoTrabajo;
+      save(); renderAjustes();
+      break;
+    case 'set-tema':
+      DATA.config.tema = d.valor;
+      save(); aplicarTema(); renderAjustes();
+      break;
+    case 'guardar-ajustes': guardarAjustesForm(); break;
+
+    case 'exportar-backup': exportarBackup(); break;
+    case 'importar-backup': document.getElementById('fileImportBackup').click(); break;
+    case 'instalar-app': await instalarApp(); break;
+
+    case 'elegir-rol': _rolElegido = d.rol; renderAuthScreen(); break;
+    case 'crear-perfil': await crearPerfil(); break;
+    case 'iniciar-sesion': await iniciarSesion(); break;
+    case 'pedir-reset-perfil': await pedirResetPerfil(); break;
+    case 'cerrar-sesion': cerrarSesion(); break;
+
+    case 'importar-excel-equipo': document.getElementById('fileImportExcelEquipo').click(); break;
+    case 'confirmar-importar-equipo': confirmarImportarEquipo(); break;
+    case 'eliminar-informe': await eliminarInforme(d.id); break;
+    case 'eliminar-trabajador': await eliminarTrabajadorEquipo(d.nombre); break;
+    case 'exportar-resumen-equipo': exportarResumenEquipo(); break;
+
+    case 'cerrar-modal': closeModal(); break;
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if(e.target.id === 'buscadorHistorico'){
+    UI.historico.busqueda = e.target.value;
+    renderHistorico();
+  }
+  if(e.target.id === 'rangoIniInput'){ UI.historico.rangoIni = e.target.value; renderHistorico(); }
+  if(e.target.id === 'rangoFinInput'){ UI.historico.rangoFin = e.target.value; renderHistorico(); }
+  if(e.target.dataset && e.target.dataset.action === 'toggle-dia-activo'){
+    DATA.config.dias[e.target.dataset.dow].activo = e.target.checked;
+    save(); renderAjustes();
+  }
+  if(e.target.id === 'fileImportBackup' && e.target.files[0]){
+    importarBackupSeleccionado(e.target.files[0]);
+    e.target.value = '';
+  }
+  if(e.target.id === 'fileImportExcelEquipo' && e.target.files[0]){
+    importarExcelEquipo(e.target.files[0]);
+    e.target.value = '';
+  }
+});
+
+document.getElementById('tabbar').addEventListener('click', (e) => {
+  const b = e.target.closest('.tabbar-item');
+  if(b) setTab(b.dataset.tab);
+});
+document.getElementById('themeQuickToggle').addEventListener('click', () => {
+  const orden = ['claro','oscuro','auto'];
+  const i = orden.indexOf(DATA.config.tema);
+  DATA.config.tema = orden[(i+1)%orden.length];
+  save(); aplicarTema();
+  toast('Tema: ' + DATA.config.tema);
+  if(UI.tab === 'ajustes') renderAjustes();
+});
+
+/* ----------------------------- Arranque --------------------------------- */
+function init(){
+  configurarAccesoDirecto();
+  // Evita fichajes de entrada duplicados si hay más de uno abierto por datos corruptos:
+  // conserva sólo el primero abierto encontrado (no debería ocurrir con el flujo normal).
+  const abiertas = DATA.jornadas.filter(j => j.salida == null);
+  if(abiertas.length > 1){
+    for(let i=1;i<abiertas.length;i++) abiertas[i].salida = abiertas[i].entrada;
+    save();
+  }
+  aplicarTema();
+  if(sesionActiva()){
+    arrancarAppPrincipal();
+  } else {
+    document.getElementById('authScreen').classList.remove('hidden');
+    renderAuthScreen();
+  }
+  setInterval(() => {
+    if(!sesionActiva()) return;
+    tickLive(); tickTrayecto();
+    document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' · ' + fmtTimeHM(Date.now());
+  }, 1000);
+}
+init();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
