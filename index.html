@@ -458,7 +458,8 @@ function defaultData(){
     equipo: [],            // solo lo usa el rol "directivo": informes importados de trabajadores
     calendarioLaboral: {}, // { 'YYYY-MM-DD': {tipo:'festivo'|'vacaciones'|'compensacion', nombre?, horas?} }
     viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } — días de viaje/instalación
-    sinComida: {}          // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
+    sinComida: {},         // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
+    informesDescargados: {} // { 'YYYY-MM': {fecha, incompleto} } — informes mensuales ya descargados
   };
 }
 
@@ -489,7 +490,8 @@ function loadData(){
       equipo: Array.isArray(parsed.equipo) ? parsed.equipo : [],
       calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
-      sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {}
+      sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
+      informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {}
     };
   }catch(e){
     console.error('Error cargando datos, se usará configuración por defecto.', e);
@@ -2054,34 +2056,102 @@ function construirFilasInformeMensual(anio, mesIdx){
   }
   return filas;
 }
-function generarInformeMensualTrabajador(anio, mesIdx){
-  const mesIni = `${anio}-${pad2(mesIdx+1)}-01`;
-  const totalDias = new Date(anio, mesIdx+1, 0).getDate();
-  const mesFin = `${anio}-${pad2(mesIdx+1)}-${pad2(totalDias)}`;
-  const saldoInicio = bancoHorasSaldoMs(addDays(mesIni, -1));
-  const saldoFin = bancoHorasSaldoMs(mesFin);
-  const filas = construirFilasInformeMensual(anio, mesIdx);
-  const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
-  const mesLabel = `${MONTH_NAMES[mesIdx]} ${anio}`;
-  const blob = buildXlsxBlobInformeMensual(nombreTrabajador, mesLabel, saldoInicio, filas, saldoFin);
-  const sufijoNombre = nombreTrabajador ? '_' + nombreTrabajador.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ-]/g,'') : '';
-  descargarBlob(blob, `informe_mensual${sufijoNombre}_${anio}_${pad2(mesIdx+1)}.xlsx`, 'Informe mensual exportado');
+// Meses "disponibles" para el informe: desde el primer dato que exista
+// (fichaje, viaje, marca de calendario...) hasta el mes en curso, incluido.
+function mesesDisponiblesInforme(){
+  const hoy = new Date();
+  const fechas = [
+    ...DATA.jornadas.map(j => j.fecha),
+    ...Object.keys(DATA.calendarioLaboral),
+    ...Object.keys(DATA.viajes),
+    ...Object.keys(DATA.sinComida)
+  ].filter(Boolean).sort();
+
+  let inicio;
+  if(fechas.length){
+    const d0 = parseDateLocal(fechas[0]);
+    inicio = new Date(d0.getFullYear(), d0.getMonth(), 1);
+  } else {
+    inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  }
+  const limite = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const claveActual = `${hoy.getFullYear()}-${pad2(hoy.getMonth()+1)}`;
+
+  const meses = [];
+  let cursor = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+  while(cursor <= limite){
+    const clave = `${cursor.getFullYear()}-${pad2(cursor.getMonth()+1)}`;
+    meses.push({ anio: cursor.getFullYear(), mesIdx: cursor.getMonth(), clave, esActual: clave === claveActual });
+    cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1);
+  }
+  return meses.reverse(); // el más reciente primero
 }
+
 function abrirModalInformeMensual(){
-  const mesDefault = todayStr().slice(0,7);
+  const meses = mesesDisponiblesInforme();
+  const filasHtml = meses.map(m => {
+    const info = DATA.informesDescargados[m.clave];
+    const estado = info
+      ? `<br><span style="color:var(--success);font-size:12px;">✅ Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}${info.incompleto ? ' (incompleto)' : ''}</span>`
+      : '';
+    const label = `${MONTH_NAMES[m.mesIdx]} ${m.anio}` + (m.esActual ? ' · en curso' : '');
+    return `
+    <label class="mini-list-item" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:8px;">
+      <input type="checkbox" class="informe-mes-chk" value="${m.clave}" style="margin-top:3px;">
+      <span style="flex:1;font-size:14px;">${esc(label)}${estado}</span>
+    </label>`;
+  }).join('');
+
   openModal(`
     <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Genera un Excel con el detalle día a día del mes elegido: viaje en verde, vacaciones en azul, festivo en amarillo y compensación en naranja, con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
-    <div class="field"><label>Mes</label><input type="month" id="informeMesInput" value="${mesDefault}"></div>
-    <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">📊 Descargar informe del mes</button>
-  `, {onOpen: () => document.getElementById('informeMesInput').focus()});
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Elige uno o varios meses: viaje en verde, vacaciones en azul, festivo en amarillo y compensación en naranja. Si eliges varios, el Excel llevará una tabla separada por cada mes. El mes en curso se descarga marcado como incompleto (solo hasta hoy).</p>
+    <div style="max-height:320px;overflow-y:auto;margin-bottom:14px;">${filasHtml || '<p style="color:var(--muted);font-size:13px;">Todavía no hay meses con datos.</p>'}</div>
+    <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">📊 Descargar seleccionados</button>
+  `);
 }
+
 function confirmarInformeMensual(){
-  const val = document.getElementById('informeMesInput').value;
-  if(!val){ toast('Selecciona un mes.'); return; }
-  const [y, m] = val.split('-').map(Number);
+  const claves = Array.from(document.querySelectorAll('.informe-mes-chk:checked')).map(chk => chk.value);
+  if(!claves.length){ toast('Selecciona al menos un mes.'); return; }
   closeModal();
-  generarInformeMensualTrabajador(y, m - 1);
+  generarInformesMensuales(claves);
+}
+
+// Genera un único Excel con una tabla (hoja) por cada mes elegido, y anota
+// cada mes como "ya descargado" (el mes en curso, como incompleto).
+function generarInformesMensuales(claves){
+  const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
+  const claveHoy = todayStr().slice(0, 7);
+  const clavesOrdenadas = [...claves].sort();
+
+  const datos = clavesOrdenadas.map(clave => {
+    const [anioStr, mesStr] = clave.split('-');
+    const anio = Number(anioStr), mesIdx = Number(mesStr) - 1;
+    const mesIni = `${clave}-01`;
+    const totalDias = new Date(anio, mesIdx+1, 0).getDate();
+    const esActual = clave === claveHoy;
+    const mesFin = esActual ? todayStr() : `${clave}-${pad2(totalDias)}`;
+    const saldoInicio = bancoHorasSaldoMs(addDays(mesIni, -1));
+    const saldoFin = bancoHorasSaldoMs(mesFin);
+    const filas = construirFilasInformeMensual(anio, mesIdx);
+    const mesLabel = `${MONTH_NAMES[mesIdx]} ${anio}` + (esActual ? ' (incompleto, hasta hoy)' : '');
+    return { clave, anio, mesIdx, esActual, mesLabel, saldoInicio, filas, saldoFin };
+  });
+
+  const nombresHoja = nombresHojaUnicos(datos.map(d => `${MONTH_NAMES[d.mesIdx]} ${d.anio}`));
+  const sheets = datos.map((d,i) => ({
+    name: nombresHoja[i],
+    sheetXml: buildSheetXmlInformeMensual(nombreTrabajador, d.mesLabel, d.saldoInicio, d.filas, d.saldoFin)
+  }));
+  const blob = buildXlsxPackageMultiSheet(sheets, buildStylesXmlInformeMensual());
+
+  const sufijoNombre = nombreTrabajador ? '_' + nombreTrabajador.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ-]/g,'') : '';
+  const sufijoMeses = clavesOrdenadas.length === 1 ? clavesOrdenadas[0].replace('-','_') : `${clavesOrdenadas[0].replace('-','_')}_a_${clavesOrdenadas[clavesOrdenadas.length-1].replace('-','_')}`;
+  descargarBlob(blob, `informe_mensual${sufijoNombre}_${sufijoMeses}.xlsx`, 'Informe mensual exportado');
+
+  datos.forEach(d => { DATA.informesDescargados[d.clave] = { fecha: Date.now(), incompleto: d.esActual }; });
+  save();
+  if(UI.tab === 'resumen') renderResumen();
 }
 
 /* ---------------------------------------------------------------------
@@ -2216,7 +2286,7 @@ async function importarExcelEquipo(file){
     toast('No se pudo importar: ' + e.message);
   }
 }
-function confirmarImportarEquipo(){
+async function confirmarImportarEquipo(){
   const nombre = document.getElementById('impNombreTrabajador').value.trim();
   if(!nombre){ toast('Escribe el nombre del trabajador.'); return; }
   const { informe, archivoNombre } = _pendienteImportEquipo;
@@ -2228,17 +2298,36 @@ function confirmarImportarEquipo(){
     if(f.horaInicio) diasConFichaje++;
   });
   const fechas = informe.filas.map(f => f.fecha).sort();
-  DATA.equipo.push({
-    id: uid(), nombreTrabajador: nombre, archivoNombre, fechaImportacion: Date.now(),
+  const fechaMin = fechas[0], fechaMax = fechas[fechas.length-1];
+
+  // Si ya existe un informe de ese mismo trabajador y mes (año-mes de la
+  // primera fecha), se sustituye en vez de duplicarlo: si no, cada
+  // reimportación inflaba los totales del trabajador (horas contadas dos
+  // veces) y aparecía repetido en "Informes recibidos".
+  const claveMes = fechaMin ? fechaMin.slice(0, 7) : '';
+  const existente = DATA.equipo.find(i =>
+    i.nombreTrabajador.trim().toLowerCase() === nombre.toLowerCase() &&
+    (i.fechaMin || '').slice(0, 7) === claveMes
+  );
+  if(existente){
+    const ok = await confirmDialog(`Ya habías importado un informe de ${nombre} para ${informe.mesLabel || 'este periodo'}. ¿Quieres sustituirlo por este archivo nuevo?`, 'Sustituir', true);
+    if(!ok) return;
+  }
+
+  const datos = {
+    nombreTrabajador: nombre, archivoNombre, fechaImportacion: Date.now(),
     mesLabel: informe.mesLabel,
     saldoInicioMs: informe.saldoInicioMs, saldoFinMs: informe.saldoFinMs,
-    fechaMin: fechas[0], fechaMax: fechas[fechas.length-1],
+    fechaMin, fechaMax,
     filas: informe.filas,
     totales: { horasExtraMs, horasCompensadasMs, horasEfectivasMs, dias: diasConFichaje, totalDiasMes: informe.filas.length }
-  });
+  };
+  if(existente) Object.assign(existente, datos);
+  else DATA.equipo.push({ id: uid(), ...datos });
+
   save();
   closeModal();
-  toast(`Informe de ${nombre} importado (${informe.mesLabel || informe.filas.length + ' días'}).`);
+  toast(existente ? `Informe de ${nombre} sustituido.` : `Informe de ${nombre} importado (${informe.mesLabel || informe.filas.length + ' días'}).`);
   renderEquipo();
 }
 async function eliminarInforme(id){
@@ -2563,7 +2652,8 @@ function importarBackupSeleccionado(file){
       equipo: Array.isArray(parsed.equipo) ? parsed.equipo : [],
       calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
-      sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {}
+      sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
+      informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {}
     };
     save();
     toast('Copia de seguridad restaurada');
@@ -2881,7 +2971,7 @@ document.addEventListener('click', async (e) => {
     case 'cerrar-sesion': cerrarSesion(); break;
 
     case 'importar-excel-equipo': document.getElementById('fileImportExcelEquipo').click(); break;
-    case 'confirmar-importar-equipo': confirmarImportarEquipo(); break;
+    case 'confirmar-importar-equipo': await confirmarImportarEquipo(); break;
     case 'eliminar-informe': await eliminarInforme(d.id); break;
     case 'eliminar-trabajador': await eliminarTrabajadorEquipo(d.nombre); break;
     case 'exportar-resumen-equipo': exportarResumenEquipo(); break;
