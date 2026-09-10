@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -11,8 +11,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fichaje">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%237c3aed'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%237c3aed'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23910048'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23910048'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#f5f3fb; --surface:#ffffff; --surface-2:#f7f5fc; --text:#1a1523; --muted:#6b6478;
@@ -257,8 +257,8 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 .informe-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .informe-item .if-meta{color:var(--muted);}
 
-/* Impresión del calendario laboral (usado para "Guardar como PDF"): siempre
-   el año completo en una sola página, con los mismos colores que la app. */
+/* ImpresiÃ³n del calendario laboral (usado para "Guardar como PDF"): siempre
+   el aÃ±o completo en una sola pÃ¡gina, con los mismos colores que la app. */
 #printArea{display:none;}
 .print-cal-title{font:800 20px -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:2px;}
 .print-cal-sub{font:600 12px -apple-system,Segoe UI,Roboto,sans-serif;color:#555;margin-bottom:10px;}
@@ -294,13 +294,13 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
   <div id="mainApp" class="hidden">
     <div class="app-header">
       <div class="brand">
-        <div class="brand-logo">⏱</div>
+        <div class="brand-logo">â±</div>
         <div>
           <h1>Control Horario</h1>
           <div class="header-date" id="headerClock">--</div>
         </div>
       </div>
-      <button class="icon-btn" id="themeQuickToggle" title="Cambiar tema">🌓</button>
+      <button class="icon-btn" id="themeQuickToggle" title="Cambiar tema">ðŸŒ“</button>
     </div>
 
     <div id="bannerAbierto"></div>
@@ -321,18 +321,18 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
     <section class="tab-panel" id="tab-ajustes" data-panel="ajustes"></section>
 
     <footer class="appfoot">
-      Todos tus datos se guardan únicamente en este dispositivo.<br>
-      Control Horario · 100% local y sin conexión
+      Todos tus datos se guardan Ãºnicamente en este dispositivo.<br>
+      Control Horario Â· 100% local y sin conexiÃ³n
     </footer>
   </div>
 </div>
 
 <nav class="tabbar hidden" id="tabbar">
-  <button class="tabbar-item" data-tab="hoy"><span class="ic">🏠</span>Hoy</button>
-  <button class="tabbar-item" data-tab="historico"><span class="ic">📅</span>Histórico</button>
-  <button class="tabbar-item" data-tab="resumen"><span class="ic">📊</span>Resumen</button>
-  <button class="tabbar-item hidden" id="tabbarEquipoBtn" data-tab="equipo"><span class="ic">🧑‍🤝‍🧑</span>Equipo</button>
-  <button class="tabbar-item" data-tab="ajustes"><span class="ic">⚙️</span>Ajustes</button>
+  <button class="tabbar-item" data-tab="hoy"><span class="ic">ðŸ </span>Hoy</button>
+  <button class="tabbar-item" data-tab="historico"><span class="ic">ðŸ“…</span>HistÃ³rico</button>
+  <button class="tabbar-item" data-tab="resumen"><span class="ic">ðŸ“Š</span>Resumen</button>
+  <button class="tabbar-item hidden" id="tabbarEquipoBtn" data-tab="equipo"><span class="ic">ðŸ§‘â€ðŸ¤â€ðŸ§‘</span>Equipo</button>
+  <button class="tabbar-item" data-tab="ajustes"><span class="ic">âš™ï¸</span>Ajustes</button>
 </nav>
 
 <div id="modalRoot"></div>
@@ -344,14 +344,14 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 <script>
 'use strict';
 /* =========================================================================
-   CONTROL HORARIO — aplicación autocontenida (HTML + CSS + JS)
+   CONTROL HORARIO â€” aplicaciÃ³n autocontenida (HTML + CSS + JS)
    Todos los datos se guardan en localStorage. No requiere servidor.
    ========================================================================= */
 
 /* ----------------------------- Utilidades ----------------------------- */
 const STORAGE_KEY = 'controlHorario_data_v1';
-const DOW_NAMES = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-const DOW_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DOW_NAMES = ['Domingo','Lunes','Martes','MiÃ©rcoles','Jueves','Viernes','SÃ¡bado'];
+const DOW_SHORT = ['Dom','Lun','Mar','MiÃ©','Jue','Vie','SÃ¡b'];
 const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
 function pad2(n){ return String(Math.trunc(n)).padStart(2,'0'); }
@@ -376,13 +376,13 @@ function fmtDateShort(s){
   const d = parseDateLocal(s);
   return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()}`;
 }
-// Duración en HH:MM (redondeo al minuto, sin negativos)
+// DuraciÃ³n en HH:MM (redondeo al minuto, sin negativos)
 function fmtHM(ms){
   ms = Math.max(0, ms || 0);
   const totalMin = Math.round(ms/60000);
   return `${pad2(Math.floor(totalMin/60))}:${pad2(totalMin%60)}`;
 }
-// Duración en HH:MM:SS para contadores en vivo
+// DuraciÃ³n en HH:MM:SS para contadores en vivo
 function fmtHMS(ms){
   ms = Math.max(0, ms || 0);
   const totalSec = Math.floor(ms/1000);
@@ -404,7 +404,7 @@ function parseHMTexto(texto){
 const COLUMNAS_EXPORT = [
   {id:'trabajador',  label:'Trabajador'},
   {id:'fecha',       label:'Fecha'},
-  {id:'diaSemana',   label:'Día de la semana'},
+  {id:'diaSemana',   label:'DÃ­a de la semana'},
   {id:'horaEntrada', label:'Hora entrada'},
   {id:'horaSalida',  label:'Hora salida'},
   {id:'tiempoBruto', label:'Tiempo bruto (h)'},
@@ -413,7 +413,7 @@ const COLUMNAS_EXPORT = [
   {id:'horasEfectivas', label:'Horas efectivas'},
   {id:'horasNormales',  label:'Horas normales'},
   {id:'horasExtra',     label:'Horas extra'},
-  {id:'diaViaje',    label:'Día de viaje'},
+  {id:'diaViaje',    label:'DÃ­a de viaje'},
   {id:'lugarViaje',  label:'Lugar del viaje'},
   {id:'clienteViaje', label:'Cliente'},
   {id:'observaciones', label:'Observaciones'}
@@ -432,12 +432,12 @@ function defaultConfig(){
     comidaInicio: '14:00',
     comidaFin: '14:45',
     modoDescanso: 'manual',   // 'auto' | 'manual'
-    modoComida: 'manual',     // 'auto' (duración fija) | 'manual' | 'horario' (franja fija)
+    modoComida: 'manual',     // 'auto' (duraciÃ³n fija) | 'manual' | 'horario' (franja fija)
     tema: 'auto',             // 'claro' | 'oscuro' | 'auto'
     avisoEntradaActivo: true,
     avisoEntradaHora: '08:30',
     exportColumnas: COLUMNAS_EXPORT.map(c => c.id),
-    // La jornada normal de cada día se cuenta a partir de la hora real de
+    // La jornada normal de cada dÃ­a se cuenta a partir de la hora real de
     // fichaje de entrada (no de un horario fijo de entrada/salida).
     dias: {
       1: {activo:true,  horas:8.5, comida:true},
@@ -454,11 +454,11 @@ function defaultData(){
   return {
     version: 1, config: defaultConfig(), jornadas: [],
     perfil: null,          // {nombre, passHash, rol:'trabajador'|'directivo'}
-    sesionAbierta: false,  // se mantiene iniciada entre aperturas, como cualquier app del móvil
+    sesionAbierta: false,  // se mantiene iniciada entre aperturas, como cualquier app del mÃ³vil
     equipo: [],            // solo lo usa el rol "directivo": informes importados de trabajadores
     calendarioLaboral: {}, // { 'YYYY-MM-DD': {tipo:'festivo'|'vacaciones'|'compensacion', nombre?, horas?} }
-    viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } — días de viaje/instalación
-    sinComida: {}          // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
+    viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } â€” dÃ­as de viaje/instalaciÃ³n
+    sinComida: {}          // { 'YYYY-MM-DD': true } â€” dÃ­as en los que se avisÃ³ "no he comido"
   };
 }
 
@@ -469,7 +469,7 @@ function loadData(){
     const raw = localStorage.getItem(STORAGE_KEY);
     if(!raw) return defaultData();
     const parsed = JSON.parse(raw);
-    // Fusión defensiva por si faltan campos (versiones futuras / datos parciales)
+    // FusiÃ³n defensiva por si faltan campos (versiones futuras / datos parciales)
     const def = defaultData();
     const cfg = Object.assign({}, def.config, parsed.config || {});
     const diasGuardados = (parsed.config && parsed.config.dias) || {};
@@ -492,7 +492,7 @@ function loadData(){
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {}
     };
   }catch(e){
-    console.error('Error cargando datos, se usará configuración por defecto.', e);
+    console.error('Error cargando datos, se usarÃ¡ configuraciÃ³n por defecto.', e);
     return defaultData();
   }
 }
@@ -503,14 +503,14 @@ function save(){ persist(); }
 
 /*
  * ---------------------------------------------------------------------
- * Identificación de usuario (perfil trabajador / directivo)
+ * IdentificaciÃ³n de usuario (perfil trabajador / directivo)
  * ---------------------------------------------------------------------
- * Importante: esto es una app 100% local, sin servidor. La contraseña
- * solo sirve para identificar quién usa el dispositivo y evitar que
- * alguien cambie el perfil o los datos por error — NO es un sistema de
- * seguridad real (quien tenga acceso físico al dispositivo y sepa
- * inspeccionar el código podría llegar a los datos). Aun así, la
- * contraseña se guarda como huella SHA-256, nunca en texto plano.
+ * Importante: esto es una app 100% local, sin servidor. La contraseÃ±a
+ * solo sirve para identificar quiÃ©n usa el dispositivo y evitar que
+ * alguien cambie el perfil o los datos por error â€” NO es un sistema de
+ * seguridad real (quien tenga acceso fÃ­sico al dispositivo y sepa
+ * inspeccionar el cÃ³digo podrÃ­a llegar a los datos). Aun asÃ­, la
+ * contraseÃ±a se guarda como huella SHA-256, nunca en texto plano.
  */
 async function hashPassword(pass){
   try{
@@ -518,7 +518,7 @@ async function hashPassword(pass){
     const buf = await crypto.subtle.digest('SHA-256', bytes);
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   }catch(e){
-    // Fallback muy simple si SubtleCrypto no está disponible (navegadores muy antiguos).
+    // Fallback muy simple si SubtleCrypto no estÃ¡ disponible (navegadores muy antiguos).
     let h = 0;
     for(let i=0;i<pass.length;i++){ h = ((h<<5)-h+pass.charCodeAt(i))|0; }
     return 'fallback-' + h;
@@ -543,7 +543,7 @@ function comidaAbierta(j){ return j ? j.comidas.find(c => c.fin == null) || null
 function getJornada(id){ return DATA.jornadas.find(j => j.id === id) || null; }
 function jornadaDeFecha(fecha){ return DATA.jornadas.find(j => j.fecha === fecha) || null; }
 
-/* ----------------------------- Días de viaje / sin comida ----------------- */
+/* ----------------------------- DÃ­as de viaje / sin comida ----------------- */
 function obtenerViaje(fechaStr){ return DATA.viajes[fechaStr] || null; }
 function diaEsViaje(fechaStr){ return !!(DATA.viajes[fechaStr] && DATA.viajes[fechaStr].activo); }
 function marcarViaje(fechaStr, lugar, cliente){
@@ -575,9 +575,9 @@ function jornadaNormalMsForFecha(fechaStr){
   return Math.round((horas || 0) * 3600000);
 }
 
-// Horas fijas de compensación por día de la semana. A diferencia de la
+// Horas fijas de compensaciÃ³n por dÃ­a de la semana. A diferencia de la
 // jornada configurable en Ajustes, estas NO cambian aunque se edite el
-// horario habitual: de lunes a jueves un día de compensación siempre
+// horario habitual: de lunes a jueves un dÃ­a de compensaciÃ³n siempre
 // descuenta 8,5 h del banco de horas, y el viernes siempre 6 h.
 const HORAS_COMPENSACION_FIJAS = {1:8.5, 2:8.5, 3:8.5, 4:8.5, 5:6, 6:0, 0:0};
 function horasCompensacionFijasFor(fechaStr){
@@ -601,7 +601,7 @@ function quitarMarcaCalendarioLaboral(fechaStr){
   delete DATA.calendarioLaboral[fechaStr];
   save();
 }
-// El parámetro opcional "hastaFecha" (YYYY-MM-DD, inclusive) permite calcular
+// El parÃ¡metro opcional "hastaFecha" (YYYY-MM-DD, inclusive) permite calcular
 // el saldo del banco de horas en un momento concreto del pasado (p.ej. para
 // el informe mensual: saldo a inicio/fin de un mes), en vez de solo "a hoy".
 function bancoHorasGeneradoMs(hastaFecha){
@@ -625,24 +625,24 @@ function bancoHorasSaldoMs(hastaFecha){ return bancoHorasGeneradoMs(hastaFecha) 
 
 const FESTIVOS_NAVARRA = {
   2026: [
-    {fecha:'2026-01-01', nombre:'Año Nuevo'},
-    {fecha:'2026-01-06', nombre:'Epifanía del Señor'},
-    {fecha:'2026-03-19', nombre:'San José'},
+    {fecha:'2026-01-01', nombre:'AÃ±o Nuevo'},
+    {fecha:'2026-01-06', nombre:'EpifanÃ­a del SeÃ±or'},
+    {fecha:'2026-03-19', nombre:'San JosÃ©'},
     {fecha:'2026-04-02', nombre:'Jueves Santo'},
     {fecha:'2026-04-03', nombre:'Viernes Santo'},
     {fecha:'2026-04-06', nombre:'Lunes de Pascua'},
-    {fecha:'2026-05-01', nombre:'Día del Trabajo'},
-    {fecha:'2026-08-15', nombre:'Asunción de la Virgen'},
-    {fecha:'2026-10-12', nombre:'Fiesta Nacional de España'},
+    {fecha:'2026-05-01', nombre:'DÃ­a del Trabajo'},
+    {fecha:'2026-08-15', nombre:'AsunciÃ³n de la Virgen'},
+    {fecha:'2026-10-12', nombre:'Fiesta Nacional de EspaÃ±a'},
     {fecha:'2026-11-02', nombre:'Todos los Santos (traslado)'},
     {fecha:'2026-12-03', nombre:'San Francisco Javier'},
-    {fecha:'2026-12-08', nombre:'Inmaculada Concepción'},
-    {fecha:'2026-12-25', nombre:'Natividad del Señor'}
+    {fecha:'2026-12-08', nombre:'Inmaculada ConcepciÃ³n'},
+    {fecha:'2026-12-25', nombre:'Natividad del SeÃ±or'}
   ]
 };
 
 // Franja horaria de comida preconfigurada (p.ej. 14:00-14:45) aplicada al
-// calendario de un día concreto. Si "fin" es menor o igual que "inicio" se
+// calendario de un dÃ­a concreto. Si "fin" es menor o igual que "inicio" se
 // interpreta que la franja cruza la medianoche.
 function comidaHorarioParaFecha(fechaStr){
   const cfg = DATA.config;
@@ -659,17 +659,17 @@ function overlapMs(aIni, aFin, bIni, bFin){
 }
 
 /*
- * Motor de cálculo. Usa SIEMPRE timestamps reales (ms desde época), nunca
+ * Motor de cÃ¡lculo. Usa SIEMPRE timestamps reales (ms desde Ã©poca), nunca
  * resta de strings "HH:MM", por lo que gestiona correctamente turnos
- * nocturnos, cambios de día y jornadas de cualquier duración.
+ * nocturnos, cambios de dÃ­a y jornadas de cualquier duraciÃ³n.
  *
  *   TIEMPO BRUTO     = salida - entrada
- *   TIEMPO NO TRAB.  = descansos + comida (0 si ese día se avisó "no he comido")
+ *   TIEMPO NO TRAB.  = descansos + comida (0 si ese dÃ­a se avisÃ³ "no he comido")
  *   TIEMPO EFECTIVO  = bruto - noTrabajado
  *   HORAS NORMALES   = min(efectivo, jornadaConfigurada)
  *   HORAS EXTRA      = max(0, efectivo - jornadaConfigurada), y SOLO cuenta
- *                      si ese día está marcado como "día de viaje": el resto
- *                      de días, ese exceso sigue formando parte del tiempo
+ *                      si ese dÃ­a estÃ¡ marcado como "dÃ­a de viaje": el resto
+ *                      de dÃ­as, ese exceso sigue formando parte del tiempo
  *                      efectivo pero no se contabiliza como hora extra ni
  *                      suma al banco de horas.
  */
@@ -752,7 +752,7 @@ function closeModal(){
 function confirmDialog(message, okLabel = 'Eliminar', danger = true){
   return new Promise(resolve => {
     openModal(`
-      <div class="modal-head"><h3>Confirmar</h3><button class="modal-close" data-action="cerrar-confirm">✕</button></div>
+      <div class="modal-head"><h3>Confirmar</h3><button class="modal-close" data-action="cerrar-confirm">âœ•</button></div>
       <p style="margin-bottom:18px;color:var(--muted);font-size:14.5px;line-height:1.5;">${esc(message)}</p>
       <div class="btn-row">
         <button class="btn btn-outline" data-action="cancelar-confirm">Cancelar</button>
@@ -782,7 +782,7 @@ function accionFicharEntrada(){
 }
 function accionFicharSalida(){
   const j = jornadaAbierta();
-  if(!j){ toast('No hay ningún fichaje abierto.'); return; }
+  if(!j){ toast('No hay ningÃºn fichaje abierto.'); return; }
   if(descansoAbierto(j)){ toast('Finaliza el descanso antes de fichar la salida.'); return; }
   if(comidaAbierta(j)){ toast('Finaliza la comida antes de fichar la salida.'); return; }
   const now = Date.now();
@@ -790,7 +790,7 @@ function accionFicharSalida(){
   j.salida = now;
   save();
   const calc = calcJornada(j, now);
-  toast(`Salida registrada a las ${fmtTimeHM(now)}` + (calc.extra > 0 ? ` · ${fmtHM(calc.extra)} de horas extra` : ''));
+  toast(`Salida registrada a las ${fmtTimeHM(now)}` + (calc.extra > 0 ? ` Â· ${fmtHM(calc.extra)} de horas extra` : ''));
   renderAll();
 }
 function accionIniciarDescanso(){
@@ -806,7 +806,7 @@ function accionIniciarDescanso(){
 function accionFinalizarDescanso(){
   const j = jornadaAbierta();
   const d = descansoAbierto(j);
-  if(!d){ toast('No hay ningún descanso en curso.'); return; }
+  if(!d){ toast('No hay ningÃºn descanso en curso.'); return; }
   d.fin = Date.now();
   save();
   toast(`Descanso de ${fmtHM(d.fin - d.inicio)} registrado`);
@@ -832,11 +832,11 @@ function accionFinalizarComida(){
   renderAll();
 }
 
-/* ----------------------------- Acciones: día de viaje / sin comida -------- */
+/* ----------------------------- Acciones: dÃ­a de viaje / sin comida -------- */
 /*
- * Refresca la app tras editar la marca de un día. Si esa edición se hizo
- * desde el modal de detalle de un día (histórico/calendario), lo vuelve a
- * abrir con los datos actualizados; si no, simplemente repinta las pestañas.
+ * Refresca la app tras editar la marca de un dÃ­a. Si esa ediciÃ³n se hizo
+ * desde el modal de detalle de un dÃ­a (histÃ³rico/calendario), lo vuelve a
+ * abrir con los datos actualizados; si no, simplemente repinta las pestaÃ±as.
  */
 function refrescarTrasEditarDia(fecha){
   renderAll();
@@ -845,17 +845,17 @@ function refrescarTrasEditarDia(fecha){
 function abrirFormularioViaje(fecha){
   const actual = obtenerViaje(fecha);
   openModal(`
-    <div class="modal-head"><h3>Día de viaje</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">Las horas extra de <b>${esc(fmtDateHuman(fecha))}</b> solo se contabilizarán si marcas este día como día de viaje.</p>
+    <div class="modal-head"><h3>DÃ­a de viaje</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
+    <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">Las horas extra de <b>${esc(fmtDateHuman(fecha))}</b> solo se contabilizarÃ¡n si marcas este dÃ­a como dÃ­a de viaje.</p>
     <div class="field">
       <label>Lugar del viaje</label>
       <input type="text" id="frmViajeLugar" placeholder="Ej. Zaragoza" value="${esc(actual?.lugar||'')}">
     </div>
     <div class="field">
       <label>Cliente</label>
-      <input type="text" id="frmViajeCliente" placeholder="Ej. Instalaciones Pérez S.L." value="${esc(actual?.cliente||'')}">
+      <input type="text" id="frmViajeCliente" placeholder="Ej. Instalaciones PÃ©rez S.L." value="${esc(actual?.cliente||'')}">
     </div>
-    <button class="btn btn-viaje btn-lg" data-action="confirmar-marcar-viaje" data-fecha="${fecha}">🧳 Marcar como día de viaje</button>
+    <button class="btn btn-viaje btn-lg" data-action="confirmar-marcar-viaje" data-fecha="${fecha}">ðŸ§³ Marcar como dÃ­a de viaje</button>
   `, {onOpen: () => document.getElementById('frmViajeLugar').focus()});
 }
 function confirmarMarcarViaje(fecha){
@@ -863,14 +863,14 @@ function confirmarMarcarViaje(fecha){
   const cliente = document.getElementById('frmViajeCliente').value.trim();
   marcarViaje(fecha, lugar, cliente);
   closeModal();
-  toast('Día marcado como viaje: sus horas extra ya se contabilizan');
+  toast('DÃ­a marcado como viaje: sus horas extra ya se contabilizan');
   refrescarTrasEditarDia(fecha);
 }
 async function accionQuitarViaje(fecha){
-  // confirmDialog reemplaza el modal actual (incluido el detalle del día, si
-  // estaba abierto), así que hay que recordar si había uno antes de preguntar.
+  // confirmDialog reemplaza el modal actual (incluido el detalle del dÃ­a, si
+  // estaba abierto), asÃ­ que hay que recordar si habÃ­a uno antes de preguntar.
   const habiaModalAbierto = !!document.getElementById('activeModalOverlay');
-  const ok = await confirmDialog('¿Quitar la marca de día de viaje de ' + fmtDateShort(fecha) + '? Las horas extra de ese día dejarán de contabilizarse.', 'Quitar marca', true);
+  const ok = await confirmDialog('Â¿Quitar la marca de dÃ­a de viaje de ' + fmtDateShort(fecha) + '? Las horas extra de ese dÃ­a dejarÃ¡n de contabilizarse.', 'Quitar marca', true);
   if(!ok) return;
   quitarViaje(fecha);
   toast('Marca de viaje eliminada');
@@ -884,20 +884,20 @@ function accionMarcarSinComida(fecha){
 }
 function accionQuitarSinComida(fecha){
   quitarSinComida(fecha);
-  toast('Se volverá a descontar la comida este día');
+  toast('Se volverÃ¡ a descontar la comida este dÃ­a');
   refrescarTrasEditarDia(fecha);
 }
 
-/* ----------------------------- Fichaje abierto de días anteriores -------- */
+/* ----------------------------- Fichaje abierto de dÃ­as anteriores -------- */
 function jornadaAbiertaDeAyer(){
   const j = jornadaAbierta();
   if(!j) return null;
   return j.fecha !== todayStr() ? j : null;
 }
 /*
- * Aviso de "todavía no has fichado". Solo se puede comprobar mientras la
- * app está abierta (sin backend no hay forma de avisar con la app cerrada):
- * se reevalúa cada segundo mientras el usuario tiene la app en pantalla.
+ * Aviso de "todavÃ­a no has fichado". Solo se puede comprobar mientras la
+ * app estÃ¡ abierta (sin backend no hay forma de avisar con la app cerrada):
+ * se reevalÃºa cada segundo mientras el usuario tiene la app en pantalla.
  */
 function debeAvisarFichaje(){
   const cfg = DATA.config;
@@ -918,8 +918,8 @@ function renderBanner(){
   if(j && !UI.bannerDismissed){
     el.innerHTML = `
       <div class="banner">
-        <b>⚠️ Tienes un fichaje abierto desde el ${esc(fmtDateShort(j.fecha))} (${esc(fmtTimeHM(j.entrada))})</b>
-        Elige qué quieres hacer. No se cerrará ni se inventará ninguna hora automáticamente.
+        <b>âš ï¸ Tienes un fichaje abierto desde el ${esc(fmtDateShort(j.fecha))} (${esc(fmtTimeHM(j.entrada))})</b>
+        Elige quÃ© quieres hacer. No se cerrarÃ¡ ni se inventarÃ¡ ninguna hora automÃ¡ticamente.
         <div class="btn-row">
           <button class="btn btn-primary btn-sm" data-action="fichaje-abierto-cerrar-ahora" data-id="${j.id}">Fichar salida ahora</button>
           <button class="btn btn-outline btn-sm" data-action="fichaje-abierto-manual" data-id="${j.id}">Indicar hora manual</button>
@@ -932,10 +932,10 @@ function renderBanner(){
   if(debeAvisarFichaje()){
     el.innerHTML = `
       <div class="banner">
-        <b>⏰ Son las ${esc(fmtTimeHM(Date.now()))} y todavía no has fichado entrada</b>
+        <b>â° Son las ${esc(fmtTimeHM(Date.now()))} y todavÃ­a no has fichado entrada</b>
         <div class="btn-row" style="margin-top:10px;">
-          <button class="btn btn-primary btn-sm" data-action="fichar-entrada">▶ Fichar entrada ahora</button>
-          <button class="btn btn-soft btn-sm" data-action="aviso-fichaje-descartar-hoy">No avisar más hoy</button>
+          <button class="btn btn-primary btn-sm" data-action="fichar-entrada">â–¶ Fichar entrada ahora</button>
+          <button class="btn btn-soft btn-sm" data-action="aviso-fichaje-descartar-hoy">No avisar mÃ¡s hoy</button>
         </div>
       </div>`;
     return;
@@ -954,7 +954,7 @@ function fichajeAbiertoManual(id){
   const j = getJornada(id);
   if(!j) return;
   openModal(`
-    <div class="modal-head"><h3>Indicar hora real de salida</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="modal-head"><h3>Indicar hora real de salida</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
     <div class="field">
       <label>Fecha y hora de salida</label>
       <input type="datetime-local" id="frmSalidaManual" value="${toDatetimeLocalValue(Date.now())}">
@@ -965,7 +965,7 @@ function fichajeAbiertoManual(id){
 function confirmarSalidaManualAbierto(id){
   const j = getJornada(id);
   const ts = fromDatetimeLocalValue(document.getElementById('frmSalidaManual').value);
-  if(ts == null){ toast('Fecha inválida.'); return; }
+  if(ts == null){ toast('Fecha invÃ¡lida.'); return; }
   if(ts < j.entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
   j.salida = ts;
   save();
@@ -974,7 +974,7 @@ function confirmarSalidaManualAbierto(id){
   renderAll();
 }
 
-/* ----------------------------- Render: pestaña HOY ------------------------ */
+/* ----------------------------- Render: pestaÃ±a HOY ------------------------ */
 function renderHoy(){
   const el = document.getElementById('tab-hoy');
   const now = Date.now();
@@ -1003,7 +1003,7 @@ function renderHoy(){
     if(estado==='comida'){
       heroTimerLabel = calc.cAbierta
         ? `En comida desde las ${fmtTimeHM(calc.cAbierta.inicio)}`
-        : `En comida (horario ${DATA.config.comidaInicio}–${DATA.config.comidaFin})`;
+        : `En comida (horario ${DATA.config.comidaInicio}â€“${DATA.config.comidaFin})`;
     }
 
     progressPct = calc.normalMax > 0 ? clamp((calc.efectivoTotal/calc.normalMax)*100, 0, 100) : 0;
@@ -1015,14 +1015,14 @@ function renderHoy(){
       <div class="hero-extra">
         <div>
           <strong id="liveExtra">${fmtHMS(calc.extra)}</strong>
-          <span>HORAS EXTRA${calc.extra>0 ? ' · en aumento' : ''}</span>
+          <span>HORAS EXTRA${calc.extra>0 ? ' Â· en aumento' : ''}</span>
         </div>
       </div>
-      ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">Hoy no está marcado como día de viaje: el tiempo de más no cuenta como hora extra.</p>` : ''}`;
+      ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">Hoy no estÃ¡ marcado como dÃ­a de viaje: el tiempo de mÃ¡s no cuenta como hora extra.</p>` : ''}`;
 
     const restante = Math.max(0, calc.normalMax - calc.efectivoTotal);
-    // Si la comida es de horario fijo, se descuenta entera para la estimación
-    // aunque el tramo todavía no haya llegado (se sabe que ocurrirá).
+    // Si la comida es de horario fijo, se descuenta entera para la estimaciÃ³n
+    // aunque el tramo todavÃ­a no haya llegado (se sabe que ocurrirÃ¡).
     const comidaParaEstimacion = (DATA.config.modoComida === 'horario' && diaConfigFor(j.fecha)?.comida !== false)
       ? (comidaHorarioParaFecha(j.fecha).fin - comidaHorarioParaFecha(j.fecha).inicio)
       : calc.comidasMs;
@@ -1036,7 +1036,7 @@ function renderHoy(){
         <div class="item"><b>${calc.abierta ? fmtTimeHM(estimadaFin) : fmtTimeHM(j.salida)}</b><small>${calc.abierta?'Fin estimado':'Hora de salida'}</small></div>
       </div>`;
   } else {
-    heroTimerValue = '—';
+    heroTimerValue = 'â€”';
   }
 
   const heroHtml = `
@@ -1048,34 +1048,34 @@ function renderHoy(){
       <div class="hero-timer" id="heroTimer">${heroTimerValue}</div>
       <div class="hero-timer-label">${esc(heroTimerLabel)}</div>
       ${j ? extraBlock : ''}
-      ${j ? subStats : `<p style="opacity:.9;font-size:14px;">Pulsa «Fichar entrada» para empezar tu jornada.</p>`}
+      ${j ? subStats : `<p style="opacity:.9;font-size:14px;">Pulsa Â«Fichar entradaÂ» para empezar tu jornada.</p>`}
       ${j ? `
       <div class="progress-wrap">
         <div class="progress-track"><div class="progress-fill ${progressExtra?'extra':''}" id="progressFill" style="width:${progressPct}%"></div></div>
-        <div class="progress-text"><span id="progressLabel">${progressLabel}</span><span>${progressExtra?'⚡ Horas extra':''}</span></div>
+        <div class="progress-text"><span id="progressLabel">${progressLabel}</span><span>${progressExtra?'âš¡ Horas extra':''}</span></div>
       </div>` : ''}
     </div>`;
 
-  // Botones de acción principal
+  // Botones de acciÃ³n principal
   let mainBtn;
   if(!j){
-    mainBtn = `<button class="btn btn-primary btn-lg" data-action="fichar-entrada">▶ FICHAR ENTRADA</button>`;
+    mainBtn = `<button class="btn btn-primary btn-lg" data-action="fichar-entrada">â–¶ FICHAR ENTRADA</button>`;
   } else {
-    mainBtn = `<button class="btn btn-danger btn-lg" data-action="fichar-salida">⏹ FICHAR SALIDA</button>`;
+    mainBtn = `<button class="btn btn-danger btn-lg" data-action="fichar-salida">â¹ FICHAR SALIDA</button>`;
   }
 
   let descansoBtn = '', comidaBtn = '';
   if(j && cfg.modoDescanso === 'manual'){
     const d = descansoAbierto(j);
     descansoBtn = d
-      ? `<button class="btn btn-danger" data-action="finalizar-descanso">⏸ FINALIZAR DESCANSO</button>`
-      : `<button class="btn btn-descanso" data-action="iniciar-descanso" ${comidaAbierta(j)?'disabled':''}>☕ INICIAR DESCANSO</button>`;
+      ? `<button class="btn btn-danger" data-action="finalizar-descanso">â¸ FINALIZAR DESCANSO</button>`
+      : `<button class="btn btn-descanso" data-action="iniciar-descanso" ${comidaAbierta(j)?'disabled':''}>â˜• INICIAR DESCANSO</button>`;
   }
   if(j && cfg.modoComida === 'manual' && diaConfigFor(j.fecha)?.comida !== false){
     const c = comidaAbierta(j);
     comidaBtn = c
-      ? `<button class="btn btn-danger" data-action="finalizar-comida">⏸ FINALIZAR COMIDA</button>`
-      : `<button class="btn btn-comida" data-action="iniciar-comida" ${descansoAbierto(j)?'disabled':''}>🍽 INICIAR COMIDA</button>`;
+      ? `<button class="btn btn-danger" data-action="finalizar-comida">â¸ FINALIZAR COMIDA</button>`
+      : `<button class="btn btn-comida" data-action="iniciar-comida" ${descansoAbierto(j)?'disabled':''}>ðŸ½ INICIAR COMIDA</button>`;
   }
 
   const detalle = j ? (() => {
@@ -1095,23 +1095,23 @@ function renderHoy(){
   const viajeHoy = obtenerViaje(fechaHoy);
   const viajeSeccion = (viajeHoy && viajeHoy.activo) ? `
     <div class="card-row">
-      <span class="label">🧳 Día de viaje</span>
-      <span class="value">${esc(viajeHoy.lugar || 'Sin lugar')}${viajeHoy.cliente ? ` · ${esc(viajeHoy.cliente)}` : ''}</span>
+      <span class="label">ðŸ§³ DÃ­a de viaje</span>
+      <span class="value">${esc(viajeHoy.lugar || 'Sin lugar')}${viajeHoy.cliente ? ` Â· ${esc(viajeHoy.cliente)}` : ''}</span>
     </div>
     <div class="btn-row" style="margin-top:6px;">
-      <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fechaHoy}">✎ Editar</button>
+      <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fechaHoy}">âœŽ Editar</button>
       <button class="btn btn-outline btn-sm" data-action="quitar-viaje" data-fecha="${fechaHoy}" style="color:var(--danger);border-color:var(--danger)">Quitar marca</button>
     </div>` : `
-    <button class="btn btn-viaje" data-action="abrir-form-viaje" data-fecha="${fechaHoy}">🧳 HOY ES DÍA DE VIAJE</button>`;
+    <button class="btn btn-viaje" data-action="abrir-form-viaje" data-fecha="${fechaHoy}">ðŸ§³ HOY ES DÃA DE VIAJE</button>`;
 
   const diaCfgHoy = diaConfigFor(fechaHoy);
   const puedeSinComida = diaCfgHoy?.comida !== false && cfg.modoComida !== 'manual';
   let sinComidaSeccion = '';
   if(puedeSinComida){
     sinComidaSeccion = diaSinComida(fechaHoy) ? `
-      <div class="card-row"><span class="label">🚫 Comida</span><span class="value">No se descuenta hoy</span></div>
-      <button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fechaHoy}">↩ Deshacer</button>` : `
-      <button class="btn btn-outline btn-sm" data-action="marcar-sin-comida" data-fecha="${fechaHoy}">🚫 No he comido hoy</button>`;
+      <div class="card-row"><span class="label">ðŸš« Comida</span><span class="value">No se descuenta hoy</span></div>
+      <button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fechaHoy}">â†© Deshacer</button>` : `
+      <button class="btn btn-outline btn-sm" data-action="marcar-sin-comida" data-fecha="${fechaHoy}">ðŸš« No he comido hoy</button>`;
   }
 
   el.innerHTML = `
@@ -1129,7 +1129,7 @@ function renderHoy(){
   `;
 }
 
-/* Actualiza sólo los números en vivo cada segundo, sin re-renderizar todo */
+/* Actualiza sÃ³lo los nÃºmeros en vivo cada segundo, sin re-renderizar todo */
 function tickLive(){
   renderBanner();
   if(UI.tab !== 'hoy') return;
@@ -1161,12 +1161,12 @@ function tickLive(){
   // Aviso al alcanzar la jornada prevista (una sola vez)
   if(calc.extra > 0 && !j._avisoExtraDado){
     j._avisoExtraDado = true;
-    toast('Has completado tu jornada normal. Estás acumulando horas extra.');
+    toast('Has completado tu jornada normal. EstÃ¡s acumulando horas extra.');
   }
   renderBanner();
 }
 
-/* ----------------------------- Render: pestaña HISTORICO ------------------ */
+/* ----------------------------- Render: pestaÃ±a HISTORICO ------------------ */
 function rangoParaFiltro(){
   const f = UI.historico.filtro;
   const hoy = todayStr();
@@ -1237,8 +1237,8 @@ function renderHistorico(){
     const {j, calc, esViaje, sinComida} = statsDia(f);
     const extraPill = calc && calc.extra > 0 ? `<span class="pill extra">+${fmtHM(calc.extra)} extra</span>` : '';
     const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
-    const viajePill = esViaje ? `<span class="pill viaje">🧳 Viaje</span>` : '';
-    const sinComidaPill = sinComida ? `<span class="pill sincomida">🚫 Sin comida</span>` : '';
+    const viajePill = esViaje ? `<span class="pill viaje">ðŸ§³ Viaje</span>` : '';
+    const sinComidaPill = sinComida ? `<span class="pill sincomida">ðŸš« Sin comida</span>` : '';
     return `
     <div class="day-item" data-action="ver-dia" data-fecha="${f}">
       <div class="di-top">
@@ -1252,19 +1252,19 @@ function renderHistorico(){
         <span>Normales <b>${calc?fmtHM(calc.normal):'00:00'}</b></span>
       </div>
     </div>`;
-  }).join('') : `<div class="empty-state"><div class="ic">📭</div>No hay registros en este periodo.</div>`;
+  }).join('') : `<div class="empty-state"><div class="ic">ðŸ“­</div>No hay registros en este periodo.</div>`;
 
   el.innerHTML = `
     <div class="hist-filters">${chips}</div>
     ${rangoInputs}
     <div class="field search-box">
-      <input type="text" placeholder="Buscar en el histórico…" id="buscadorHistorico" value="${esc(UI.historico.busqueda)}">
+      <input type="text" placeholder="Buscar en el histÃ³ricoâ€¦" id="buscadorHistorico" value="${esc(UI.historico.busqueda)}">
     </div>
     ${items}
   `;
 }
 
-/* Modal de detalle / edición de un día completo */
+/* Modal de detalle / ediciÃ³n de un dÃ­a completo */
 function verDia(fecha){
   const j = jornadaDeFecha(fecha);
   const calc = j ? calcJornada(j, Date.now()) : null;
@@ -1274,7 +1274,7 @@ function verDia(fecha){
       <div class="field"><label>Entrada</label><input type="datetime-local" id="edJEntrada" value="${toDatetimeLocalValue(j.entrada)}"></div>
       <div class="field"><label>Salida</label><input type="datetime-local" id="edJSalida" value="${j.salida?toDatetimeLocalValue(j.salida):''}"></div>
     </div>
-    <div class="field"><label>Observaciones del día</label><textarea id="edJObs">${esc(j.observaciones||'')}</textarea></div>
+    <div class="field"><label>Observaciones del dÃ­a</label><textarea id="edJObs">${esc(j.observaciones||'')}</textarea></div>
     <div class="btn-row">
       <button class="btn btn-outline" data-action="eliminar-jornada" data-id="${j.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar jornada</button>
       <button class="btn btn-primary" data-action="guardar-jornada-editada" data-id="${j.id}">Guardar</button>
@@ -1283,48 +1283,48 @@ function verDia(fecha){
     <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calc.efectivoTotal)}</span></div>
     <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calc.normal)}</span></div>
     <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calc.extra)}</span></div>
-  ` : `<p style="color:var(--muted);font-size:14px;">No hay fichaje de entrada/salida este día.</p>
-       <button class="btn btn-soft" data-action="crear-jornada-manual" data-fecha="${fecha}">+ Añadir fichaje para este día</button>`;
+  ` : `<p style="color:var(--muted);font-size:14px;">No hay fichaje de entrada/salida este dÃ­a.</p>
+       <button class="btn btn-soft" data-action="crear-jornada-manual" data-fecha="${fecha}">+ AÃ±adir fichaje para este dÃ­a</button>`;
 
   const descansosHtml = j ? `
     <div class="section-title">Descansos</div>
     ${j.descansos.length ? j.descansos.map(d => `
       <div class="mini-list-item">
-        <div class="mli-top"><span>☕ ${fmtTimeHM(d.inicio)} - ${d.fin?fmtTimeHM(d.fin):'en curso'}</span><span>${fmtHM((d.fin??Date.now())-d.inicio)}</span></div>
+        <div class="mli-top"><span>â˜• ${fmtTimeHM(d.inicio)} - ${d.fin?fmtTimeHM(d.fin):'en curso'}</span><span>${fmtHM((d.fin??Date.now())-d.inicio)}</span></div>
         <div class="mli-actions">
           <button class="btn btn-soft btn-sm" data-action="editar-intervalo" data-tipo="descanso" data-jid="${j.id}" data-iid="${d.id}">Editar</button>
           <button class="btn btn-outline btn-sm" data-action="eliminar-intervalo" data-tipo="descanso" data-jid="${j.id}" data-iid="${d.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
         </div>
       </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin descansos registrados.</p>`}
-    <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="descanso" data-jid="${j.id}">+ Añadir descanso</button>
+    <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="descanso" data-jid="${j.id}">+ AÃ±adir descanso</button>
   ` : '';
 
   const comidasHtml = j ? `
     <div class="section-title">Comida</div>
     ${j.comidas.length ? j.comidas.map(c => `
       <div class="mini-list-item">
-        <div class="mli-top"><span>🍽 ${fmtTimeHM(c.inicio)} - ${c.fin?fmtTimeHM(c.fin):'en curso'}</span><span>${fmtHM((c.fin??Date.now())-c.inicio)}</span></div>
+        <div class="mli-top"><span>ðŸ½ ${fmtTimeHM(c.inicio)} - ${c.fin?fmtTimeHM(c.fin):'en curso'}</span><span>${fmtHM((c.fin??Date.now())-c.inicio)}</span></div>
         <div class="mli-actions">
           <button class="btn btn-soft btn-sm" data-action="editar-intervalo" data-tipo="comida" data-jid="${j.id}" data-iid="${c.id}">Editar</button>
           <button class="btn btn-outline btn-sm" data-action="eliminar-intervalo" data-tipo="comida" data-jid="${j.id}" data-iid="${c.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
         </div>
       </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin comidas registradas.</p>`}
-    <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="comida" data-jid="${j.id}">+ Añadir comida</button>
+    <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="comida" data-jid="${j.id}">+ AÃ±adir comida</button>
   ` : '';
 
   const viajeDia = obtenerViaje(fecha);
   const viajeHtml = `
-    <div class="section-title">Día de viaje</div>
+    <div class="section-title">DÃ­a de viaje</div>
     ${(viajeDia && viajeDia.activo) ? `
     <div class="mini-list-item">
-      <div class="mli-top"><span>🧳 ${esc(viajeDia.lugar||'Sin lugar')}</span><span>${esc(viajeDia.cliente||'')}</span></div>
+      <div class="mli-top"><span>ðŸ§³ ${esc(viajeDia.lugar||'Sin lugar')}</span><span>${esc(viajeDia.cliente||'')}</span></div>
       <div class="mli-actions">
         <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fecha}">Editar</button>
         <button class="btn btn-outline btn-sm" data-action="quitar-viaje" data-fecha="${fecha}" style="color:var(--danger);border-color:var(--danger)">Quitar marca</button>
       </div>
     </div>` : `
-    <p style="color:var(--muted);font-size:13px;">Este día no está marcado como viaje: las horas extra no cuentan.</p>
-    <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fecha}">🧳 Marcar como día de viaje</button>`}
+    <p style="color:var(--muted);font-size:13px;">Este dÃ­a no estÃ¡ marcado como viaje: las horas extra no cuentan.</p>
+    <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fecha}">ðŸ§³ Marcar como dÃ­a de viaje</button>`}
   `;
 
   const diaCfgDia = diaConfigFor(fecha);
@@ -1332,13 +1332,13 @@ function verDia(fecha){
   const sinComidaHtml = puedeSinComidaDia ? `
     <div class="section-title">Comida</div>
     ${diaSinComida(fecha) ? `
-    <p style="color:var(--muted);font-size:13px;">Marcado como "no comió" este día: no se descuenta tiempo de comida.</p>
-    <button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fecha}">↩ Deshacer</button>` : `
-    <button class="btn btn-soft btn-sm" data-action="marcar-sin-comida" data-fecha="${fecha}">🚫 No comió este día</button>`}
+    <p style="color:var(--muted);font-size:13px;">Marcado como "no comiÃ³" este dÃ­a: no se descuenta tiempo de comida.</p>
+    <button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fecha}">â†© Deshacer</button>` : `
+    <button class="btn btn-soft btn-sm" data-action="marcar-sin-comida" data-fecha="${fecha}">ðŸš« No comiÃ³ este dÃ­a</button>`}
   ` : '';
 
   openModal(`
-    <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
     ${filaJornada}
     ${descansosHtml}
     ${comidasHtml}
@@ -1347,9 +1347,9 @@ function verDia(fecha){
   `);
 }
 /*
- * Modal del "calendario laboral": permite ver el fichaje de ese día (delega
- * en verDia) y/o marcarlo como festivo, vacaciones o compensación de horas.
- * Cada pulsación guarda al instante y vuelve a pintar este mismo modal.
+ * Modal del "calendario laboral": permite ver el fichaje de ese dÃ­a (delega
+ * en verDia) y/o marcarlo como festivo, vacaciones o compensaciÃ³n de horas.
+ * Cada pulsaciÃ³n guarda al instante y vuelve a pintar este mismo modal.
  */
 function abrirDiaCalendario(fecha){
   const j = jornadaDeFecha(fecha);
@@ -1362,22 +1362,22 @@ function abrirDiaCalendario(fecha){
     <div class="card-row"><span class="label">Fichaje</span><span class="value">${fmtTimeHM(j.entrada)} - ${j.salida?fmtTimeHM(j.salida):'(abierto)'}</span></div>
     <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calc.efectivoTotal)}</span></div>
     `;
-  })() : `<p style="color:var(--muted);font-size:13.5px;">Sin fichaje registrado este día.</p>`;
+  })() : `<p style="color:var(--muted);font-size:13.5px;">Sin fichaje registrado este dÃ­a.</p>`;
 
   const saldoActual = bancoHorasSaldoMs();
   const horasCompensacion = marca && marca.tipo === 'compensacion' ? marca.horas : horasCompensacionFijasFor(fecha);
 
   openModal(`
-    <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
     ${resumenFichaje}
-    <button class="btn btn-soft btn-sm" style="margin:10px 0 4px;" data-action="ver-dia" data-fecha="${fecha}">📋 Ver / editar fichaje de este día</button>
+    <button class="btn btn-soft btn-sm" style="margin:10px 0 4px;" data-action="ver-dia" data-fecha="${fecha}">ðŸ“‹ Ver / editar fichaje de este dÃ­a</button>
 
-    <div class="section-title">Marcar este día como</div>
+    <div class="section-title">Marcar este dÃ­a como</div>
     <div class="seg">
       <button data-action="marcar-dia" data-tipo="normal" data-fecha="${fecha}" class="${tipo==='normal'?'active':''}">Normal</button>
       <button data-action="marcar-dia" data-tipo="festivo" data-fecha="${fecha}" class="${tipo==='festivo'?'active':''}">Festivo</button>
       <button data-action="marcar-dia" data-tipo="vacaciones" data-fecha="${fecha}" class="${tipo==='vacaciones'?'active':''}">Vacaciones</button>
-      <button data-action="marcar-dia" data-tipo="compensacion" data-fecha="${fecha}" class="${tipo==='compensacion'?'active':''}">Compensación</button>
+      <button data-action="marcar-dia" data-tipo="compensacion" data-fecha="${fecha}" class="${tipo==='compensacion'?'active':''}">CompensaciÃ³n</button>
     </div>
 
     ${tipo === 'festivo' ? `
@@ -1391,7 +1391,7 @@ function abrirDiaCalendario(fecha){
       <label>Horas a descontar del banco</label>
       <input type="number" min="0" step="0.25" id="marcaHorasCompensacion" data-fecha="${fecha}" value="${horasCompensacion}">
     </div>
-    <p style="font-size:12px;color:var(--muted);">Saldo actual del banco de horas (ya con esta compensación aplicada si está guardada): <b>${fmtHM(Math.abs(saldoActual))}${saldoActual<0?' (negativo)':''}</b>.</p>
+    <p style="font-size:12px;color:var(--muted);">Saldo actual del banco de horas (ya con esta compensaciÃ³n aplicada si estÃ¡ guardada): <b>${fmtHM(Math.abs(saldoActual))}${saldoActual<0?' (negativo)':''}</b>.</p>
     ` : ''}
   `);
 }
@@ -1400,11 +1400,11 @@ async function cargarFestivosNavarra(){
   const anio = new Date().getFullYear();
   const lista = FESTIVOS_NAVARRA[anio];
   if(!lista){
-    toast(`Todavía no tengo cargados los festivos oficiales de Navarra para ${anio}.`);
+    toast(`TodavÃ­a no tengo cargados los festivos oficiales de Navarra para ${anio}.`);
     return;
   }
   const ok = await confirmDialog(
-    `Se añadirán ${lista.length} festivos oficiales de toda Navarra para ${anio} (sobrescribiendo lo que tuvieras marcado esos días). Recuerda añadir a mano las 2 fiestas locales de tu municipio y tus vacaciones.`,
+    `Se aÃ±adirÃ¡n ${lista.length} festivos oficiales de toda Navarra para ${anio} (sobrescribiendo lo que tuvieras marcado esos dÃ­as). Recuerda aÃ±adir a mano las 2 fiestas locales de tu municipio y tus vacaciones.`,
     'Cargar festivos', false
   );
   if(!ok) return;
@@ -1414,8 +1414,8 @@ async function cargarFestivosNavarra(){
   renderAll();
 }
 
-/* Genera una vista de impresión con el AÑO COMPLETO del calendario laboral
-   en una sola página (Guardar como PDF), con los mismos colores que la app. */
+/* Genera una vista de impresiÃ³n con el AÃ‘O COMPLETO del calendario laboral
+   en una sola pÃ¡gina (Guardar como PDF), con los mismos colores que la app. */
 function exportarCalendarioPDF(){
   const anio = parseDateLocal(UI.resumen.mesRef).getFullYear();
   const dowLabels = ['L','M','X','J','V','S','D'];
@@ -1451,7 +1451,7 @@ function exportarCalendarioPDF(){
 
   const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
   document.getElementById('printArea').innerHTML = `
-    <div class="print-cal-title">Calendario laboral · ${anio}</div>
+    <div class="print-cal-title">Calendario laboral Â· ${anio}</div>
     <div class="print-cal-sub">${esc(nombreTrabajador)}</div>
     <div class="print-cal-year">${mesesHtml.join('')}</div>
     <div class="print-cal-legend">
@@ -1460,7 +1460,7 @@ function exportarCalendarioPDF(){
       <div class="li"><span class="sw" style="background:#f7f8fb;"></span>Fin de semana</div>
       <div class="li"><span class="sw" style="background:rgba(225,29,72,.16);"></span>Festivo</div>
       <div class="li"><span class="sw" style="background:rgba(22,163,74,.16);"></span>Vacaciones</div>
-      <div class="li"><span class="sw" style="background:rgba(79,70,229,.16);"></span>Compensación</div>
+      <div class="li"><span class="sw" style="background:rgba(79,70,229,.16);"></span>CompensaciÃ³n</div>
     </div>
   `;
   setTimeout(() => window.print(), 50);
@@ -1472,7 +1472,7 @@ function crearJornadaManual(fecha){
   DATA.jornadas.push({ id: uid(), fecha, entrada: d.getTime(), salida: null, descansos:[], comidas:[], observaciones:'' });
   save();
   closeModal();
-  toast('Fichaje creado, edítalo con los datos correctos.');
+  toast('Fichaje creado, edÃ­talo con los datos correctos.');
   renderAll();
   verDia(fecha);
 }
@@ -1482,7 +1482,7 @@ function guardarJornadaEditada(id){
   const entrada = fromDatetimeLocalValue(document.getElementById('edJEntrada').value);
   const salidaVal = document.getElementById('edJSalida').value;
   const salida = salidaVal ? fromDatetimeLocalValue(salidaVal) : null;
-  if(entrada == null){ toast('Fecha de entrada inválida.'); return; }
+  if(entrada == null){ toast('Fecha de entrada invÃ¡lida.'); return; }
   if(salida != null && salida < entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
   j.entrada = entrada;
   j.salida = salida;
@@ -1494,7 +1494,7 @@ function guardarJornadaEditada(id){
   renderAll();
 }
 async function eliminarJornada(id){
-  const ok = await confirmDialog('¿Eliminar este fichaje completo (entrada, salida, descansos y comidas)? Esta acción no se puede deshacer.');
+  const ok = await confirmDialog('Â¿Eliminar este fichaje completo (entrada, salida, descansos y comidas)? Esta acciÃ³n no se puede deshacer.');
   if(!ok) return;
   DATA.jornadas = DATA.jornadas.filter(j => j.id !== id);
   save();
@@ -1509,7 +1509,7 @@ function agregarIntervalo(tipo, jid){
   const item = { id: uid(), inicio: now - 15*60000, fin: now };
   (tipo==='descanso' ? j.descansos : j.comidas).push(item);
   save();
-  toast((tipo==='descanso'?'Descanso':'Comida') + ' añadido, edítalo si hace falta.');
+  toast((tipo==='descanso'?'Descanso':'Comida') + ' aÃ±adido, edÃ­talo si hace falta.');
   verDia(j.fecha);
 }
 function editarIntervalo(tipo, jid, iid){
@@ -1518,7 +1518,7 @@ function editarIntervalo(tipo, jid, iid){
   const item = (tipo==='descanso'?j.descansos:j.comidas).find(x=>x.id===iid);
   if(!item) return;
   openModal(`
-    <div class="modal-head"><h3>Editar ${tipo}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="modal-head"><h3>Editar ${tipo}</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
     <div class="field"><label>Inicio</label><input type="datetime-local" id="edIntIni" value="${toDatetimeLocalValue(item.inicio)}"></div>
     <div class="field"><label>Fin</label><input type="datetime-local" id="edIntFin" value="${item.fin?toDatetimeLocalValue(item.fin):''}"></div>
     <button class="btn btn-primary btn-lg" data-action="guardar-intervalo-editado" data-tipo="${tipo}" data-jid="${jid}" data-iid="${iid}">Guardar</button>
@@ -1532,7 +1532,7 @@ function guardarIntervaloEditado(tipo, jid, iid){
   const ini = fromDatetimeLocalValue(document.getElementById('edIntIni').value);
   const finVal = document.getElementById('edIntFin').value;
   const fin = finVal ? fromDatetimeLocalValue(finVal) : null;
-  if(ini == null){ toast('Fecha de inicio inválida.'); return; }
+  if(ini == null){ toast('Fecha de inicio invÃ¡lida.'); return; }
   if(fin != null && fin < ini){ toast('El fin no puede ser anterior al inicio.'); return; }
   item.inicio = ini; item.fin = fin;
   save();
@@ -1542,7 +1542,7 @@ function guardarIntervaloEditado(tipo, jid, iid){
   verDia(j.fecha);
 }
 async function eliminarIntervalo(tipo, jid, iid){
-  const ok = await confirmDialog('¿Eliminar este registro?');
+  const ok = await confirmDialog('Â¿Eliminar este registro?');
   if(!ok) return;
   const j = getJornada(jid);
   if(!j) return;
@@ -1554,7 +1554,7 @@ async function eliminarIntervalo(tipo, jid, iid){
   verDia(j.fecha);
 }
 
-/* ----------------------------- Render: pestaña RESUMEN -------------------- */
+/* ----------------------------- Render: pestaÃ±a RESUMEN -------------------- */
 function agregarRango(ini, fin){
   const now = Date.now();
   let efectivo=0, normal=0, extra=0, descansos=0, comidas=0, diasTrabajados=new Set();
@@ -1590,7 +1590,7 @@ function renderResumen(){
   const firstDow = (new Date(ref.getFullYear(), ref.getMonth(), 1).getDay()+6)%7;
   const totalDias = new Date(ref.getFullYear(), ref.getMonth()+1, 0).getDate();
   let calCells = '';
-  const dowLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const dowLabels = ['Lun','Mar','MiÃ©','Jue','Vie','SÃ¡b','Dom'];
   calCells += dowLabels.map(d => `<div class="cal-dow">${d}</div>`).join('');
   for(let i=0;i<firstDow;i++) calCells += `<div class="cal-day empty"></div>`;
   for(let d=1; d<=totalDias; d++){
@@ -1623,16 +1623,16 @@ function renderResumen(){
         <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(bancoGenerado)}</b><small>Horas extra generadas</small></div>
         <div class="summary-tile"><b style="color:var(--compensacion)">${fmtHM(bancoCompensado)}</b><small>Ya compensadas</small></div>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Se calcula con las horas extra registradas en días marcados como "viaje" hasta hoy, menos los días que hayas marcado como "Compensación de horas" en el calendario de abajo.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Se calcula con las horas extra registradas en dÃ­as marcados como "viaje" hasta hoy, menos los dÃ­as que hayas marcado como "CompensaciÃ³n de horas" en el calendario de abajo.</p>
     </div>
 
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h2 style="margin:0;">Calendario</h2>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button class="icon-btn" data-action="cal-mes" data-dir="-1">‹</button>
+          <button class="icon-btn" data-action="cal-mes" data-dir="-1">â€¹</button>
           <span style="font-size:13px;font-weight:700;min-width:110px;text-align:center;">${MONTH_NAMES[ref.getMonth()]} ${ref.getFullYear()}</span>
-          <button class="icon-btn" data-action="cal-mes" data-dir="1">›</button>
+          <button class="icon-btn" data-action="cal-mes" data-dir="1">â€º</button>
         </div>
       </div>
       <div class="cal-grid">${calCells}</div>
@@ -1642,12 +1642,12 @@ function renderResumen(){
         <div class="li"><span class="sw" style="background:var(--surface-2);border:1px solid var(--border);"></span>Fin de semana</div>
         <div class="li"><span class="sw" style="background:var(--festivo);"></span>Festivo</div>
         <div class="li"><span class="sw" style="background:var(--success);"></span>Vacaciones</div>
-        <div class="li"><span class="sw" style="background:var(--compensacion);"></span>Compensación</div>
+        <div class="li"><span class="sw" style="background:var(--compensacion);"></span>CompensaciÃ³n</div>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Toca cualquier día para ver su fichaje o marcarlo como festivo, vacaciones o compensación de horas: así distribuyes las horas del banco de arriba.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Toca cualquier dÃ­a para ver su fichaje o marcarlo como festivo, vacaciones o compensaciÃ³n de horas: asÃ­ distribuyes las horas del banco de arriba.</p>
       <div class="btn-row" style="margin-top:10px;">
-        <button class="btn btn-outline btn-sm" data-action="cargar-festivos-navarra">📅 Cargar festivos Navarra 2026</button>
-        <button class="btn btn-outline btn-sm" data-action="exportar-calendario-pdf">🖨 Exportar calendario a PDF</button>
+        <button class="btn btn-outline btn-sm" data-action="cargar-festivos-navarra">ðŸ“… Cargar festivos Navarra 2026</button>
+        <button class="btn btn-outline btn-sm" data-action="exportar-calendario-pdf">ðŸ–¨ Exportar calendario a PDF</button>
       </div>
     </div>
 
@@ -1665,8 +1665,8 @@ function renderResumen(){
     <div class="card">
       <h2>Resumen mensual (${MONTH_NAMES[dHoy.getMonth()]})</h2>
       <div class="summary-grid">
-        <div class="summary-tile"><b>${rMes.dias}</b><small>Días trabajados</small></div>
-        <div class="summary-tile"><b>${fmtHM(mediaMes)}</b><small>Media horas/día</small></div>
+        <div class="summary-tile"><b>${rMes.dias}</b><small>DÃ­as trabajados</small></div>
+        <div class="summary-tile"><b>${fmtHM(mediaMes)}</b><small>Media horas/dÃ­a</small></div>
         <div class="summary-tile"><b>${fmtHM(rMes.normal)}</b><small>Horas normales</small></div>
         <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rMes.extra)}</b><small>Horas extra</small></div>
         <div class="summary-tile"><b>${fmtHM(rMes.descansos)}</b><small>Descansos</small></div>
@@ -1676,21 +1676,21 @@ function renderResumen(){
 
     <div class="card">
       <h2>Informe mensual</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel día a día de un mes, coloreado por tipo de día (viaje en verde, vacaciones en azul, festivo en amarillo, compensación en naranja), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
-      <button class="btn btn-primary btn-lg" data-action="abrir-informe-mensual">🗓️ Informe mensual coloreado</button>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel dÃ­a a dÃ­a de un mes, coloreado por tipo de dÃ­a (viaje en verde, vacaciones en azul, festivo en amarillo, compensaciÃ³n en naranja), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
+      <button class="btn btn-primary btn-lg" data-action="abrir-informe-mensual">ðŸ—“ï¸ Informe mensual coloreado</button>
     </div>
 
     <div class="card">
       <h2>Exportar datos</h2>
       <div class="btn-row">
-        <button class="btn btn-primary" data-action="abrir-exportar-excel">📊 EXPORTAR A EXCEL</button>
-        <button class="btn btn-outline" data-action="abrir-exportar-csv">📄 Exportar CSV</button>
+        <button class="btn btn-primary" data-action="abrir-exportar-excel">ðŸ“Š EXPORTAR A EXCEL</button>
+        <button class="btn btn-outline" data-action="abrir-exportar-csv">ðŸ“„ Exportar CSV</button>
       </div>
     </div>
   `;
 }
 
-/* ----------------------------- Exportación --------------------------------- */
+/* ----------------------------- ExportaciÃ³n --------------------------------- */
 function periodoARango(periodo){
   const hoy = todayStr();
   if(periodo === 'mesActual'){
@@ -1732,7 +1732,7 @@ function construirFilasExportacion(ini, fin, columnas){
         horaEntrada: fmtTimeHM(j.entrada), horaSalida: j.salida ? fmtTimeHM(j.salida) : '(abierto)',
         tiempoBruto: hoursDecimal(c.bruto), descansos: hoursDecimal(c.descansosMs), comida: hoursDecimal(c.comidasMs),
         horasEfectivas: hoursDecimal(c.efectivoTotal), horasNormales: hoursDecimal(c.normal), horasExtra: hoursDecimal(c.extra),
-        diaViaje: (viaje && viaje.activo) ? 'Sí' : 'No',
+        diaViaje: (viaje && viaje.activo) ? 'SÃ­' : 'No',
         lugarViaje: viaje ? (viaje.lugar||'') : '', clienteViaje: viaje ? (viaje.cliente||'') : '',
         observaciones: j.observaciones || ''
       });
@@ -1741,7 +1741,7 @@ function construirFilasExportacion(ini, fin, columnas){
         trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
         horaEntrada: '', horaSalida: '', tiempoBruto: '', descansos: '', comida: '',
         horasEfectivas: '', horasNormales: '', horasExtra: '',
-        diaViaje: 'Sí', lugarViaje: viaje.lugar||'', clienteViaje: viaje.cliente||'',
+        diaViaje: 'SÃ­', lugarViaje: viaje.lugar||'', clienteViaje: viaje.cliente||'',
         observaciones: ''
       });
     }
@@ -1752,7 +1752,7 @@ function construirFilasExportacion(ini, fin, columnas){
 }
 
 function nombreArchivo(ini, fin, ext){
-  const nombre = DATA.perfil ? '_' + DATA.perfil.nombre.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ-]/g,'') : '';
+  const nombre = DATA.perfil ? '_' + DATA.perfil.nombre.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_Ã±Ã‘Ã¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“Ãš-]/g,'') : '';
   if(ini === fin) return `fichajes${nombre}_${ini}.${ext}`;
   const d1 = parseDateLocal(ini), d2 = parseDateLocal(fin);
   if(d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth()){
@@ -1763,10 +1763,10 @@ function nombreArchivo(ini, fin, ext){
 /*
  * Descarga de archivos. Cuando la app se ejecuta dentro del visor de
  * Artifacts de Claude, el navegador sandboxeado bloquea las descargas
- * mediante <a download>, así que se usa la capacidad "downloads" del
- * anfitrión si está disponible. Si la app se abre como archivo HTML
+ * mediante <a download>, asÃ­ que se usa la capacidad "downloads" del
+ * anfitriÃ³n si estÃ¡ disponible. Si la app se abre como archivo HTML
  * normal (doble clic, servidor propio), esa capacidad no existe y se
- * usa la descarga estándar del navegador.
+ * usa la descarga estÃ¡ndar del navegador.
  */
 let _downloadsCap = null, _downloadsCapTried = false;
 async function getDownloadsCapability(){
@@ -1807,11 +1807,11 @@ function exportarCSV(ini, fin, columnas){
     return /[;"\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
   };
   const lines = [headers.map(escCsv).join(sep), ...rows.map(r => r.map(escCsv).join(sep))];
-  const csv = '﻿' + lines.join('\r\n');
+  const csv = 'ï»¿' + lines.join('\r\n');
   descargarBlob(new Blob([csv], {type:'text/csv;charset=utf-8'}), nombreArchivo(ini, fin, 'csv'), 'CSV exportado');
 }
 
-/* ---- Generador XLSX autocontenido (ZIP sin compresión + Open XML) ---- */
+/* ---- Generador XLSX autocontenido (ZIP sin compresiÃ³n + Open XML) ---- */
 function crc32(bytes){
   let table = crc32._t;
   if(!table){
@@ -1877,9 +1877,9 @@ function buildSheetXml(headers, rows){
   });
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${xml}</sheetData></worksheet>`;
 }
-/* Empaqueta un .xlsx mínimo (ZIP sin compresión + Open XML) a partir de una o
+/* Empaqueta un .xlsx mÃ­nimo (ZIP sin compresiÃ³n + Open XML) a partir de una o
  * varias hojas ya construidas y de los estilos compartidos. Reutilizado por
- * el exportador genérico, el informe mensual individual y el Excel combinado
+ * el exportador genÃ©rico, el informe mensual individual y el Excel combinado
  * del equipo (una hoja por informe). */
 function buildXlsxPackageMultiSheet(sheets, stylesXml){
   const enc = new TextEncoder();
@@ -1904,7 +1904,7 @@ function buildXlsxPackageMultiSheet(sheets, stylesXml){
 function buildXlsxPackage(sheetName, sheetXml, stylesXml){
   return buildXlsxPackageMultiSheet([{name:sheetName, sheetXml}], stylesXml);
 }
-// Nombres de hoja únicos y válidos para Excel (máx. 31 car., sin : \ / ? * [ ]).
+// Nombres de hoja Ãºnicos y vÃ¡lidos para Excel (mÃ¡x. 31 car., sin : \ / ? * [ ]).
 function nombresHojaUnicos(nombresDeseados){
   const usados = new Set();
   return nombresDeseados.map(deseado => {
@@ -1930,11 +1930,11 @@ function exportarXLSX(ini, fin, columnas){
   descargarBlob(blob, nombreArchivo(ini, fin, 'xlsx'), 'Excel exportado');
 }
 
-/* ---- Informe mensual coloreado (día a día, por trabajador) ------------ */
+/* ---- Informe mensual coloreado (dÃ­a a dÃ­a, por trabajador) ------------ */
 /*
- * Estilos: 0 normal, 1 negrita (títulos/cabecera), 2 negrita grande (nombre),
+ * Estilos: 0 normal, 1 negrita (tÃ­tulos/cabecera), 2 negrita grande (nombre),
  * 3 relleno verde (viaje), 4 relleno azul claro (vacaciones),
- * 5 relleno amarillo (festivo), 6 relleno naranja (compensación).
+ * 5 relleno amarillo (festivo), 6 relleno naranja (compensaciÃ³n).
  */
 const INFORME_MENSUAL_ESTILO_POR_TIPO = { viaje:3, vacaciones:4, festivo:5, compensacion:6 };
 function buildStylesXmlInformeMensual(){
@@ -1965,10 +1965,10 @@ function buildStylesXmlInformeMensual(){
     `</cellXfs>` +
   `</styleSheet>`;
 }
-// Etiqueta de texto plano del tipo de día: se guarda en la última columna
+// Etiqueta de texto plano del tipo de dÃ­a: se guarda en la Ãºltima columna
 // ("Tipo") para poder reconstruir el color al volver a importar el informe
-// (el color de la celda en sí no es fiable de releer entre distintos lectores).
-const INFORME_MENSUAL_TIPO_LABEL = { normal:'Normal', viaje:'Viaje', vacaciones:'Vacaciones', festivo:'Festivo', compensacion:'Compensación' };
+// (el color de la celda en sÃ­ no es fiable de releer entre distintos lectores).
+const INFORME_MENSUAL_TIPO_LABEL = { normal:'Normal', viaje:'Viaje', vacaciones:'Vacaciones', festivo:'Festivo', compensacion:'CompensaciÃ³n' };
 const INFORME_MENSUAL_TIPO_DESDE_LABEL = Object.fromEntries(Object.entries(INFORME_MENSUAL_TIPO_LABEL).map(([k,v]) => [v, k]));
 
 function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs){
@@ -2005,7 +2005,7 @@ function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, sal
   });
 
   r++; // fila en blanco
-  xml += filaMerged(r, 'Horas extra acumuladas después de este mes: ' + fmtHMSigned(saldoFinMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  xml += filaMerged(r, 'Horas extra acumuladas despuÃ©s de este mes: ' + fmtHMSigned(saldoFinMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
 
   const colsXml = `<cols><col min="1" max="${NUM_COLS-2}" width="15" customWidth="1"/><col min="${NUM_COLS-1}" max="${NUM_COLS-1}" width="34" customWidth="1"/><col min="${NUM_COLS}" max="${NUM_COLS}" width="15" customWidth="1"/></cols>`;
   const mergeXml = `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`;
@@ -2015,9 +2015,9 @@ function buildXlsxBlobInformeMensual(nombre, mesLabel, saldoInicioMs, filas, sal
   const sheetXml = buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs);
   return buildXlsxPackage('Informe mensual', sheetXml, buildStylesXmlInformeMensual());
 }
-// Clasifica cada día del mes (normal/viaje/festivo/vacaciones/compensación) y
+// Clasifica cada dÃ­a del mes (normal/viaje/festivo/vacaciones/compensaciÃ³n) y
 // arma las columnas del informe mensual coloreado a partir de los datos ya
-// guardados (fichajes, marcas de calendario y días de viaje).
+// guardados (fichajes, marcas de calendario y dÃ­as de viaje).
 function construirFilasInformeMensual(anio, mesIdx){
   const totalDias = new Date(anio, mesIdx+1, 0).getDate();
   const filas = [];
@@ -2035,8 +2035,8 @@ function construirFilasInformeMensual(anio, mesIdx){
     let comentario = '';
     if(tipo === 'festivo') comentario = marca.nombre ? `Festivo: ${marca.nombre}` : 'Festivo';
     else if(tipo === 'vacaciones') comentario = 'Vacaciones';
-    else if(tipo === 'compensacion') comentario = 'Compensación de horas';
-    else if(tipo === 'viaje') comentario = [viaje.lugar, viaje.cliente].filter(Boolean).join(' · ') || 'Viaje';
+    else if(tipo === 'compensacion') comentario = 'CompensaciÃ³n de horas';
+    else if(tipo === 'viaje') comentario = [viaje.lugar, viaje.cliente].filter(Boolean).join(' Â· ') || 'Viaje';
     else comentario = (j && j.observaciones) || '';
 
     filas.push({
@@ -2044,9 +2044,9 @@ function construirFilasInformeMensual(anio, mesIdx){
       horaInicio: j ? fmtTimeHM(j.entrada) : '',
       horaFin: j ? (j.salida ? fmtTimeHM(j.salida) : '(abierto)') : '',
       horasEfectivas: j ? fmtHM(calc.efectivoTotal) : '',
-      // calc.extra ya solo es >0 en días de viaje (lo decide calcJornada); se
-      // muestra siempre que exista, aunque ese mismo día también esté marcado
-      // como festivo/vacaciones/compensación en el calendario.
+      // calc.extra ya solo es >0 en dÃ­as de viaje (lo decide calcJornada); se
+      // muestra siempre que exista, aunque ese mismo dÃ­a tambiÃ©n estÃ© marcado
+      // como festivo/vacaciones/compensaciÃ³n en el calendario.
       horasExtra: (j && calc.extra > 0) ? fmtHM(calc.extra) : '',
       horasCompensadas: tipo === 'compensacion' ? fmtHM((Number(marca.horas)||0) * 3600000) : '',
       comentario
@@ -2064,16 +2064,16 @@ function generarInformeMensualTrabajador(anio, mesIdx){
   const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
   const mesLabel = `${MONTH_NAMES[mesIdx]} ${anio}`;
   const blob = buildXlsxBlobInformeMensual(nombreTrabajador, mesLabel, saldoInicio, filas, saldoFin);
-  const sufijoNombre = nombreTrabajador ? '_' + nombreTrabajador.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ-]/g,'') : '';
+  const sufijoNombre = nombreTrabajador ? '_' + nombreTrabajador.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_Ã±Ã‘Ã¡Ã©Ã­Ã³ÃºÃÃ‰ÃÃ“Ãš-]/g,'') : '';
   descargarBlob(blob, `informe_mensual${sufijoNombre}_${anio}_${pad2(mesIdx+1)}.xlsx`, 'Informe mensual exportado');
 }
 function abrirModalInformeMensual(){
   const mesDefault = todayStr().slice(0,7);
   openModal(`
-    <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Genera un Excel con el detalle día a día del mes elegido: viaje en verde, vacaciones en azul, festivo en amarillo y compensación en naranja, con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
+    <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Genera un Excel con el detalle dÃ­a a dÃ­a del mes elegido: viaje en verde, vacaciones en azul, festivo en amarillo y compensaciÃ³n en naranja, con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
     <div class="field"><label>Mes</label><input type="month" id="informeMesInput" value="${mesDefault}"></div>
-    <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">📊 Descargar informe del mes</button>
+    <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">ðŸ“Š Descargar informe del mes</button>
   `, {onOpen: () => document.getElementById('informeMesInput').focus()});
 }
 function confirmarInformeMensual(){
@@ -2085,10 +2085,10 @@ function confirmarInformeMensual(){
 }
 
 /* ---------------------------------------------------------------------
- * Lectura de un .xlsx (solo perfil directivo, pestaña "Equipo")
+ * Lectura de un .xlsx (solo perfil directivo, pestaÃ±a "Equipo")
  * Solo sabe leer archivos generados por esta misma app (ZIP sin
- * compresión / método STORE). Si el archivo se abrió y volvió a guardar
- * con Excel/LibreOffice, estos recomprimen con DEFLATE y no se podrá
+ * compresiÃ³n / mÃ©todo STORE). Si el archivo se abriÃ³ y volviÃ³ a guardar
+ * con Excel/LibreOffice, estos recomprimen con DEFLATE y no se podrÃ¡
  * leer: se avisa claramente en vez de fallar en silencio.
  * ------------------------------------------------------------------- */
 function extraerEntradaZip(bytes, nombreBuscado){
@@ -2099,7 +2099,7 @@ function extraerEntradaZip(bytes, nombreBuscado){
   for(let i = len - 22; i >= limite; i--){
     if(view.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
   }
-  if(eocd < 0) throw new Error('No es un archivo .xlsx válido.');
+  if(eocd < 0) throw new Error('No es un archivo .xlsx vÃ¡lido.');
   const numRegistros = view.getUint16(eocd + 10, true);
   let ptr = view.getUint32(eocd + 16, true);
   for(let i = 0; i < numRegistros; i++){
@@ -2114,18 +2114,18 @@ function extraerEntradaZip(bytes, nombreBuscado){
       const lfMethod = view.getUint16(localOffset + 8, true);
       const lfNameLen = view.getUint16(localOffset + 26, true);
       const lfExtraLen = view.getUint16(localOffset + 28, true);
-      if(lfMethod !== 0) throw new Error('Este Excel usa compresión no soportada (¿se guardó desde Excel/LibreOffice? Importa el archivo original descargado desde la app).');
+      if(lfMethod !== 0) throw new Error('Este Excel usa compresiÃ³n no soportada (Â¿se guardÃ³ desde Excel/LibreOffice? Importa el archivo original descargado desde la app).');
       const dataStart = localOffset + 30 + lfNameLen + lfExtraLen;
       return bytes.subarray(dataStart, dataStart + compSize);
     }
     ptr += 46 + nameLen + extraLen + commentLen;
   }
-  throw new Error('El archivo no contiene los datos esperados (¿es un Excel exportado por esta app?).');
+  throw new Error('El archivo no contiene los datos esperados (Â¿es un Excel exportado por esta app?).');
 }
-// Lectura "en bruto" de la única hoja de un .xlsx: array de filas, cada una
+// Lectura "en bruto" de la Ãºnica hoja de un .xlsx: array de filas, cada una
 // como array de valores de celda en el orden en que aparecen en el XML.
 // Como nuestro propio generador siempre escribe una celda por columna usada
-// (incluso vacía) y omite del todo las filas separadoras en blanco, esta
+// (incluso vacÃ­a) y omite del todo las filas separadoras en blanco, esta
 // lectura posicional reconstruye exactamente la estructura del informe.
 function leerFilasCrudasXlsx(arrayBuffer){
   const bytes = new Uint8Array(arrayBuffer);
@@ -2148,15 +2148,15 @@ function leerFilasCrudasXlsx(arrayBuffer){
 }
 function parseXlsxRows(arrayBuffer){
   const filas = leerFilasCrudasXlsx(arrayBuffer);
-  if(!filas.length) throw new Error('El Excel está vacío.');
+  if(!filas.length) throw new Error('El Excel estÃ¡ vacÃ­o.');
   return { headers: filas[0].map(h => String(h).trim()), rows: filas.slice(1) };
 }
 
 /*
  * Lee un "Informe mensual" (el .xlsx coloreado que cada trabajador descarga
  * desde Resumen) reconstruyendo su estructura fija: nombre, mes, saldo de
- * inicio, cabecera de columnas, filas día a día (con su tipo de día) y saldo
- * final. No sirve para leer el exportador genérico "Exportar a Excel/CSV".
+ * inicio, cabecera de columnas, filas dÃ­a a dÃ­a (con su tipo de dÃ­a) y saldo
+ * final. No sirve para leer el exportador genÃ©rico "Exportar a Excel/CSV".
  */
 function parseInformeMensualXlsx(arrayBuffer){
   const filas = leerFilasCrudasXlsx(arrayBuffer);
@@ -2171,7 +2171,7 @@ function parseInformeMensualXlsx(arrayBuffer){
         cEfec = colIdx('Horas efectivas'), cExtra = colIdx('Horas extra'), cComp = colIdx('Horas compensadas'),
         cCom = colIdx('Comentario'), cTipo = colIdx('Tipo');
   if(cFecha < 0 || cTipo < 0){
-    throw new Error('El archivo no tiene el formato esperado. Importa el "Informe mensual" descargado desde la pestaña Resumen.');
+    throw new Error('El archivo no tiene el formato esperado. Importa el "Informe mensual" descargado desde la pestaÃ±a Resumen.');
   }
 
   const dataRows = [];
@@ -2180,7 +2180,7 @@ function parseInformeMensualXlsx(arrayBuffer){
     const fila = filas[i];
     const primera = String((fila && fila[0]) || '');
     if(/^Horas extra acumuladas/.test(primera)){
-      saldoFinMs = parseHMTexto(primera.replace(/^Horas extra acumuladas después de este mes:\s*/, ''));
+      saldoFinMs = parseHMTexto(primera.replace(/^Horas extra acumuladas despuÃ©s de este mes:\s*/, ''));
       break;
     }
     if(!/^\d{4}-\d{2}-\d{2}$/.test(primera)) continue; // fila inesperada: se ignora
@@ -2196,7 +2196,7 @@ function parseInformeMensualXlsx(arrayBuffer){
       comentario: String(fila[cCom] ?? '')
     });
   }
-  if(!dataRows.length) throw new Error('El informe no contiene ningún día.');
+  if(!dataRows.length) throw new Error('El informe no contiene ningÃºn dÃ­a.');
   return { nombre, mesLabel, saldoInicioMs, saldoFinMs, filas: dataRows };
 }
 
@@ -2207,9 +2207,9 @@ async function importarExcelEquipo(file){
     const informe = parseInformeMensualXlsx(buf);
     _pendienteImportEquipo = { informe, archivoNombre: file.name };
     openModal(`
-      <div class="modal-head"><h3>Importar informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+      <div class="modal-head"><h3>Importar informe mensual</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
       <div class="field"><label>Nombre del trabajador</label><input type="text" id="impNombreTrabajador" value="${esc(informe.nombre)}" placeholder="Nombre y apellidos"></div>
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">${esc(informe.mesLabel || '')} · ${informe.filas.length} días · «${esc(file.name)}»</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">${esc(informe.mesLabel || '')} Â· ${informe.filas.length} dÃ­as Â· Â«${esc(file.name)}Â»</p>
       <button class="btn btn-primary btn-lg" data-action="confirmar-importar-equipo">Guardar informe</button>
     `, {onOpen: () => document.getElementById('impNombreTrabajador').focus()});
   }catch(e){
@@ -2238,11 +2238,11 @@ function confirmarImportarEquipo(){
   });
   save();
   closeModal();
-  toast(`Informe de ${nombre} importado (${informe.mesLabel || informe.filas.length + ' días'}).`);
+  toast(`Informe de ${nombre} importado (${informe.mesLabel || informe.filas.length + ' dÃ­as'}).`);
   renderEquipo();
 }
 async function eliminarInforme(id){
-  const ok = await confirmDialog('¿Eliminar este informe importado?');
+  const ok = await confirmDialog('Â¿Eliminar este informe importado?');
   if(!ok) return;
   DATA.equipo = DATA.equipo.filter(i => i.id !== id);
   save();
@@ -2250,7 +2250,7 @@ async function eliminarInforme(id){
   renderEquipo();
 }
 async function eliminarTrabajadorEquipo(nombre){
-  const ok = await confirmDialog(`¿Eliminar TODOS los informes importados de ${nombre}? Esta acción no se puede deshacer.`);
+  const ok = await confirmDialog(`Â¿Eliminar TODOS los informes importados de ${nombre}? Esta acciÃ³n no se puede deshacer.`);
   if(!ok) return;
   DATA.equipo = DATA.equipo.filter(i => i.nombreTrabajador.trim().toLowerCase() !== nombre.trim().toLowerCase());
   save();
@@ -2269,7 +2269,7 @@ function agruparEquipo(){
 function renderEquipo(){
   const el = document.getElementById('tab-equipo');
   if(!esDirectivo()){
-    el.innerHTML = `<div class="empty-state"><div class="ic">🔒</div>Esta sección solo está disponible para el perfil directivo.</div>`;
+    el.innerHTML = `<div class="empty-state"><div class="ic">ðŸ”’</div>Esta secciÃ³n solo estÃ¡ disponible para el perfil directivo.</div>`;
     return;
   }
   const trabajadores = agruparEquipo();
@@ -2282,15 +2282,15 @@ function renderEquipo(){
     const iniciales = w.nombre.split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
     const informesHtml = w.informes.slice().sort((a,b)=>b.fechaImportacion-a.fechaImportacion).map(inf => `
       <div class="informe-item">
-        <span>${esc(inf.mesLabel || (inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} – ${fmtDateShort(inf.fechaMax)}` : inf.archivoNombre))} · ${inf.totales.dias} días con fichaje</span>
-        <span class="if-meta">Extra ${fmtHM(inf.totales.horasExtraMs)} · Comp. ${fmtHM(inf.totales.horasCompensadasMs)}</span>
-        <button class="icon-btn" data-action="eliminar-informe" data-id="${inf.id}" title="Eliminar este informe">🗑</button>
+        <span>${esc(inf.mesLabel || (inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} â€“ ${fmtDateShort(inf.fechaMax)}` : inf.archivoNombre))} Â· ${inf.totales.dias} dÃ­as con fichaje</span>
+        <span class="if-meta">Extra ${fmtHM(inf.totales.horasExtraMs)} Â· Comp. ${fmtHM(inf.totales.horasCompensadasMs)}</span>
+        <button class="icon-btn" data-action="eliminar-informe" data-id="${inf.id}" title="Eliminar este informe">ðŸ—‘</button>
       </div>`).join('');
     return `
     <div class="worker-card">
       <div class="wc-top">
         <div class="wc-name"><span class="wc-avatar">${esc(iniciales)}</span>${esc(w.nombre)}</div>
-        <button class="icon-btn" data-action="eliminar-trabajador" data-nombre="${esc(w.nombre)}" title="Eliminar de la lista">🗑</button>
+        <button class="icon-btn" data-action="eliminar-trabajador" data-nombre="${esc(w.nombre)}" title="Eliminar de la lista">ðŸ—‘</button>
       </div>
       <div class="summary-grid">
         <div class="summary-tile"><b>${fmtHM(totalEfectivo)}</b><small>Horas efectivas</small></div>
@@ -2298,7 +2298,7 @@ function renderEquipo(){
         <div class="summary-tile"><b style="color:var(--compensacion)">${fmtHM(totalCompensado)}</b><small>Horas compensadas</small></div>
         <div class="summary-tile"><b style="color:${saldoPendiente>=0?'var(--success)':'var(--danger)'}">${fmtHMSigned(saldoPendiente)}</b><small>Saldo pendiente</small></div>
       </div>
-      <div class="card-row"><span class="label">Días con fichaje</span><span class="value">${totalDias}</span></div>
+      <div class="card-row"><span class="label">DÃ­as con fichaje</span><span class="value">${totalDias}</span></div>
       <div class="section-title">Informes recibidos</div>
       ${informesHtml}
     </div>`;
@@ -2307,20 +2307,20 @@ function renderEquipo(){
   el.innerHTML = `
     <div class="card">
       <h2>Importar informe de un trabajador</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Importa el "Informe mensual" (coloreado) que te envíe cada trabajador, descargado desde su pestaña Resumen. Puedes importar varios meses del mismo trabajador para ir acumulando sus horas extra y compensaciones.</p>
-      <button class="btn btn-primary btn-lg" data-action="importar-excel-equipo">📥 Importar informe de un trabajador</button>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Importa el "Informe mensual" (coloreado) que te envÃ­e cada trabajador, descargado desde su pestaÃ±a Resumen. Puedes importar varios meses del mismo trabajador para ir acumulando sus horas extra y compensaciones.</p>
+      <button class="btn btn-primary btn-lg" data-action="importar-excel-equipo">ðŸ“¥ Importar informe de un trabajador</button>
     </div>
-    ${cards || `<div class="empty-state"><div class="ic">🧑‍🤝‍🧑</div>Todavía no has importado ningún informe.</div>`}
+    ${cards || `<div class="empty-state"><div class="ic">ðŸ§‘â€ðŸ¤â€ðŸ§‘</div>TodavÃ­a no has importado ningÃºn informe.</div>`}
     ${trabajadores.length ? `
     <div class="btn-row" style="margin-bottom:20px;">
-      <button class="btn btn-outline" data-action="exportar-resumen-equipo">📊 Resumen del equipo</button>
-      <button class="btn btn-primary" data-action="exportar-informes-equipo-combinado">📦 Todos los informes en un Excel</button>
+      <button class="btn btn-outline" data-action="exportar-resumen-equipo">ðŸ“Š Resumen del equipo</button>
+      <button class="btn btn-primary" data-action="exportar-informes-equipo-combinado">ðŸ“¦ Todos los informes en un Excel</button>
     </div>` : ''}
   `;
 }
 function exportarResumenEquipo(){
   const trabajadores = agruparEquipo();
-  const headers = ['Trabajador','Nº de informes','Días con fichaje','Horas efectivas','Horas extra generadas','Horas compensadas','Saldo pendiente','Periodo más antiguo','Periodo más reciente'];
+  const headers = ['Trabajador','NÂº de informes','DÃ­as con fichaje','Horas efectivas','Horas extra generadas','Horas compensadas','Saldo pendiente','Periodo mÃ¡s antiguo','Periodo mÃ¡s reciente'];
   const rows = trabajadores.map(w => {
     const totalEfectivo = w.informes.reduce((s,i)=>s+(i.totales.horasEfectivasMs||0),0);
     const totalExtra = w.informes.reduce((s,i)=>s+(i.totales.horasExtraMs||0),0);
@@ -2333,7 +2333,7 @@ function exportarResumenEquipo(){
   descargarBlob(blob, `resumen_equipo_${todayStr()}.xlsx`, 'Resumen del equipo exportado');
 }
 // Reempaqueta cada informe importado (uno por trabajador y mes) como una hoja
-// coloreada dentro de un único .xlsx, listo para reenviar a quien lo necesite.
+// coloreada dentro de un Ãºnico .xlsx, listo para reenviar a quien lo necesite.
 function exportarTodosInformesEquipo(){
   if(!DATA.equipo.length){ toast('No hay informes importados.'); return; }
   const informesOrdenados = DATA.equipo.slice().sort((a,b) =>
@@ -2341,8 +2341,8 @@ function exportarTodosInformesEquipo(){
   );
   const nombresHoja = nombresHojaUnicos(informesOrdenados.map(inf => `${inf.nombreTrabajador} ${inf.mesLabel||''}`.trim()));
   const sheets = informesOrdenados.map((inf, i) => {
-    // Los informes con el formato antiguo (previo a esta función) no tienen
-    // estos campos por día: se normalizan para no dejar celdas con "undefined".
+    // Los informes con el formato antiguo (previo a esta funciÃ³n) no tienen
+    // estos campos por dÃ­a: se normalizan para no dejar celdas con "undefined".
     const filas = (inf.filas||[]).map(f => ({
       fecha: f.fecha||'', tipo: f.tipo||'normal',
       horaInicio: f.horaInicio||'', horaFin: f.horaFin||'',
@@ -2362,14 +2362,14 @@ function abrirModalExportar(tipo){
   UI.export = UI.export || { rangoIni: todayStr(), rangoFin: todayStr() };
   const columnasActuales = DATA.config.exportColumnas;
   openModal(`
-    <div class="modal-head"><h3>${tipo==='xlsx'?'Exportar a Excel':'Exportar a CSV'}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="modal-head"><h3>${tipo==='xlsx'?'Exportar a Excel':'Exportar a CSV'}</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
     <div class="field">
       <label>Periodo</label>
       <select id="selPeriodo">
         <option value="mesActual">Mes actual</option>
         <option value="mesAnterior">Mes anterior</option>
         <option value="semanaActual">Semana actual</option>
-        <option value="anioCompleto">Año completo</option>
+        <option value="anioCompleto">AÃ±o completo</option>
         <option value="rango">Rango personalizado</option>
       </select>
     </div>
@@ -2414,7 +2414,7 @@ function confirmarExportar(tipo){
   if(tipo === 'xlsx') exportarXLSX(ini, fin, columnas); else exportarCSV(ini, fin, columnas);
 }
 
-/* ----------------------------- Render: pestaña AJUSTES -------------------- */
+/* ----------------------------- Render: pestaÃ±a AJUSTES -------------------- */
 function renderAjustes(){
   const el = document.getElementById('tab-ajustes');
   const c = DATA.config;
@@ -2426,7 +2426,7 @@ function renderAjustes(){
       <span class="dname">${DOW_SHORT[dow]}</span>
       <input type="number" min="0" step="0.25" data-field="horas" data-dow="${dow}" value="${d.horas}" ${d.activo?'':'disabled'}>
       <span class="dunit">h</span>
-      <button type="button" class="dia-comida-btn ${d.comida!==false?'on':''}" data-action="toggle-dia-comida" data-dow="${dow}" title="¿Paras a comer este día?" ${d.activo?'':'disabled'}>🍽</button>
+      <button type="button" class="dia-comida-btn ${d.comida!==false?'on':''}" data-action="toggle-dia-comida" data-dow="${dow}" title="Â¿Paras a comer este dÃ­a?" ${d.activo?'':'disabled'}>ðŸ½</button>
     </div>`;
   }).join('');
 
@@ -2436,14 +2436,14 @@ function renderAjustes(){
       <div class="card-row"><span class="label">Nombre</span><span class="value">${esc(DATA.perfil?.nombre||'')}</span></div>
       <div class="card-row"><span class="label">Tipo de perfil</span><span class="value">${DATA.perfil?.rol==='directivo'?'Directivo':'Trabajador'}</span></div>
       <div class="btn-row" style="margin-top:14px;">
-        <button class="btn btn-outline" data-action="cerrar-sesion">Cerrar sesión</button>
+        <button class="btn btn-outline" data-action="cerrar-sesion">Cerrar sesiÃ³n</button>
         <button class="btn btn-outline" data-action="pedir-reset-perfil" style="color:var(--danger);border-color:var(--danger)">Restablecer perfil</button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Jornada por día de la semana</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">No hace falta fijar una hora de entrada y salida: en cuanto fichas la entrada, la app cuenta las horas de esa jornada a partir de ese momento. Aquí solo indicas cuántas horas normales tiene cada día. El icono 🍽 indica si ese día paras a comer (si lo desactivas, ese día no se descuenta ni se pide registrar comida).</p>
+      <h2>Jornada por dÃ­a de la semana</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">No hace falta fijar una hora de entrada y salida: en cuanto fichas la entrada, la app cuenta las horas de esa jornada a partir de ese momento. AquÃ­ solo indicas cuÃ¡ntas horas normales tiene cada dÃ­a. El icono ðŸ½ indica si ese dÃ­a paras a comer (si lo desactivas, ese dÃ­a no se descuenta ni se pide registrar comida).</p>
       ${diasFilas}
     </div>
 
@@ -2453,7 +2453,7 @@ function renderAjustes(){
         <label>Modo del descanso</label>
         <div class="seg">
           <button data-action="set-modo" data-campo="modoDescanso" data-valor="manual" class="${c.modoDescanso==='manual'?'active':''}">Manual</button>
-          <button data-action="set-modo" data-campo="modoDescanso" data-valor="auto" class="${c.modoDescanso==='auto'?'active':''}">Automático</button>
+          <button data-action="set-modo" data-campo="modoDescanso" data-valor="auto" class="${c.modoDescanso==='auto'?'active':''}">AutomÃ¡tico</button>
         </div>
       </div>
       ${c.modoDescanso==='auto' ? `
@@ -2464,65 +2464,65 @@ function renderAjustes(){
         <label>Modo de la comida</label>
         <div class="seg">
           <button data-action="set-modo" data-campo="modoComida" data-valor="manual" class="${c.modoComida==='manual'?'active':''}">Manual</button>
-          <button data-action="set-modo" data-campo="modoComida" data-valor="auto" class="${c.modoComida==='auto'?'active':''}">Duración fija</button>
+          <button data-action="set-modo" data-campo="modoComida" data-valor="auto" class="${c.modoComida==='auto'?'active':''}">DuraciÃ³n fija</button>
           <button data-action="set-modo" data-campo="modoComida" data-valor="horario" class="${c.modoComida==='horario'?'active':''}">Horario fijo</button>
         </div>
       </div>
       ${c.modoComida==='auto' ? `
       <div class="field"><label>Comida habitual (min)</label><input type="number" id="cfgComidaMin" min="0" value="${c.comidaMin}"></div>
-      <p style="font-size:12px;color:var(--muted);">Se descuenta esta duración fija cada jornada, sin importar a qué hora comas.</p>
+      <p style="font-size:12px;color:var(--muted);">Se descuenta esta duraciÃ³n fija cada jornada, sin importar a quÃ© hora comas.</p>
       ` : ''}
       ${c.modoComida==='horario' ? `
       <div class="field-row">
         <div class="field"><label>Comida desde</label><input type="time" id="cfgComidaInicio" value="${c.comidaInicio}"></div>
         <div class="field"><label>Comida hasta</label><input type="time" id="cfgComidaFin" value="${c.comidaFin}"></div>
       </div>
-      <p style="font-size:12px;color:var(--muted);">Ese tramo horario se descuenta automáticamente cada día como comida, sin tener que pulsar «Iniciar/Finalizar comida». Solo tendrás que fichar entrada y salida.</p>
+      <p style="font-size:12px;color:var(--muted);">Ese tramo horario se descuenta automÃ¡ticamente cada dÃ­a como comida, sin tener que pulsar Â«Iniciar/Finalizar comidaÂ». Solo tendrÃ¡s que fichar entrada y salida.</p>
       ` : ''}
-      ${c.modoComida==='manual' ? `<p style="font-size:12px;color:var(--muted);">Registras cada comida a mano con «Iniciar comida» / «Finalizar comida» en la pestaña Hoy.</p>` : ''}
+      ${c.modoComida==='manual' ? `<p style="font-size:12px;color:var(--muted);">Registras cada comida a mano con Â«Iniciar comidaÂ» / Â«Finalizar comidaÂ» en la pestaÃ±a Hoy.</p>` : ''}
     </div>
 
     <div class="card">
       <h2>Aviso de fichaje</h2>
       <div class="switch-row">
-        <div class="txt"><b>Avisarme si no he fichado entrada</b><small>Muestra un aviso dentro de la app si abres el móvil y aún no has fichado. Solo funciona mientras la app está abierta; no envía notificaciones ni depende de internet.</small></div>
+        <div class="txt"><b>Avisarme si no he fichado entrada</b><small>Muestra un aviso dentro de la app si abres el mÃ³vil y aÃºn no has fichado. Solo funciona mientras la app estÃ¡ abierta; no envÃ­a notificaciones ni depende de internet.</small></div>
         <button class="switch ${c.avisoEntradaActivo?'on':''}" data-action="toggle-aviso-entrada"></button>
       </div>
       ${c.avisoEntradaActivo ? `
       <div class="field" style="margin-top:12px;"><label>Avisar a partir de las</label><input type="time" id="cfgAvisoHora" value="${c.avisoEntradaHora}"></div>
-      <p style="font-size:12px;color:var(--muted);">Solo se aplica los días marcados como activos en "Jornada por día de la semana", y deja de avisar en cuanto fiches entrada ese día.</p>
+      <p style="font-size:12px;color:var(--muted);">Solo se aplica los dÃ­as marcados como activos en "Jornada por dÃ­a de la semana", y deja de avisar en cuanto fiches entrada ese dÃ­a.</p>
       ` : ''}
     </div>
 
     <div class="card">
       <h2>Acceso directo</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Añade un icono en la pantalla de inicio de tu móvil para abrir la app con un toque, como cualquier otra aplicación.</p>
-      <button class="btn btn-primary" data-action="instalar-app">📱 Añadir a pantalla de inicio</button>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">AÃ±ade un icono en la pantalla de inicio de tu mÃ³vil para abrir la app con un toque, como cualquier otra aplicaciÃ³n.</p>
+      <button class="btn btn-primary" data-action="instalar-app">ðŸ“± AÃ±adir a pantalla de inicio</button>
     </div>
 
     <div class="card">
       <h2>Apariencia</h2>
       <div class="seg">
-        <button data-action="set-tema" data-valor="claro" class="${c.tema==='claro'?'active':''}">☀️ Claro</button>
-        <button data-action="set-tema" data-valor="oscuro" class="${c.tema==='oscuro'?'active':''}">🌙 Oscuro</button>
-        <button data-action="set-tema" data-valor="auto" class="${c.tema==='auto'?'active':''}">🔄 Automático</button>
+        <button data-action="set-tema" data-valor="claro" class="${c.tema==='claro'?'active':''}">â˜€ï¸ Claro</button>
+        <button data-action="set-tema" data-valor="oscuro" class="${c.tema==='oscuro'?'active':''}">ðŸŒ™ Oscuro</button>
+        <button data-action="set-tema" data-valor="auto" class="${c.tema==='auto'?'active':''}">ðŸ”„ AutomÃ¡tico</button>
       </div>
     </div>
 
     <div class="card">
       <h2>Copia de seguridad</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Todos tus datos están guardados únicamente en este dispositivo (localStorage). Exporta una copia periódicamente por seguridad.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Todos tus datos estÃ¡n guardados Ãºnicamente en este dispositivo (localStorage). Exporta una copia periÃ³dicamente por seguridad.</p>
       <div class="btn-row">
-        <button class="btn btn-outline" data-action="exportar-backup">⬇ Exportar copia</button>
-        <button class="btn btn-outline" data-action="importar-backup">⬆ Importar copia</button>
+        <button class="btn btn-outline" data-action="exportar-backup">â¬‡ Exportar copia</button>
+        <button class="btn btn-outline" data-action="importar-backup">â¬† Importar copia</button>
       </div>
     </div>
 
     <div class="card">
       <h2>Privacidad</h2>
       <p style="font-size:13px;color:var(--muted);line-height:1.6;">
-        Ningún dato (horarios, viajes, clientes, histórico) sale de este dispositivo. La aplicación no incluye
-        analítica ni publicidad.
+        NingÃºn dato (horarios, viajes, clientes, histÃ³rico) sale de este dispositivo. La aplicaciÃ³n no incluye
+        analÃ­tica ni publicidad.
       </p>
     </div>
   `;
@@ -2538,11 +2538,11 @@ function importarBackupSeleccionado(file){
   reader.onload = async () => {
     let parsed;
     try{ parsed = JSON.parse(reader.result); }
-    catch(e){ toast('El archivo no es un JSON válido.'); return; }
+    catch(e){ toast('El archivo no es un JSON vÃ¡lido.'); return; }
     if(!parsed || !Array.isArray(parsed.jornadas) || !parsed.config){
       toast('El archivo no tiene el formato esperado.'); return;
     }
-    const ok = await confirmDialog('Vas a sobrescribir TODOS los datos actuales con los de esta copia de seguridad. ¿Continuar?', 'Restaurar', true);
+    const ok = await confirmDialog('Vas a sobrescribir TODOS los datos actuales con los de esta copia de seguridad. Â¿Continuar?', 'Restaurar', true);
     if(!ok) return;
     const def = defaultData();
     const diasGuardados = parsed.config.dias || {};
@@ -2553,7 +2553,7 @@ function importarBackupSeleccionado(file){
     const idsValidos = COLUMNAS_EXPORT.map(c => c.id);
     const columnasGuardadas = Array.isArray(parsed.config.exportColumnas) ? parsed.config.exportColumnas.filter(id => idsValidos.includes(id)) : [];
     // Las copias de seguridad antiguas (con "trayectos") se aceptan igualmente;
-    // esos viajes en coche ya no existen como función y se descartan.
+    // esos viajes en coche ya no existen como funciÃ³n y se descartan.
     DATA = {
       version: 1,
       config: Object.assign({}, def.config, parsed.config, {dias: diasFusionados, exportColumnas: columnasGuardadas.length ? columnasGuardadas : idsValidos}),
@@ -2575,18 +2575,18 @@ function importarBackupSeleccionado(file){
 
 /* ----------------------------- Acceso directo / icono ------------------- */
 /*
- * Genera un icono de app (canvas → PNG) más nítido que el SVG estático y lo
+ * Genera un icono de app (canvas â†’ PNG) mÃ¡s nÃ­tido que el SVG estÃ¡tico y lo
  * declara como apple-touch-icon. El manifest ("manifest.json", con sus
- * icons y shortcuts) se sirve como archivo real y NO se toca aquí: si se
- * sobrescribiera con uno generado en memoria, los accesos rápidos de
- * "Fichar entrada/salida" del icono dejarían de funcionar.
+ * icons y shortcuts) se sirve como archivo real y NO se toca aquÃ­: si se
+ * sobrescribiera con uno generado en memoria, los accesos rÃ¡pidos de
+ * "Fichar entrada/salida" del icono dejarÃ­an de funcionar.
  */
 function configurarAccesoDirecto(){
   try{
     const canvas = document.createElement('canvas');
     canvas.width = 512; canvas.height = 512;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#7c3aed';
+    ctx.fillStyle = '#910048';
     if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(0,0,512,512,112); ctx.fill(); }
     else { ctx.fillRect(0,0,512,512); }
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 34; ctx.lineCap = 'round';
@@ -2613,11 +2613,11 @@ async function instalarApp(){
 }
 function mostrarInstruccionesInstalacion(){
   openModal(`
-    <div class="modal-head"><h3>Añadir a la pantalla de inicio</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="modal-head"><h3>AÃ±adir a la pantalla de inicio</h3><button class="modal-close" data-action="cerrar-modal">âœ•</button></div>
     <div class="section-title">Android (Chrome)</div>
-    <p style="font-size:13.5px;color:var(--muted);line-height:1.6;">Toca el menú ⋮ (arriba a la derecha) y elige «Añadir a pantalla de inicio» o «Instalar aplicación».</p>
+    <p style="font-size:13.5px;color:var(--muted);line-height:1.6;">Toca el menÃº â‹® (arriba a la derecha) y elige Â«AÃ±adir a pantalla de inicioÂ» o Â«Instalar aplicaciÃ³nÂ».</p>
     <div class="section-title">iPhone (Safari)</div>
-    <p style="font-size:13.5px;color:var(--muted);line-height:1.6;">Toca el icono de compartir (el cuadrado con la flecha hacia arriba, abajo en la barra) y elige «Añadir a pantalla de inicio».</p>
+    <p style="font-size:13.5px;color:var(--muted);line-height:1.6;">Toca el icono de compartir (el cuadrado con la flecha hacia arriba, abajo en la barra) y elige Â«AÃ±adir a pantalla de inicioÂ».</p>
   `, {center:true});
 }
 
@@ -2636,41 +2636,41 @@ if(window.matchMedia){
   });
 }
 
-/* ----------------------------- Pantalla de identificación ---------------- */
+/* ----------------------------- Pantalla de identificaciÃ³n ---------------- */
 let _rolElegido = 'trabajador';
 function renderAuthScreen(){
   const el = document.getElementById('authScreen');
   if(!DATA.perfil){
     el.innerHTML = `
       <div class="auth-wrap"><div class="auth-card">
-        <div class="auth-logo">⏱</div>
+        <div class="auth-logo">â±</div>
         <h2>Crea tu perfil</h2>
-        <div class="sub">Este dispositivo aún no tiene ningún perfil configurado.</div>
+        <div class="sub">Este dispositivo aÃºn no tiene ningÃºn perfil configurado.</div>
         <div id="authErrorBox"></div>
         <div class="role-pick">
           <div class="role-opt ${_rolElegido==='trabajador'?'active':''}" data-action="elegir-rol" data-rol="trabajador">
-            <span class="ic">🧑‍🔧</span><b>Trabajador</b><small>Ficho mis horas</small>
+            <span class="ic">ðŸ§‘â€ðŸ”§</span><b>Trabajador</b><small>Ficho mis horas</small>
           </div>
           <div class="role-opt ${_rolElegido==='directivo'?'active':''}" data-action="elegir-rol" data-rol="directivo">
-            <span class="ic">🧑‍💼</span><b>Directivo</b><small>Reviso al equipo</small>
+            <span class="ic">ðŸ§‘â€ðŸ’¼</span><b>Directivo</b><small>Reviso al equipo</small>
           </div>
         </div>
-        <div class="field"><label>Tu nombre</label><input type="text" id="authNombre" placeholder="Ej. María López" autocomplete="name"></div>
-        <div class="field"><label>Contraseña</label><input type="password" id="authPass" placeholder="Mínimo 4 caracteres" autocomplete="new-password"></div>
-        <div class="field"><label>Repite la contraseña</label><input type="password" id="authPass2" autocomplete="new-password"></div>
+        <div class="field"><label>Tu nombre</label><input type="text" id="authNombre" placeholder="Ej. MarÃ­a LÃ³pez" autocomplete="name"></div>
+        <div class="field"><label>ContraseÃ±a</label><input type="password" id="authPass" placeholder="MÃ­nimo 4 caracteres" autocomplete="new-password"></div>
+        <div class="field"><label>Repite la contraseÃ±a</label><input type="password" id="authPass2" autocomplete="new-password"></div>
         <button class="btn btn-primary btn-lg" data-action="crear-perfil">Empezar</button>
-        <p style="font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;">La contraseña solo identifica este perfil en este dispositivo; no se envía a ningún sitio.</p>
+        <p style="font-size:11.5px;color:var(--muted);margin-top:14px;line-height:1.5;">La contraseÃ±a solo identifica este perfil en este dispositivo; no se envÃ­a a ningÃºn sitio.</p>
       </div></div>`;
   } else {
     el.innerHTML = `
       <div class="auth-wrap"><div class="auth-card">
-        <div class="auth-logo">⏱</div>
+        <div class="auth-logo">â±</div>
         <h2>Hola, ${esc(DATA.perfil.nombre)}</h2>
-        <div class="sub">${DATA.perfil.rol==='directivo' ? 'Perfil directivo' : 'Perfil trabajador'} · introduce tu contraseña</div>
+        <div class="sub">${DATA.perfil.rol==='directivo' ? 'Perfil directivo' : 'Perfil trabajador'} Â· introduce tu contraseÃ±a</div>
         <div id="authErrorBox"></div>
-        <div class="field"><label>Contraseña</label><input type="password" id="authPassLogin" autocomplete="current-password"></div>
+        <div class="field"><label>ContraseÃ±a</label><input type="password" id="authPassLogin" autocomplete="current-password"></div>
         <button class="btn btn-primary btn-lg" data-action="iniciar-sesion">Entrar</button>
-        <div class="auth-switch"><a class="link" href="#" data-action="pedir-reset-perfil">¿No eres tú? Restablecer perfil de este dispositivo</a></div>
+        <div class="auth-switch"><a class="link" href="#" data-action="pedir-reset-perfil">Â¿No eres tÃº? Restablecer perfil de este dispositivo</a></div>
       </div></div>`;
     document.getElementById('authPassLogin')?.addEventListener('keydown', e => { if(e.key === 'Enter') iniciarSesion(); });
   }
@@ -2684,8 +2684,8 @@ async function crearPerfil(){
   const pass = document.getElementById('authPass').value;
   const pass2 = document.getElementById('authPass2').value;
   if(!nombre){ mostrarErrorAuth('Escribe tu nombre.'); return; }
-  if(pass.length < 4){ mostrarErrorAuth('La contraseña debe tener al menos 4 caracteres.'); return; }
-  if(pass !== pass2){ mostrarErrorAuth('Las contraseñas no coinciden.'); return; }
+  if(pass.length < 4){ mostrarErrorAuth('La contraseÃ±a debe tener al menos 4 caracteres.'); return; }
+  if(pass !== pass2){ mostrarErrorAuth('Las contraseÃ±as no coinciden.'); return; }
   const passHash = await hashPassword(pass);
   DATA.perfil = { nombre, passHash, rol: _rolElegido };
   DATA.sesionAbierta = true;
@@ -2695,7 +2695,7 @@ async function crearPerfil(){
 async function iniciarSesion(){
   const pass = document.getElementById('authPassLogin').value;
   const hash = await hashPassword(pass);
-  if(hash !== DATA.perfil.passHash){ mostrarErrorAuth('Contraseña incorrecta.'); return; }
+  if(hash !== DATA.perfil.passHash){ mostrarErrorAuth('ContraseÃ±a incorrecta.'); return; }
   DATA.sesionAbierta = true;
   save();
   arrancarAppPrincipal();
@@ -2709,7 +2709,7 @@ function cerrarSesion(){
   renderAuthScreen();
 }
 async function pedirResetPerfil(){
-  const ok = await confirmDialog('Esto borra el nombre/contraseña de este dispositivo (tus fichajes NO se borran). Tendrás que crear el perfil de nuevo. ¿Continuar?', 'Restablecer', true);
+  const ok = await confirmDialog('Esto borra el nombre/contraseÃ±a de este dispositivo (tus fichajes NO se borran). TendrÃ¡s que crear el perfil de nuevo. Â¿Continuar?', 'Restablecer', true);
   if(!ok) return;
   DATA.perfil = null;
   DATA.sesionAbierta = false;
@@ -2729,9 +2729,9 @@ function arrancarAppPrincipal(){
 }
 
 /*
- * Fichaje directo desde los accesos rápidos del icono de la app
- * (manifest "shortcuts" → ?accion=entrada / ?accion=salida). Reutiliza las
- * mismas funciones y validaciones que los botones normales de la pestaña Hoy.
+ * Fichaje directo desde los accesos rÃ¡pidos del icono de la app
+ * (manifest "shortcuts" â†’ ?accion=entrada / ?accion=salida). Reutiliza las
+ * mismas funciones y validaciones que los botones normales de la pestaÃ±a Hoy.
  */
 function procesarAccesoDirecto(){
   const params = new URLSearchParams(window.location.search);
@@ -2745,8 +2745,8 @@ function procesarAccesoDirecto(){
   }
 }
 
-/* ----------------------------- Navegación / render general -------------- */
-// Recuerda la última pestaña visitada para que un refresco de página no
+/* ----------------------------- NavegaciÃ³n / render general -------------- */
+// Recuerda la Ãºltima pestaÃ±a visitada para que un refresco de pÃ¡gina no
 // vuelva siempre a "Hoy" (se guarda aparte de DATA: es solo estado de UI).
 const TABS_VALIDAS = ['hoy','historico','resumen','equipo','ajustes'];
 const TAB_STORAGE_KEY = 'controlHorario_ultimaPestana_v1';
@@ -2777,10 +2777,10 @@ function renderTabContent(tab){
 function renderAll(){
   renderBanner();
   renderTabContent(UI.tab);
-  document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' · ' + fmtTimeHM(Date.now());
+  document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' Â· ' + fmtTimeHM(Date.now());
 }
 
-/* ----------------------------- Delegación de eventos --------------------- */
+/* ----------------------------- DelegaciÃ³n de eventos --------------------- */
 document.addEventListener('click', async (e) => {
   const t = e.target.closest('[data-action]');
   if(!t) return;
@@ -2836,7 +2836,7 @@ document.addEventListener('click', async (e) => {
       const marcaActual = diaCalendarioLaboral(d.fecha);
       if(d.tipo === 'normal') quitarMarcaCalendarioLaboral(d.fecha);
       // Si ya estaba en ese mismo tipo, no se vuelve a marcar: evita perder
-      // un nombre de festivo o unas horas de compensación editados a mano.
+      // un nombre de festivo o unas horas de compensaciÃ³n editados a mano.
       else if(!marcaActual || marcaActual.tipo !== d.tipo) marcarDiaCalendarioLaboral(d.fecha, d.tipo);
       renderAll();
       abrirDiaCalendario(d.fecha);
@@ -2962,8 +2962,8 @@ document.getElementById('themeQuickToggle').addEventListener('click', () => {
 /* ----------------------------- Arranque --------------------------------- */
 function init(){
   configurarAccesoDirecto();
-  // Evita fichajes de entrada duplicados si hay más de uno abierto por datos corruptos:
-  // conserva sólo el primero abierto encontrado (no debería ocurrir con el flujo normal).
+  // Evita fichajes de entrada duplicados si hay mÃ¡s de uno abierto por datos corruptos:
+  // conserva sÃ³lo el primero abierto encontrado (no deberÃ­a ocurrir con el flujo normal).
   const abiertas = DATA.jornadas.filter(j => j.salida == null);
   if(abiertas.length > 1){
     for(let i=1;i<abiertas.length;i++) abiertas[i].salida = abiertas[i].entrada;
@@ -2980,7 +2980,7 @@ function init(){
   setInterval(() => {
     if(!sesionActiva()) return;
     tickLive();
-    document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' · ' + fmtTimeHM(Date.now());
+    document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' Â· ' + fmtTimeHM(Date.now());
   }, 1000);
 }
 init();
