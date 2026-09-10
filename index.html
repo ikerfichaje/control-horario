@@ -535,7 +535,8 @@ const UI = {
   historico: { filtro: 'semana', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '' },
   resumen: { periodo: 'semana', mesRef: todayStr() },
   bannerDismissed: false,
-  avisoDescartadoFecha: null
+  avisoDescartadoFecha: null,
+  informeMensual: null // { anio, seleccionados: Set<clave> } — estado del modal "Informe mensual", se resetea cada vez que se abre
 };
 
 /* ----------------------------- Consultas de datos ------------------------ */
@@ -2025,10 +2026,17 @@ function construirFilasInformeMensual(anio, mesIdx){
   const filas = [];
   for(let d=1; d<=totalDias; d++){
     const fecha = `${anio}-${pad2(mesIdx+1)}-${pad2(d)}`;
-    const j = jornadaDeFecha(fecha);
+    // Un mismo día puede tener varios tramos fichados (entrada/salida repetidos
+    // varias veces), así que se suman todos en vez de quedarse con el primero.
+    const jornadasDia = DATA.jornadas.filter(j => j.fecha === fecha).sort((a,b) => a.entrada - b.entrada);
     const marca = diaCalendarioLaboral(fecha);
     const viaje = obtenerViaje(fecha);
-    const calc = j ? calcJornada(j, Date.now()) : null;
+    const calcs = jornadasDia.map(j => calcJornada(j, Date.now()));
+    const efectivoTotalMs = calcs.reduce((s,c) => s + c.efectivoTotal, 0);
+    // calc.extra ya solo es >0 en días de viaje (lo decide calcJornada); se
+    // muestra siempre que exista, aunque ese mismo día también esté marcado
+    // como festivo/vacaciones/compensación en el calendario.
+    const extraTotalMs = calcs.reduce((s,c) => s + c.extra, 0);
 
     let tipo = 'normal';
     if(marca) tipo = marca.tipo;
@@ -2039,17 +2047,14 @@ function construirFilasInformeMensual(anio, mesIdx){
     else if(tipo === 'vacaciones') comentario = 'Vacaciones';
     else if(tipo === 'compensacion') comentario = 'Compensación de horas';
     else if(tipo === 'viaje') comentario = [viaje.lugar, viaje.cliente].filter(Boolean).join(' · ') || 'Viaje';
-    else comentario = (j && j.observaciones) || '';
+    else comentario = jornadasDia.map(j => j.observaciones).filter(Boolean).join(' · ');
 
     filas.push({
       fecha, tipo,
-      horaInicio: j ? fmtTimeHM(j.entrada) : '',
-      horaFin: j ? (j.salida ? fmtTimeHM(j.salida) : '(abierto)') : '',
-      horasEfectivas: j ? fmtHM(calc.efectivoTotal) : '',
-      // calc.extra ya solo es >0 en días de viaje (lo decide calcJornada); se
-      // muestra siempre que exista, aunque ese mismo día también esté marcado
-      // como festivo/vacaciones/compensación en el calendario.
-      horasExtra: (j && calc.extra > 0) ? fmtHM(calc.extra) : '',
+      horaInicio: jornadasDia.map(j => fmtTimeHM(j.entrada)).join(', '),
+      horaFin: jornadasDia.map(j => j.salida ? fmtTimeHM(j.salida) : '(abierto)').join(', '),
+      horasEfectivas: jornadasDia.length ? fmtHM(efectivoTotalMs) : '',
+      horasExtra: extraTotalMs > 0 ? fmtHM(extraTotalMs) : '',
       horasCompensadas: tipo === 'compensacion' ? fmtHM((Number(marca.horas)||0) * 3600000) : '',
       comentario
     });
@@ -2087,31 +2092,49 @@ function mesesDisponiblesInforme(){
   return meses.reverse(); // el más reciente primero
 }
 
+// El modal muestra primero un selector de año (chips) y debajo solo los meses
+// de ese año, para no acabar con una lista larga y con scroll al acumular
+// varios años de datos. La selección de meses se guarda en UI.informeMensual
+// .seleccionados (no en el DOM) precisamente para no perderla al cambiar de
+// año. mesesDisponiblesInforme() ya limita el rango a "desde el primer dato
+// fichado hasta el mes actual", así que nunca aparecen años/meses sin datos.
 function abrirModalInformeMensual(){
   const meses = mesesDisponiblesInforme();
-  const filasHtml = meses.map(m => {
+  const anios = [...new Set(meses.map(m => m.anio))].sort((a,b) => b - a);
+
+  if(!UI.informeMensual) UI.informeMensual = { anio: anios[0], seleccionados: new Set() };
+  if(!anios.includes(UI.informeMensual.anio)) UI.informeMensual.anio = anios[0];
+
+  const aniosHtml = anios.map(a => `
+    <button type="button" class="chip ${a === UI.informeMensual.anio ? 'active' : ''}" data-action="informe-mes-anio" data-anio="${a}">${a}</button>
+  `).join('');
+
+  const mesesAnio = meses.filter(m => m.anio === UI.informeMensual.anio).sort((a,b) => a.mesIdx - b.mesIdx);
+  const mesesHtml = mesesAnio.map(m => {
     const info = DATA.informesDescargados[m.clave];
     const estado = info
-      ? `<br><span style="color:var(--success);font-size:12px;">✅ Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}${info.incompleto ? ' (incompleto)' : ''}</span>`
+      ? `<span style="color:var(--success);font-size:12px;display:block;">✅ Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}${info.incompleto ? ' (incompleto)' : ''}</span>`
       : '';
-    const label = `${MONTH_NAMES[m.mesIdx]} ${m.anio}` + (m.esActual ? ' · en curso' : '');
+    const checked = UI.informeMensual.seleccionados.has(m.clave) ? 'checked' : '';
     return `
     <label class="mini-list-item" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:8px;">
-      <input type="checkbox" class="informe-mes-chk" value="${m.clave}" style="margin-top:3px;">
-      <span style="flex:1;font-size:14px;">${esc(label)}${estado}</span>
+      <input type="checkbox" class="informe-mes-chk" value="${m.clave}" ${checked} style="margin-top:3px;">
+      <span style="flex:1;font-size:14px;">${MONTH_NAMES[m.mesIdx]}${m.esActual ? ' · en curso' : ''}${estado}</span>
     </label>`;
   }).join('');
 
   openModal(`
     <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
     <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Elige uno o varios meses: viaje en verde, vacaciones en azul, festivo en amarillo y compensación en naranja. Si eliges varios, el Excel llevará una tabla separada por cada mes. El mes en curso se descarga marcado como incompleto (solo hasta hoy).</p>
-    <div style="max-height:320px;overflow-y:auto;margin-bottom:14px;">${filasHtml || '<p style="color:var(--muted);font-size:13px;">Todavía no hay meses con datos.</p>'}</div>
-    <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">📊 Descargar seleccionados</button>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:8px;">Toca un año para ver sus meses. Vuelve a tocar el año activo para marcar (o desmarcar) todos sus meses.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${aniosHtml}</div>
+    <div style="margin-bottom:14px;">${mesesHtml || '<p style="color:var(--muted);font-size:13px;">No hay meses con datos en este año.</p>'}</div>
+    <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">📊 Descargar seleccionados (<span id="informeMesSelCount">${UI.informeMensual.seleccionados.size}</span>)</button>
   `);
 }
 
 function confirmarInformeMensual(){
-  const claves = Array.from(document.querySelectorAll('.informe-mes-chk:checked')).map(chk => chk.value);
+  const claves = UI.informeMensual ? [...UI.informeMensual.seleccionados] : [];
   if(!claves.length){ toast('Selecciona al menos un mes.'); return; }
   closeModal();
   generarInformesMensuales(claves);
@@ -2161,7 +2184,10 @@ function generarInformesMensuales(claves){
  * con Excel/LibreOffice, estos recomprimen con DEFLATE y no se podrá
  * leer: se avisa claramente en vez de fallar en silencio.
  * ------------------------------------------------------------------- */
-function extraerEntradaZip(bytes, nombreBuscado){
+// Recorre una sola vez el directorio central del zip y devuelve, para cada
+// entrada, su nombre y una función para extraer sus bytes sin comprimir
+// (solo soporta STORE, como genera esta misma app).
+function listarEntradasZip(bytes){
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const len = bytes.length;
   let eocd = -1;
@@ -2172,6 +2198,7 @@ function extraerEntradaZip(bytes, nombreBuscado){
   if(eocd < 0) throw new Error('No es un archivo .xlsx válido.');
   const numRegistros = view.getUint16(eocd + 10, true);
   let ptr = view.getUint32(eocd + 16, true);
+  const entradas = [];
   for(let i = 0; i < numRegistros; i++){
     if(view.getUint32(ptr, true) !== 0x02014b50) throw new Error('Estructura del .xlsx inesperada.');
     const compSize = view.getUint32(ptr + 20, true);
@@ -2180,26 +2207,38 @@ function extraerEntradaZip(bytes, nombreBuscado){
     const commentLen = view.getUint16(ptr + 32, true);
     const localOffset = view.getUint32(ptr + 42, true);
     const nombre = new TextDecoder().decode(bytes.subarray(ptr + 46, ptr + 46 + nameLen));
-    if(nombre === nombreBuscado){
+    entradas.push({ nombre, datos: () => {
       const lfMethod = view.getUint16(localOffset + 8, true);
       const lfNameLen = view.getUint16(localOffset + 26, true);
       const lfExtraLen = view.getUint16(localOffset + 28, true);
       if(lfMethod !== 0) throw new Error('Este Excel usa compresión no soportada (¿se guardó desde Excel/LibreOffice? Importa el archivo original descargado desde la app).');
       const dataStart = localOffset + 30 + lfNameLen + lfExtraLen;
       return bytes.subarray(dataStart, dataStart + compSize);
-    }
+    }});
     ptr += 46 + nameLen + extraLen + commentLen;
   }
-  throw new Error('El archivo no contiene los datos esperados (¿es un Excel exportado por esta app?).');
+  return entradas;
 }
-// Lectura "en bruto" de la única hoja de un .xlsx: array de filas, cada una
-// como array de valores de celda en el orden en que aparecen en el XML.
-// Como nuestro propio generador siempre escribe una celda por columna usada
+function extraerEntradaZip(bytes, nombreBuscado){
+  const entrada = listarEntradasZip(bytes).find(e => e.nombre === nombreBuscado);
+  if(!entrada) throw new Error('El archivo no contiene los datos esperados (¿es un Excel exportado por esta app?).');
+  return entrada.datos();
+}
+// Nombres de las hojas (xl/worksheets/sheetN.xml) presentes en el .xlsx, en
+// orden numérico (1, 2, 3…): un informe puede llevar una hoja por mes.
+function nombresHojasWorksheet(bytes){
+  return listarEntradasZip(bytes)
+    .map(e => e.nombre)
+    .filter(n => /^xl\/worksheets\/sheet\d+\.xml$/.test(n))
+    .sort((a,b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]));
+}
+// Lectura "en bruto" de una hoja del .xlsx: array de filas, cada una como
+// array de valores de celda en el orden en que aparecen en el XML. Como
+// nuestro propio generador siempre escribe una celda por columna usada
 // (incluso vacía) y omite del todo las filas separadoras en blanco, esta
 // lectura posicional reconstruye exactamente la estructura del informe.
-function leerFilasCrudasXlsx(arrayBuffer){
-  const bytes = new Uint8Array(arrayBuffer);
-  const xmlBytes = extraerEntradaZip(bytes, 'xl/worksheets/sheet1.xml');
+function leerFilasCrudasDeHoja(bytes, nombreHoja){
+  const xmlBytes = extraerEntradaZip(bytes, nombreHoja);
   const xml = new TextDecoder('utf-8').decode(xmlBytes);
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   if(doc.querySelector('parsererror')) throw new Error('No se pudo leer el contenido del Excel.');
@@ -2217,7 +2256,7 @@ function leerFilasCrudasXlsx(arrayBuffer){
   );
 }
 function parseXlsxRows(arrayBuffer){
-  const filas = leerFilasCrudasXlsx(arrayBuffer);
+  const filas = leerFilasCrudasDeHoja(new Uint8Array(arrayBuffer), 'xl/worksheets/sheet1.xml');
   if(!filas.length) throw new Error('El Excel está vacío.');
   return { headers: filas[0].map(h => String(h).trim()), rows: filas.slice(1) };
 }
@@ -2228,8 +2267,7 @@ function parseXlsxRows(arrayBuffer){
  * inicio, cabecera de columnas, filas día a día (con su tipo de día) y saldo
  * final. No sirve para leer el exportador genérico "Exportar a Excel/CSV".
  */
-function parseInformeMensualXlsx(arrayBuffer){
-  const filas = leerFilasCrudasXlsx(arrayBuffer);
+function parseHojaInformeMensual(filas){
   if(filas.length < 5) throw new Error('El archivo no tiene el formato de un informe mensual.');
   const nombre = String(filas[0][0] || '').trim();
   const mesLabel = String(filas[1][0] || '').replace(/^Mes:\s*/, '').trim();
@@ -2269,18 +2307,46 @@ function parseInformeMensualXlsx(arrayBuffer){
   if(!dataRows.length) throw new Error('El informe no contiene ningún día.');
   return { nombre, mesLabel, saldoInicioMs, saldoFinMs, filas: dataRows };
 }
+// Un mismo archivo puede traer un solo mes (una hoja) o varios (p.ej. "todo
+// el año", una hoja por mes, como genera esta misma app al seleccionar
+// varios meses de golpe). Se parsean todas las hojas y se ignoran, sin
+// abortar la importación entera, las que no tengan formato de informe
+// mensual (por si el archivo trajera alguna hoja ajena).
+function parseInformesMensualesXlsx(arrayBuffer){
+  const bytes = new Uint8Array(arrayBuffer);
+  const nombresHojas = nombresHojasWorksheet(bytes);
+  if(!nombresHojas.length) throw new Error('El archivo no contiene ninguna hoja de cálculo.');
+  const informes = [];
+  let hojasIgnoradas = 0;
+  nombresHojas.forEach(nombreHoja => {
+    try{
+      informes.push(parseHojaInformeMensual(leerFilasCrudasDeHoja(bytes, nombreHoja)));
+    }catch(e){
+      hojasIgnoradas++;
+    }
+  });
+  if(!informes.length) throw new Error('El archivo no tiene el formato de un informe mensual. Importa el "Informe mensual" descargado desde la pestaña Resumen.');
+  return { informes, hojasIgnoradas };
+}
 
 let _pendienteImportEquipo = null;
 async function importarExcelEquipo(file){
   try{
     const buf = await file.arrayBuffer();
-    const informe = parseInformeMensualXlsx(buf);
-    _pendienteImportEquipo = { informe, archivoNombre: file.name };
+    const { informes, hojasIgnoradas } = parseInformesMensualesXlsx(buf);
+    _pendienteImportEquipo = { informes, archivoNombre: file.name };
+    const resumenMeses = informes.length === 1
+      ? `${informes[0].mesLabel || ''} · ${informes[0].filas.length} días`
+      : `${informes.length} meses: ${informes.map(i => i.mesLabel || '?').join(', ')}`;
+    const avisoIgnoradas = hojasIgnoradas
+      ? `<p style="font-size:12px;color:var(--muted);margin-bottom:10px;">⚠️ ${hojasIgnoradas} hoja(s) del archivo no tenían formato de informe mensual y se han ignorado.</p>`
+      : '';
     openModal(`
       <div class="modal-head"><h3>Importar informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-      <div class="field"><label>Nombre del trabajador</label><input type="text" id="impNombreTrabajador" value="${esc(informe.nombre)}" placeholder="Nombre y apellidos"></div>
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">${esc(informe.mesLabel || '')} · ${informe.filas.length} días · «${esc(file.name)}»</p>
-      <button class="btn btn-primary btn-lg" data-action="confirmar-importar-equipo">Guardar informe</button>
+      <div class="field"><label>Nombre del trabajador</label><input type="text" id="impNombreTrabajador" value="${esc(informes[0].nombre)}" placeholder="Nombre y apellidos"></div>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">${esc(resumenMeses)} · «${esc(file.name)}»</p>
+      ${avisoIgnoradas}
+      <button class="btn btn-primary btn-lg" data-action="confirmar-importar-equipo">Guardar informe${informes.length > 1 ? 's' : ''}</button>
     `, {onOpen: () => document.getElementById('impNombreTrabajador').focus()});
   }catch(e){
     toast('No se pudo importar: ' + e.message);
@@ -2289,45 +2355,78 @@ async function importarExcelEquipo(file){
 async function confirmarImportarEquipo(){
   const nombre = document.getElementById('impNombreTrabajador').value.trim();
   if(!nombre){ toast('Escribe el nombre del trabajador.'); return; }
-  const { informe, archivoNombre } = _pendienteImportEquipo;
-  let horasExtraMs = 0, horasCompensadasMs = 0, horasEfectivasMs = 0, diasConFichaje = 0;
-  informe.filas.forEach(f => {
-    horasExtraMs += parseHMTexto(f.horasExtra);
-    horasCompensadasMs += parseHMTexto(f.horasCompensadas);
-    horasEfectivasMs += parseHMTexto(f.horasEfectivas);
-    if(f.horaInicio) diasConFichaje++;
-  });
-  const fechas = informe.filas.map(f => f.fecha).sort();
-  const fechaMin = fechas[0], fechaMax = fechas[fechas.length-1];
+  const { informes, archivoNombre } = _pendienteImportEquipo;
 
-  // Si ya existe un informe de ese mismo trabajador y mes (año-mes de la
-  // primera fecha), se sustituye en vez de duplicarlo: si no, cada
-  // reimportación inflaba los totales del trabajador (horas contadas dos
-  // veces) y aparecía repetido en "Informes recibidos".
-  const claveMes = fechaMin ? fechaMin.slice(0, 7) : '';
-  const existente = DATA.equipo.find(i =>
-    i.nombreTrabajador.trim().toLowerCase() === nombre.toLowerCase() &&
-    (i.fechaMin || '').slice(0, 7) === claveMes
-  );
-  if(existente){
-    const ok = await confirmDialog(`Ya habías importado un informe de ${nombre} para ${informe.mesLabel || 'este periodo'}. ¿Quieres sustituirlo por este archivo nuevo?`, 'Sustituir', true);
+  // Cada hoja del archivo (un mes) se procesa por separado: así, un informe
+  // de "todo el año" con una hoja por mes sustituye exactamente los meses
+  // que ya tuviéramos de ese trabajador (por clave año-mes) y añade el
+  // resto como nuevos, sin duplicar ni sumar dos veces ningún mes.
+  const bloques = informes.map(informe => {
+    let horasExtraMs = 0, horasCompensadasMs = 0, horasEfectivasMs = 0, diasConFichaje = 0;
+    informe.filas.forEach(f => {
+      horasExtraMs += parseHMTexto(f.horasExtra);
+      horasCompensadasMs += parseHMTexto(f.horasCompensadas);
+      horasEfectivasMs += parseHMTexto(f.horasEfectivas);
+      if(f.horaInicio) diasConFichaje++;
+    });
+    const fechas = informe.filas.map(f => f.fecha).sort();
+    const fechaMin = fechas[0], fechaMax = fechas[fechas.length-1];
+    return {
+      claveMes: fechaMin ? fechaMin.slice(0, 7) : '',
+      mesLabel: informe.mesLabel,
+      datos: {
+        nombreTrabajador: nombre, archivoNombre, fechaImportacion: Date.now(),
+        mesLabel: informe.mesLabel,
+        saldoInicioMs: informe.saldoInicioMs, saldoFinMs: informe.saldoFinMs,
+        fechaMin, fechaMax,
+        filas: informe.filas,
+        totales: { horasExtraMs, horasCompensadasMs, horasEfectivasMs, dias: diasConFichaje, totalDiasMes: informe.filas.length }
+      }
+    };
+  });
+
+  const existentesPorClave = new Map();
+  bloques.forEach(b => {
+    const existente = DATA.equipo.find(i =>
+      i.nombreTrabajador.trim().toLowerCase() === nombre.toLowerCase() &&
+      (i.fechaMin || '').slice(0, 7) === b.claveMes
+    );
+    if(existente) existentesPorClave.set(b.claveMes, existente);
+  });
+
+  if(existentesPorClave.size){
+    // Si el archivo nuevo trae MENOS días con fichaje que el informe que ya
+    // teníamos de ese mes (p.ej. se reimporta por error una versión vieja o
+    // incompleta encima de una ya completa), se avisa explícitamente para no
+    // perder datos sin darse cuenta; sustituir un mes incompleto por su
+    // versión completa (con más días) no lleva aviso, es el caso normal.
+    const meses = bloques.filter(b => existentesPorClave.has(b.claveMes)).map(b => {
+      const existente = existentesPorClave.get(b.claveMes);
+      const diasNuevo = b.datos.totales.dias, diasViejo = existente.totales.dias;
+      const etiqueta = b.mesLabel || b.claveMes;
+      return diasNuevo < diasViejo
+        ? `${etiqueta} (⚠️ el que ya tienes tiene más días con fichaje: ${diasViejo} frente a ${diasNuevo})`
+        : etiqueta;
+    }).join(', ');
+    const ok = await confirmDialog(
+      bloques.length === 1
+        ? `Ya habías importado un informe de ${nombre} para ${meses}. ¿Quieres sustituirlo por este archivo nuevo?`
+        : `Ya habías importado informes de ${nombre} para: ${meses}. Se sustituirán por los de este archivo${bloques.length > existentesPorClave.size ? ' (el resto de meses se añadirán nuevos)' : ''}. ¿Continuar?`,
+      'Sustituir', true);
     if(!ok) return;
   }
 
-  const datos = {
-    nombreTrabajador: nombre, archivoNombre, fechaImportacion: Date.now(),
-    mesLabel: informe.mesLabel,
-    saldoInicioMs: informe.saldoInicioMs, saldoFinMs: informe.saldoFinMs,
-    fechaMin, fechaMax,
-    filas: informe.filas,
-    totales: { horasExtraMs, horasCompensadasMs, horasEfectivasMs, dias: diasConFichaje, totalDiasMes: informe.filas.length }
-  };
-  if(existente) Object.assign(existente, datos);
-  else DATA.equipo.push({ id: uid(), ...datos });
+  bloques.forEach(b => {
+    const existente = existentesPorClave.get(b.claveMes);
+    if(existente) Object.assign(existente, b.datos);
+    else DATA.equipo.push({ id: uid(), ...b.datos });
+  });
 
   save();
   closeModal();
-  toast(existente ? `Informe de ${nombre} sustituido.` : `Informe de ${nombre} importado (${informe.mesLabel || informe.filas.length + ' días'}).`);
+  toast(bloques.length === 1
+    ? (existentesPorClave.size ? `Informe de ${nombre} sustituido.` : `Informe de ${nombre} importado (${bloques[0].mesLabel || bloques[0].datos.filas.length + ' días'}).`)
+    : `${bloques.length} meses de ${nombre} importados${existentesPorClave.size ? ` (${existentesPorClave.size} sustituidos)` : ''}.`);
   renderEquipo();
 }
 async function eliminarInforme(id){
@@ -2937,7 +3036,24 @@ document.addEventListener('click', async (e) => {
     case 'abrir-exportar-excel': abrirModalExportar('xlsx'); break;
     case 'abrir-exportar-csv': abrirModalExportar('csv'); break;
     case 'confirmar-exportar': confirmarExportar(d.tipo); break;
-    case 'abrir-informe-mensual': abrirModalInformeMensual(); break;
+    case 'abrir-informe-mensual': UI.informeMensual = null; abrirModalInformeMensual(); break;
+    case 'informe-mes-anio': {
+      const anio = Number(d.anio);
+      if(UI.informeMensual.anio === anio){
+        // Ya estábamos en este año: un segundo clic en el mismo chip marca
+        // (o desmarca, si ya estaban todos) todos sus meses de golpe.
+        const mesesAnio = mesesDisponiblesInforme().filter(m => m.anio === anio);
+        const todosMarcados = mesesAnio.every(m => UI.informeMensual.seleccionados.has(m.clave));
+        mesesAnio.forEach(m => {
+          if(todosMarcados) UI.informeMensual.seleccionados.delete(m.clave);
+          else UI.informeMensual.seleccionados.add(m.clave);
+        });
+      } else {
+        UI.informeMensual.anio = anio;
+      }
+      abrirModalInformeMensual();
+      break;
+    }
     case 'confirmar-informe-mensual': confirmarInformeMensual(); break;
     case 'export-cols-todos':
       document.querySelectorAll('.export-col-chk').forEach(chk => chk.checked = true);
@@ -3033,6 +3149,12 @@ document.addEventListener('change', (e) => {
   if(e.target.id === 'fileImportExcelEquipo' && e.target.files[0]){
     importarExcelEquipo(e.target.files[0]);
     e.target.value = '';
+  }
+  if(e.target.classList && e.target.classList.contains('informe-mes-chk')){
+    if(e.target.checked) UI.informeMensual.seleccionados.add(e.target.value);
+    else UI.informeMensual.seleccionados.delete(e.target.value);
+    const contador = document.getElementById('informeMesSelCount');
+    if(contador) contador.textContent = UI.informeMensual.seleccionados.size;
   }
 });
 
