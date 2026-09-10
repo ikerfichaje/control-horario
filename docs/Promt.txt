@@ -1,0 +1,922 @@
+
+
+Quiero que desarrolles una aplicación completa de CONTROL HORARIO / FICHAJE DE TRABAJO en un único archivo HTML autocontenido, pensada principalmente para utilizarse desde el teléfono móvil, pero que también funcione perfectamente en ordenador.
+
+IMPORTANTE:
+
+* Entrégame un único archivo `index.html`.
+* Debe contener dentro del propio archivo HTML todo el CSS y JavaScript necesario.
+* No debe necesitar servidor, backend ni base de datos externa para funcionar.
+* Los datos deben guardarse automáticamente en el dispositivo mediante `localStorage` o IndexedDB.
+* La interfaz debe estar en español.
+* Debe ser moderna, limpia, profesional, sencilla de usar y totalmente responsive para móvil.
+* Debe funcionar bien tanto en Android como en iPhone usando el navegador.
+* No quiero simplemente una maqueta visual: todas las funciones deben estar programadas y ser funcionales.
+
+OBJETIVO PRINCIPAL
+
+Quiero una aplicación personal para controlar:
+
+1. Mis fichajes de entrada y salida.
+2. Las horas normales trabajadas.
+3. Las horas extra.
+4. Los descansos.
+5. El tiempo destinado a comer.
+6. Los desplazamientos/trayectos en coche.
+7. El histórico diario, semanal y mensual.
+8. La exportación de toda la información a Excel.
+
+====================
+
+1. CONFIGURACIÓN DEL HORARIO HABITUAL
+   ====================
+
+Debe existir una sección llamada "Configuración" donde pueda indicar mi horario laboral habitual.
+
+Quiero poder configurar:
+
+* Hora habitual de entrada.
+* Hora habitual de salida.
+* Número de horas normales que debo trabajar cada día.
+* Tiempo habitual de descanso.
+* Tiempo habitual de comida.
+* Qué días de la semana trabajo normalmente.
+
+Ejemplo:
+
+Entrada habitual: 08:00
+Salida habitual: 17:00
+Horas de trabajo efectivo: 8 horas
+Descanso: 15 minutos
+Comida: 45 minutos
+
+Debe permitirme decidir si los descansos y la comida:
+
+* Se descuentan automáticamente.
+* Se registran manualmente cada día.
+
+También quiero poder configurar un horario diferente para cada día de la semana.
+
+Por ejemplo:
+
+Lunes: 08:00 - 17:00
+Martes: 08:00 - 17:00
+Miércoles: 08:00 - 17:00
+Jueves: 08:00 - 17:00
+Viernes: 08:00 - 14:00
+
+Debe permitirse trabajar en turnos que atraviesen la medianoche.
+
+====================
+2. FICHAJE DE ENTRADA
+=====================
+
+En la pantalla principal quiero un botón grande:
+
+"FICHAR ENTRADA"
+
+Cuando lo pulse:
+
+* Registrar fecha.
+* Registrar hora exacta.
+* Comenzar un contador en tiempo real.
+* Mostrar claramente que actualmente estoy trabajando.
+
+Después de fichar entrada, quiero ver algo similar a:
+
+Trabajando desde: 08:03
+Tiempo total: 05:34
+Tiempo efectivo: 04:49
+Jornada prevista: 08:00
+Tiempo restante: 03:11
+
+El contador debe continuar funcionando aunque cierre la página y vuelva a abrirla posteriormente.
+
+No debe depender de mantener abierta la página continuamente.
+
+====================
+3. FICHAJE DE SALIDA
+====================
+
+Mientras exista un fichaje abierto debe aparecer un botón grande:
+
+"FICHAR SALIDA"
+
+Al pulsarlo:
+
+* Registrar hora exacta de salida.
+* Detener el contador.
+* Calcular las horas trabajadas.
+* Restar descansos.
+* Restar comida.
+* Calcular horas normales.
+* Calcular horas extra.
+
+Ejemplo:
+
+Entrada: 08:00
+Salida: 18:00
+Descanso: 15 minutos
+Comida: 45 minutos
+
+Tiempo presente:
+10:00
+
+Tiempo descontado:
+1:00
+
+Trabajo efectivo:
+9:00
+
+Jornada normal:
+8:00
+
+Horas extra:
+1:00
+
+====================
+4. HORAS EXTRA AUTOMÁTICAS
+==========================
+
+Esta función es especialmente importante.
+
+Si mi jornada laboral configurada es de 8 horas y todavía NO he fichado salida cuando he terminado esas 8 horas efectivas, el sistema debe continuar contando automáticamente el tiempo adicional como HORAS EXTRA.
+
+Ejemplo:
+
+Entrada: 08:00
+Trabajo normal necesario: 8 horas
+Descansos descontados: 1 hora
+
+A las 17:00 completo mis 8 horas efectivas.
+
+Si sigo fichado:
+
+17:15 → 00:15 de horas extra
+17:30 → 00:30 de horas extra
+18:00 → 01:00 de horas extra
+
+Quiero que este contador de horas extra se actualice en tiempo real.
+
+Mostrar claramente:
+
+HORAS NORMALES
+08:00
+
+HORAS EXTRA
+01:27
+
+Las horas extra deben seguir aumentando hasta que pulse "Fichar salida".
+
+IMPORTANTE:
+El cálculo debe basarse en TIEMPO EFECTIVAMENTE TRABAJADO y no únicamente en la hora habitual de salida.
+
+====================
+5. DESCANSOS
+============
+
+Quiero poder registrar descansos durante la jornada.
+
+Botón:
+
+"INICIAR DESCANSO"
+
+Al pulsarlo:
+
+* Guardar hora de inicio.
+* Pausar el contador de tiempo efectivo de trabajo.
+
+Después mostrar:
+
+"FINALIZAR DESCANSO"
+
+Al pulsarlo:
+
+* Registrar duración del descanso.
+* Continuar contando el trabajo efectivo.
+
+Debe ser posible realizar varios descansos durante el mismo día.
+
+Ejemplo:
+
+10:15 - 10:30 → 15 minutos
+15:30 - 15:40 → 10 minutos
+
+Total descansos:
+25 minutos
+
+====================
+6. TIEMPO DE COMIDA
+===================
+
+Quiero una función específica para comer.
+
+Botón:
+
+"INICIAR COMIDA"
+
+y después:
+
+"FINALIZAR COMIDA"
+
+Debe registrar:
+
+* Hora de inicio.
+* Hora de finalización.
+* Duración.
+
+Este tiempo debe descontarse de las horas efectivamente trabajadas.
+
+Quiero poder decidir desde Configuración si el tiempo de comida:
+
+* Se registra manualmente.
+* Se descuenta automáticamente una cantidad fija.
+
+====================
+7. DESPLAZAMIENTOS Y TIEMPO EN COCHE
+====================================
+
+Quiero poder registrar el tiempo que paso conduciendo o realizando desplazamientos relacionados con el trabajo.
+
+Debe existir un botón:
+
+"INICIAR TRAYECTO"
+
+Al pulsarlo quiero poder indicar:
+
+* Lugar de origen.
+* Lugar de destino.
+* Motivo del trayecto.
+* Kilómetros, si los conozco.
+* Observaciones.
+
+Después:
+
+"FINALIZAR TRAYECTO"
+
+Debe registrar automáticamente:
+
+* Hora de inicio.
+* Hora de finalización.
+* Duración total.
+
+Quiero poder realizar varios trayectos durante el día.
+
+Ejemplo:
+
+08:30 - 09:10
+Barcelona → Sabadell
+40 minutos
+
+14:20 - 14:55
+Sabadell → Terrassa
+35 minutos
+
+Total coche:
+1 hora 15 minutos
+
+====================
+8. GOOGLE MAPS
+==============
+
+Para cada trayecto quiero poder utilizar Google Maps.
+
+Añade una opción:
+
+"ABRIR EN GOOGLE MAPS"
+
+que construya automáticamente una ruta con:
+
+* Origen.
+* Destino.
+
+También quiero, cuando el navegador lo permita, poder utilizar mi ubicación actual mediante la API de geolocalización del navegador.
+
+Debe existir un botón:
+
+"Usar mi ubicación actual"
+
+IMPORTANTE:
+No quiero que la aplicación dependa obligatoriamente de una API de pago de Google Maps.
+
+Para abrir rutas puede utilizar URLs/deep links oficiales de Google Maps.
+
+Si no es posible calcular automáticamente distancia y tiempo sin una API externa, permite introducir manualmente:
+
+* Kilómetros.
+* Tiempo.
+* Origen.
+* Destino.
+
+No inventes datos.
+
+====================
+9. TRAYECTOS COMO TIEMPO DE TRABAJO
+===================================
+
+En Configuración quiero una opción:
+
+"Contabilizar tiempo de trayecto como tiempo trabajado"
+
+Sí / No.
+
+Si está activada:
+El tiempo en coche relacionado con el trabajo debe incluirse dentro de mis horas efectivamente trabajadas.
+
+Si está desactivada:
+Debe contabilizarse de forma independiente.
+
+====================
+10. PANEL PRINCIPAL
+===================
+
+Quiero que la pantalla principal sea muy fácil de consultar desde el móvil.
+
+Debe mostrar como mínimo:
+
+FECHA DE HOY
+
+Estado:
+TRABAJANDO / FUERA DEL TRABAJO / DESCANSO / COMIDA / TRAYECTO
+
+Hora entrada:
+08:02
+
+Tiempo desde entrada:
+09:25
+
+Descansos:
+00:15
+
+Comida:
+00:45
+
+Trabajo efectivo:
+08:25
+
+Jornada normal:
+08:00
+
+Horas extra:
+00:25
+
+Tiempo en coche:
+01:20
+
+También quiero una barra de progreso de mi jornada.
+
+Ejemplo:
+
+████████████████░░ 7h 15m / 8h
+
+Al superar las horas normales debe quedar visualmente claro que estoy generando horas extra.
+
+====================
+11. HISTÓRICO
+=============
+
+Crear una sección:
+
+"HISTÓRICO"
+
+Debe poder consultar:
+
+* Hoy.
+* Esta semana.
+* Este mes.
+* Mes anterior.
+* Rango personalizado de fechas.
+
+Cada día debe mostrar:
+
+Fecha
+Entrada
+Salida
+Descanso
+Comida
+Horas efectivas
+Horas normales
+Horas extra
+Horas en coche
+Kilómetros
+Observaciones
+
+Quiero poder pulsar sobre cualquier día para ver todos los detalles.
+
+====================
+12. RESUMEN SEMANAL
+===================
+
+Mostrar:
+
+Horas trabajadas:
+40:25
+
+Horas normales:
+40:00
+
+Horas extra:
+00:25
+
+Descansos:
+01:30
+
+Comidas:
+03:45
+
+Tiempo en coche:
+05:20
+
+Kilómetros:
+287 km
+
+====================
+13. RESUMEN MENSUAL
+===================
+
+Mostrar exactamente el mismo tipo de información acumulada para el mes.
+
+También quiero:
+
+Días trabajados
+Media de horas/día
+Total horas normales
+Total horas extra
+Total descansos
+Total comida
+Total trayectos
+Total kilómetros
+
+====================
+14. EXPORTAR A EXCEL
+====================
+
+Esta función es obligatoria.
+
+Añade un botón:
+
+"EXPORTAR A EXCEL"
+
+Quiero poder seleccionar:
+
+* Mes actual.
+* Mes anterior.
+* Semana actual.
+* Año completo.
+* Rango personalizado.
+
+El archivo debe contener como mínimo las siguientes columnas:
+
+Fecha
+Día de la semana
+Hora entrada
+Hora salida
+Tiempo bruto
+Descansos
+Comida
+Horas efectivamente trabajadas
+Horas normales
+Horas extra
+Tiempo en trayectos
+Kilómetros
+Origen
+Destino
+Observaciones
+
+Si un mismo día tiene varios trayectos, guarda el detalle de estos correctamente.
+
+Preferiblemente genera un archivo `.xlsx`.
+
+Si para crear XLSX necesitas una librería JavaScript, intégrala dentro del propio archivo HTML para mantener el sistema tan autocontenido como sea técnicamente posible.
+
+Como alternativa adicional, incluye exportación CSV compatible con Excel.
+
+El nombre del archivo puede ser:
+
+fichajes_2026_09.xlsx
+
+o equivalente según el periodo seleccionado.
+
+====================
+15. EDICIÓN MANUAL
+==================
+
+Quiero poder corregir registros.
+
+Por ejemplo:
+
+Cambiar:
+Entrada 08:03 → 08:00
+
+Cambiar:
+Salida 17:42 → 17:30
+
+Añadir un descanso que olvidé registrar.
+
+Modificar tiempo de comida.
+
+Añadir o modificar un trayecto.
+
+Añadir kilómetros.
+
+Añadir observaciones.
+
+Cada registro debe poder:
+
+* Editarse.
+* Guardarse.
+* Eliminarse.
+
+Antes de eliminar debe solicitar confirmación.
+
+====================
+16. OLVIDO DE FICHAR SALIDA
+===========================
+
+Esta situación debe estar contemplada.
+
+Si un día ficho entrada pero olvido fichar salida, el fichaje debe permanecer abierto.
+
+Al volver a abrir la aplicación debe avisarme claramente:
+
+"TIENES UN FICHAJE ABIERTO DESDE AYER"
+
+Y darme las opciones:
+
+* Fichar salida ahora.
+* Indicar manualmente la hora real de salida.
+* Continuar trabajando.
+
+NO debe cerrar automáticamente el fichaje ni inventar una hora.
+
+====================
+17. INDICADORES VISUALES
+========================
+
+Utiliza indicadores claros para diferenciar:
+
+Trabajo normal
+Horas extra
+Descanso
+Comida
+Trayecto
+
+Utiliza tarjetas grandes, iconos sencillos y botones suficientemente grandes para utilizarlos con el dedo desde un teléfono móvil.
+
+Quiero que los números importantes, especialmente el contador de horas y las horas extra, sean grandes y fáciles de leer.
+
+====================
+18. MODO OSCURO
+===============
+
+Añade:
+
+Modo claro
+Modo oscuro
+Modo automático según el dispositivo
+
+Guardar la preferencia.
+
+====================
+19. COPIAS DE SEGURIDAD
+=======================
+
+Como los datos están guardados localmente, quiero poder hacer una copia de seguridad.
+
+Añadir botones:
+
+"EXPORTAR COPIA DE SEGURIDAD"
+
+Debe descargar todos los datos en formato JSON.
+
+"IMPORTAR COPIA DE SEGURIDAD"
+
+Debe permitirme seleccionar ese JSON y restaurar los datos.
+
+Antes de sobrescribir información debe pedir confirmación.
+
+====================
+20. PRIVACIDAD
+==============
+
+Toda la información debe permanecer almacenada localmente en el dispositivo.
+
+No enviar:
+
+* Horarios.
+* Localizaciones.
+* Trayectos.
+* Historial.
+* Coordenadas.
+
+a ningún servidor salvo que el propio usuario abra voluntariamente Google Maps.
+
+No añadir sistemas de analítica, seguimiento ni publicidad.
+
+====================
+21. PRECISIÓN DE LOS CÁLCULOS
+=============================
+
+Internamente utiliza timestamps/fechas reales para realizar los cálculos.
+
+No calcules las horas únicamente restando strings del tipo "08:00".
+
+Debe gestionar correctamente:
+
+* Cambio de día.
+* Turnos nocturnos.
+* Jornadas superiores a 8 horas.
+* Distintas duraciones de jornada.
+* Múltiples descansos.
+* Múltiples trayectos.
+* Fichajes abiertos.
+* Registros incompletos.
+
+Evita errores de redondeo.
+
+Muestra los tiempos en formato:
+
+HH:MM
+
+pero conserva internamente la precisión necesaria.
+
+====================
+22. REGLAS DE CÁLCULO
+=====================
+
+Utiliza una lógica equivalente a:
+
+TIEMPO BRUTO =
+horaSalida - horaEntrada
+
+TIEMPO NO TRABAJADO =
+descansos + comida
+
+TIEMPO EFECTIVO =
+tiempoBruto - tiempoNoTrabajado
+
+HORAS NORMALES =
+mínimo entre tiempoEfectivo y jornadaConfigurada
+
+HORAS EXTRA =
+máximo entre 0 y (tiempoEfectivo - jornadaConfigurada)
+
+Si está habilitada la opción correspondiente, incorpora correctamente el tiempo de trayectos según la configuración establecida.
+
+No debe existir tiempo negativo.
+
+====================
+23. NAVEGACIÓN
+==============
+
+La aplicación debe tener una navegación sencilla mediante pestañas inferiores en móvil:
+
+HOY
+HISTÓRICO
+TRAYECTOS
+RESUMEN
+AJUSTES
+
+La pestaña "HOY" debe ser la pantalla principal.
+
+====================
+24. EXPERIENCIA DE USUARIO
+==========================
+
+Prioriza muchísimo la facilidad de uso.
+
+Quiero poder realizar el fichaje diario básicamente con:
+
+1 toque → Fichar entrada
+1 toque → Iniciar descanso
+1 toque → Finalizar descanso
+1 toque → Iniciar comida
+1 toque → Finalizar comida
+1 toque → Fichar salida
+
+Evita formularios innecesarios durante el fichaje diario.
+
+Los detalles adicionales deben poder editarse posteriormente.
+
+====================
+25. CONFIRMACIONES
+==================
+
+Al realizar acciones importantes muestra brevemente mensajes como:
+
+"Entrada registrada a las 08:02"
+
+"Descanso iniciado"
+
+"Descanso de 15 minutos registrado"
+
+"Has completado tu jornada normal"
+
+"Estás acumulando horas extra"
+
+"Salida registrada a las 18:13"
+
+====================
+26. FUNCIONAMIENTO SIN CONEXIÓN
+===============================
+
+La parte principal del sistema debe funcionar sin conexión a Internet.
+
+Debe poder:
+
+* Fichar entrada.
+* Fichar salida.
+* Registrar descansos.
+* Registrar comida.
+* Registrar trayectos manualmente.
+* Consultar histórico.
+* Calcular horas.
+* Exportar datos.
+
+La única funcionalidad que puede necesitar conexión es abrir Google Maps.
+
+====================
+27. VALIDACIONES
+================
+
+Añade validaciones para impedir registros incoherentes.
+
+Por ejemplo:
+
+* No permitir dos fichajes de entrada simultáneos.
+* No permitir fichar salida si no existe entrada.
+* No iniciar dos descansos simultáneamente.
+* No finalizar un descanso inexistente.
+* Avisar si se intenta introducir una salida anterior a la entrada.
+* Gestionar correctamente una salida al día siguiente en turnos nocturnos.
+* No permitir duraciones negativas.
+* No duplicar registros al recargar la página.
+
+====================
+28. DISEÑO
+==========
+
+Quiero un diseño similar a una aplicación móvil profesional.
+
+Características:
+
+* Minimalista.
+* Botones grandes.
+* Tarjetas.
+* Bordes redondeados.
+* Tipografía clara.
+* Excelente legibilidad.
+* Responsive.
+* Sin elementos diminutos.
+* Animaciones discretas.
+* Navegación cómoda con una mano.
+
+No hagas una interfaz sobrecargada.
+
+====================
+29. DATOS DE PRUEBA
+===================
+
+No llenes automáticamente mi aplicación con registros ficticios.
+
+Si necesitas datos para probar durante el desarrollo, elimínalos de la versión final.
+
+La aplicación final debe arrancar limpia.
+
+====================
+30. ESTRUCTURA DE DATOS
+=======================
+
+Diseña una estructura de datos sólida para guardar como mínimo:
+
+Configuración
+Jornadas
+Fichajes
+Descansos
+Comidas
+Trayectos
+Observaciones
+
+Cada elemento debe tener IDs únicos para evitar duplicados.
+
+====================
+31. FUNCIONES ADICIONALES ÚTILES
+================================
+
+Si es posible añade también:
+
+* Indicador de cuánto falta para terminar mi jornada.
+* Hora estimada a la que completaré las horas normales teniendo en cuenta descansos y comida.
+* Aviso visual al alcanzar las horas previstas.
+* Contador de horas extra en tiempo real.
+* Calendario mensual.
+* Indicador de días con horas extra.
+* Buscador del histórico.
+* Filtros.
+* Totales por semana, mes y año.
+
+====================
+32. INSTALACIÓN EN EL MÓVIL
+===========================
+
+Haz que la aplicación tenga aspecto de app móvil cuando se añada a la pantalla de inicio.
+
+Incluye los metadatos HTML necesarios para una buena visualización móvil.
+
+Si alguna característica PWA requiere archivos independientes y entra en conflicto con el requisito de un único HTML, prioriza que TODO funcione dentro del único archivo HTML y explica la limitación.
+
+====================
+33. CÓDIGO
+==========
+
+Quiero código:
+
+* Bien estructurado.
+* Comentado donde sea necesario.
+* Sin funciones falsas.
+* Sin botones decorativos que no funcionen.
+* Sin TODOs pendientes.
+* Sin pseudocódigo.
+* Sin partes del tipo "aquí debes implementar...".
+
+Todas las funciones visibles en la interfaz deben funcionar realmente.
+
+Usa HTML5, CSS y JavaScript moderno.
+
+Evita frameworks pesados salvo que sean estrictamente necesarios.
+
+====================
+34. ENTREGA
+===========
+
+Devuélveme el código COMPLETO del archivo HTML.
+
+No omitas partes diciendo:
+
+"el resto del código continúa..."
+
+No utilices pseudocódigo.
+
+No dividas la aplicación en varios archivos.
+
+Quiero poder:
+
+1. Copiar el código.
+2. Guardarlo como `index.html`.
+3. Abrirlo en Chrome, Safari, Edge o Firefox.
+4. Empezar a utilizarlo.
+
+Antes de entregar el código, revisa mentalmente los siguientes casos:
+
+CASO 1
+Entrada 08:00
+Salida 17:00
+Descanso 15 min
+Comida 45 min
+Jornada 8 h
+Resultado:
+8 h normales
+0 h extra
+
+CASO 2
+Entrada 08:00
+Salida 18:30
+Descanso 15 min
+Comida 45 min
+Jornada 8 h
+Resultado:
+9 h 30 min efectivas
+8 h normales
+1 h 30 min extra
+
+CASO 3
+Entrada 22:00
+Salida 07:00 del día siguiente
+Comida/descanso total 1 h
+Jornada 8 h
+Resultado:
+8 h efectivas
+0 h extra
+
+CASO 4
+Ficho entrada, cierro el navegador y lo vuelvo a abrir varias horas después.
+El contador debe reconstruirse correctamente usando las horas almacenadas y no empezar de cero.
+
+CASO 5
+Supero las horas normales sin fichar salida.
+Las horas extra deben continuar aumentando en tiempo real hasta que fiche salida.
+
+CASO 6
+Olvido fichar salida y abro la aplicación al día siguiente.
+Debe detectar el fichaje abierto y permitirme corregirlo.
+
+Al final del código, explícame brevemente:
+
+* Cómo utilizarlo.
+* Cómo se almacenan los datos.
+* Cómo crear una copia de seguridad.
+* Cómo restaurarla.
+* Cómo funciona el cálculo de horas extra.
+* Qué limitaciones tiene Google Maps sin usar una API de pago.
+
+Prioriza sobre todo que el sistema sea fiable, práctico y cómodo para usarlo todos los días desde el móvil.

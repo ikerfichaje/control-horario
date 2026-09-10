@@ -5,29 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Control Horario</title>
 <meta name="description" content="Control horario y fichaje de trabajo personal, 100% local.">
-<meta name="theme-color" content="#2563eb">
+<meta name="theme-color" content="#7c3aed">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Fichaje">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%237c3aed'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%237c3aed'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root{
-  --bg:#f2f4f8; --surface:#ffffff; --surface-2:#f7f8fb; --text:#171a21; --muted:#6b7280;
-  --border:#e5e7eb; --primary:#2563eb; --primary-dark:#1d4ed8; --primary-contrast:#ffffff;
-  --success:#16a34a; --warning:#ea580c; --extra:#ea580c; --descanso:#7c3aed; --comida:#0d9488;
-  --trayecto:#0891b2; --danger:#dc2626; --danger-dark:#b91c1c; --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.06);
-  --shadow-lg:0 10px 30px rgba(16,24,40,.18); --radius:16px; --radius-sm:10px;
+  --bg:#f5f3fb; --surface:#ffffff; --surface-2:#f7f5fc; --text:#1a1523; --muted:#6b6478;
+  --border:#e6e1f2; --primary:#7c3aed; --primary-dark:#6224c9; --primary-contrast:#ffffff;
+  --accent-blue:#2563eb;
+  --success:#16a34a; --warning:#ea580c; --extra:#ea580c; --descanso:var(--accent-blue); --comida:#0d9488;
+  --viaje:#0891b2; --danger:#dc2626; --danger-dark:#b91c1c; --shadow:0 1px 3px rgba(46,16,101,.08),0 1px 2px rgba(46,16,101,.06);
+  --shadow-lg:0 10px 30px rgba(46,16,101,.18); --radius:16px; --radius-sm:10px;
   --festivo:#e11d48; --compensacion:#4f46e5;
   color-scheme:light;
 }
 [data-theme="dark"]{
-  --bg:#0f1115; --surface:#181b22; --surface-2:#20242e; --text:#f1f3f6; --muted:#9aa1ad;
-  --border:#2b3040; --primary:#3b82f6; --primary-dark:#2563eb; --primary-contrast:#ffffff;
-  --success:#22c55e; --warning:#fb923c; --extra:#fb923c; --descanso:#a78bfa; --comida:#2dd4bf;
-  --trayecto:#22d3ee; --danger:#f87171; --danger-dark:#ef4444; --shadow:0 1px 3px rgba(0,0,0,.4);
+  --bg:#14101f; --surface:#1d1830; --surface-2:#251f3b; --text:#f2eefb; --muted:#a79cc2;
+  --border:#3a3255; --primary:#8b5cf6; --primary-dark:#7c3aed; --primary-contrast:#ffffff;
+  --accent-blue:#60a5fa;
+  --success:#22c55e; --warning:#fb923c; --extra:#fb923c; --descanso:var(--accent-blue); --comida:#2dd4bf;
+  --viaje:#22d3ee; --danger:#f87171; --danger-dark:#ef4444; --shadow:0 1px 3px rgba(0,0,0,.4);
   --shadow-lg:0 10px 30px rgba(0,0,0,.5);
   --festivo:#fb7185; --compensacion:#818cf8;
   color-scheme:dark;
@@ -48,7 +50,7 @@ button{font-family:inherit;}
 /* Header */
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 16px;}
 .app-header .brand{display:flex;align-items:center;gap:10px;}
-.app-header .brand-logo{width:34px;height:34px;border-radius:9px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.app-header .brand-logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--accent-blue));color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}
 .app-header h1{font-size:17px;font-weight:700;}
 .header-date{font-size:12px;color:var(--muted);}
 
@@ -67,9 +69,8 @@ button{font-family:inherit;}
 
 /* Status hero */
 .hero{background:linear-gradient(160deg,var(--primary),var(--primary-dark));color:#fff;border-radius:20px;padding:22px 20px;box-shadow:var(--shadow-lg);margin-bottom:14px;position:relative;overflow:hidden;}
-.hero.estado-descanso{background:linear-gradient(160deg,var(--descanso),#5b21b6);}
+.hero.estado-descanso{background:linear-gradient(160deg,var(--descanso),#1d4ed8);}
 .hero.estado-comida{background:linear-gradient(160deg,var(--comida),#0f766e);}
-.hero.estado-trayecto{background:linear-gradient(160deg,var(--trayecto),#0e7490);}
 .hero.estado-fuera{background:linear-gradient(160deg,#64748b,#475569);}
 .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
 .badge-estado{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.02em;}
@@ -102,7 +103,7 @@ button{font-family:inherit;}
 .btn-soft{background:var(--surface-2);color:var(--text);border:1px solid var(--border);}
 .btn-descanso{background:var(--descanso);color:#fff;}
 .btn-comida{background:var(--comida);color:#fff;}
-.btn-trayecto{background:var(--trayecto);color:#fff;}
+.btn-viaje{background:var(--viaje);color:#fff;}
 .btn-lg{padding:20px;font-size:18px;border-radius:18px;}
 .btn-sm{padding:9px 12px;font-size:13px;border-radius:10px;width:auto;font-weight:600;}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
@@ -128,7 +129,7 @@ button{font-family:inherit;}
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px;}
 .field input[type=text],.field input[type=number],.field input[type=time],.field input[type=date],
-.field input[type=datetime-local],.field select,.field textarea{
+.field input[type=datetime-local],.field input[type=month],.field input[type=password],.field select,.field textarea{
   width:100%;padding:12px 13px;border-radius:11px;border:1.5px solid var(--border);background:var(--surface-2);
   color:var(--text);font-size:15px;font-family:inherit;
 }
@@ -178,11 +179,10 @@ button{font-family:inherit;}
 .empty-state{text-align:center;padding:40px 12px;color:var(--muted);}
 .empty-state .ic{font-size:38px;margin-bottom:10px;}
 
-/* Trayecto list */
-.trayecto-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;box-shadow:var(--shadow);}
-.trayecto-item .tr-route{font-weight:700;font-size:14.5px;margin-bottom:4px;display:flex;align-items:center;gap:6px;}
-.trayecto-item .tr-meta{font-size:12.5px;color:var(--muted);margin-bottom:10px;}
-.trayecto-item .tr-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.pill.viaje{background:#cffafe;color:#155e75;}
+[data-theme="dark"] .pill.viaje{background:#0e3a44;color:#67e8f9;}
+.pill.sincomida{background:#fce7e7;color:#9f1239;}
+[data-theme="dark"] .pill.sincomida{background:#3f1620;color:#fda4af;}
 
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,17,21,.55);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
@@ -209,15 +209,15 @@ button{font-family:inherit;}
 .cal-dow{text-align:center;font-size:10.5px;color:var(--muted);font-weight:700;padding-bottom:4px;}
 .cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:9px;font-size:12px;background:var(--surface-2);color:var(--text);border:1px solid transparent;cursor:pointer;position:relative;}
 .cal-day.empty{background:none;cursor:default;}
-.cal-day.worked{background:#dbeafe;color:#1e3a8a;font-weight:700;}
-[data-theme="dark"] .cal-day.worked{background:#1e3a5f;color:#bfdbfe;}
+.cal-day.worked{background:#ede9fe;color:#5b21b6;font-weight:700;}
+[data-theme="dark"] .cal-day.worked{background:#3a2a63;color:#ddd6fe;}
 .cal-day.has-extra{background:#fed7aa;color:#7c2d12;}
 [data-theme="dark"] .cal-day.has-extra{background:#5a3410;color:#fdba74;}
 .cal-day.weekend{background:var(--surface);color:var(--muted);}
 .cal-day.festivo{background:rgba(225,29,72,.16);color:var(--festivo);font-weight:700;}
 .cal-day.vacaciones{background:rgba(22,163,74,.16);color:var(--success);font-weight:700;}
 .cal-day.compensacion{background:rgba(79,70,229,.16);color:var(--compensacion);font-weight:700;}
-.cal-day.today{outline:2px solid var(--primary);outline-offset:1px;}
+.cal-day.today{outline:2px solid var(--accent-blue);outline-offset:1px;}
 .cal-day .dot{width:4px;height:4px;border-radius:50%;background:currentColor;margin-top:2px;}
 .cal-legend{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:12px;}
 .cal-legend .li{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);}
@@ -235,7 +235,7 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 /* Auth screen */
 .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
 .auth-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px 24px;box-shadow:var(--shadow-lg);}
-.auth-logo{width:52px;height:52px;border-radius:14px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
+.auth-logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--accent-blue));color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;}
 .auth-card h2{font-size:19px;font-weight:800;text-align:center;margin-bottom:4px;}
 .auth-card .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:20px;}
 .auth-card .field{margin-bottom:12px;}
@@ -243,7 +243,7 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 [data-theme="dark"] .auth-error{background:#3f1d1d;color:#fca5a5;}
 .role-pick{display:flex;gap:10px;margin-bottom:16px;}
 .role-opt{flex:1;border:1.5px solid var(--border);background:var(--surface-2);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;}
-.role-opt.active{border-color:var(--primary);background:rgba(37,99,235,.08);}
+.role-opt.active{border-color:var(--primary);background:rgba(124,58,237,.08);}
 .role-opt .ic{font-size:22px;display:block;margin-bottom:6px;}
 .role-opt b{display:block;font-size:13px;}
 .role-opt small{color:var(--muted);font-size:11px;}
@@ -253,31 +253,36 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 .worker-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);}
 .worker-card .wc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .worker-card .wc-name{font-weight:800;font-size:15.5px;display:flex;align-items:center;gap:8px;}
-.worker-card .wc-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+.worker-card .wc-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-blue));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
 .informe-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
 .informe-item .if-meta{color:var(--muted);}
 
-/* Impresión del calendario laboral (usado para "Guardar como PDF") */
+/* Impresión del calendario laboral (usado para "Guardar como PDF"): siempre
+   el año completo en una sola página, con los mismos colores que la app. */
 #printArea{display:none;}
-.print-cal-title{font:800 20px -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px;}
-.print-cal-sub{font:600 13px -apple-system,Segoe UI,Roboto,sans-serif;color:#555;margin-bottom:14px;}
-.print-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.print-cal-dow{text-align:center;font:700 11px -apple-system,Segoe UI,Roboto,sans-serif;color:#555;padding-bottom:4px;}
-.print-cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start;padding:4px 6px;font:600 12px -apple-system,Segoe UI,Roboto,sans-serif;border:1px solid #ddd;border-radius:4px;color:#111;overflow:hidden;}
-.print-cal-day.empty{border:none;}
-.print-cal-day.weekend{background:#f2f2f2;}
-.print-cal-day.festivo{background:#fbd7de;}
-.print-cal-day.vacaciones{background:#d6f0dc;}
-.print-cal-day.compensacion{background:#dcdafb;}
-.print-cal-day.worked{background:#dbeafe;}
-.print-cal-day.has-extra{background:#fde0c2;}
-.print-cal-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:14px;font:600 11px -apple-system,Segoe UI,Roboto,sans-serif;color:#333;}
-.print-cal-legend .li{display:flex;align-items:center;gap:6px;}
-.print-cal-legend .sw{width:11px;height:11px;border-radius:3px;border:1px solid #0002;}
+.print-cal-title{font:800 20px -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:2px;}
+.print-cal-sub{font:600 12px -apple-system,Segoe UI,Roboto,sans-serif;color:#555;margin-bottom:10px;}
+.print-cal-year{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.print-cal-month{border:1px solid #ddd;border-radius:6px;padding:5px 6px;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.print-cal-month-title{font:700 11.5px -apple-system,Segoe UI,Roboto,sans-serif;color:#111;margin-bottom:3px;text-transform:capitalize;}
+.print-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.print-cal-dow{text-align:center;font:700 8px -apple-system,Segoe UI,Roboto,sans-serif;color:#777;}
+.print-cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font:600 9px -apple-system,Segoe UI,Roboto,sans-serif;border-radius:3px;color:#111;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.print-cal-day.empty{visibility:hidden;}
+.print-cal-day.weekend{background:#f7f8fb;color:#6b7280;}
+.print-cal-day.festivo{background:rgba(225,29,72,.16);color:#e11d48;font-weight:700;}
+.print-cal-day.vacaciones{background:rgba(22,163,74,.16);color:#16a34a;font-weight:700;}
+.print-cal-day.compensacion{background:rgba(79,70,229,.16);color:#4f46e5;font-weight:700;}
+.print-cal-day.worked{background:#ede9fe;color:#5b21b6;font-weight:700;}
+.print-cal-day.has-extra{background:#fed7aa;color:#7c2d12;font-weight:700;}
+.print-cal-legend{display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:8px;font:600 10px -apple-system,Segoe UI,Roboto,sans-serif;color:#333;}
+.print-cal-legend .li{display:flex;align-items:center;gap:5px;}
+.print-cal-legend .sw{width:10px;height:10px;border-radius:3px;border:1px solid #0002;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
 @media print{
+  @page{size:A4 landscape;margin:10mm;}
   body *{visibility:hidden;}
   #printArea, #printArea *{visibility:visible;}
-  #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:16px;}
+  #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:0;}
 }
 </style>
 </head>
@@ -306,9 +311,6 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
     <!-- TAB: HISTORICO -->
     <section class="tab-panel" id="tab-historico" data-panel="historico"></section>
 
-    <!-- TAB: TRAYECTOS -->
-    <section class="tab-panel" id="tab-trayectos" data-panel="trayectos"></section>
-
     <!-- TAB: RESUMEN -->
     <section class="tab-panel" id="tab-resumen" data-panel="resumen"></section>
 
@@ -328,7 +330,6 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 <nav class="tabbar hidden" id="tabbar">
   <button class="tabbar-item" data-tab="hoy"><span class="ic">🏠</span>Hoy</button>
   <button class="tabbar-item" data-tab="historico"><span class="ic">📅</span>Histórico</button>
-  <button class="tabbar-item" data-tab="trayectos"><span class="ic">🚗</span>Trayectos</button>
   <button class="tabbar-item" data-tab="resumen"><span class="ic">📊</span>Resumen</button>
   <button class="tabbar-item hidden" id="tabbarEquipoBtn" data-tab="equipo"><span class="ic">🧑‍🤝‍🧑</span>Equipo</button>
   <button class="tabbar-item" data-tab="ajustes"><span class="ic">⚙️</span>Ajustes</button>
@@ -389,6 +390,16 @@ function fmtHMS(ms){
   return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
 }
 function hoursDecimal(ms){ return Math.round((ms/3600000)*100)/100; }
+// Igual que fmtHM pero conservando el signo (para saldos que pueden ser negativos)
+function fmtHMSigned(ms){ return (ms < 0 ? '-' : '') + fmtHM(Math.abs(ms || 0)); }
+// Interpreta un texto "HH:MM" (con signo opcional) devuelto por fmtHM/fmtHMSigned
+// al releer un informe mensual ya exportado. Devuelve 0 si no tiene ese formato.
+function parseHMTexto(texto){
+  const m = String(texto ?? '').trim().match(/^(-)?(\d+):(\d{2})$/);
+  if(!m) return 0;
+  const signo = m[1] ? -1 : 1;
+  return signo * ((Number(m[2]) * 60 + Number(m[3])) * 60000);
+}
 
 const COLUMNAS_EXPORT = [
   {id:'trabajador',  label:'Trabajador'},
@@ -402,10 +413,9 @@ const COLUMNAS_EXPORT = [
   {id:'horasEfectivas', label:'Horas efectivas'},
   {id:'horasNormales',  label:'Horas normales'},
   {id:'horasExtra',     label:'Horas extra'},
-  {id:'tiempoTrayectos', label:'Tiempo en trayectos (h)'},
-  {id:'km',          label:'Kilómetros'},
-  {id:'origen',      label:'Origen'},
-  {id:'destino',     label:'Destino'},
+  {id:'diaViaje',    label:'Día de viaje'},
+  {id:'lugarViaje',  label:'Lugar del viaje'},
+  {id:'clienteViaje', label:'Cliente'},
   {id:'observaciones', label:'Observaciones'}
 ];
 function esc(s){
@@ -423,7 +433,6 @@ function defaultConfig(){
     comidaFin: '14:45',
     modoDescanso: 'manual',   // 'auto' | 'manual'
     modoComida: 'manual',     // 'auto' (duración fija) | 'manual' | 'horario' (franja fija)
-    trayectoComoTrabajo: false,
     tema: 'auto',             // 'claro' | 'oscuro' | 'auto'
     avisoEntradaActivo: true,
     avisoEntradaHora: '08:30',
@@ -443,11 +452,13 @@ function defaultConfig(){
 }
 function defaultData(){
   return {
-    version: 1, config: defaultConfig(), jornadas: [], trayectos: [],
+    version: 1, config: defaultConfig(), jornadas: [],
     perfil: null,          // {nombre, passHash, rol:'trabajador'|'directivo'}
     sesionAbierta: false,  // se mantiene iniciada entre aperturas, como cualquier app del móvil
     equipo: [],            // solo lo usa el rol "directivo": informes importados de trabajadores
-    calendarioLaboral: {}  // { 'YYYY-MM-DD': {tipo:'festivo'|'vacaciones'|'compensacion', nombre?, horas?} }
+    calendarioLaboral: {}, // { 'YYYY-MM-DD': {tipo:'festivo'|'vacaciones'|'compensacion', nombre?, horas?} }
+    viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } — días de viaje/instalación
+    sinComida: {}          // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
   };
 }
 
@@ -473,11 +484,12 @@ function loadData(){
       version: 1,
       config: cfg,
       jornadas: Array.isArray(parsed.jornadas) ? parsed.jornadas : [],
-      trayectos: Array.isArray(parsed.trayectos) ? parsed.trayectos : [],
       perfil: parsed.perfil || null,
       sesionAbierta: !!parsed.sesionAbierta,
       equipo: Array.isArray(parsed.equipo) ? parsed.equipo : [],
-      calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {}
+      calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
+      viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
+      sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {}
     };
   }catch(e){
     console.error('Error cargando datos, se usará configuración por defecto.', e);
@@ -526,13 +538,22 @@ const UI = {
 
 /* ----------------------------- Consultas de datos ------------------------ */
 function jornadaAbierta(){ return DATA.jornadas.find(j => j.salida == null) || null; }
-function trayectoAbierto(){ return DATA.trayectos.find(t => t.fin == null) || null; }
 function descansoAbierto(j){ return j ? j.descansos.find(d => d.fin == null) || null : null; }
 function comidaAbierta(j){ return j ? j.comidas.find(c => c.fin == null) || null : null; }
 function getJornada(id){ return DATA.jornadas.find(j => j.id === id) || null; }
-function getTrayecto(id){ return DATA.trayectos.find(t => t.id === id) || null; }
-function trayectosDeFecha(fecha){ return DATA.trayectos.filter(t => t.fecha === fecha); }
 function jornadaDeFecha(fecha){ return DATA.jornadas.find(j => j.fecha === fecha) || null; }
+
+/* ----------------------------- Días de viaje / sin comida ----------------- */
+function obtenerViaje(fechaStr){ return DATA.viajes[fechaStr] || null; }
+function diaEsViaje(fechaStr){ return !!(DATA.viajes[fechaStr] && DATA.viajes[fechaStr].activo); }
+function marcarViaje(fechaStr, lugar, cliente){
+  DATA.viajes[fechaStr] = { activo:true, lugar:(lugar||'').trim(), cliente:(cliente||'').trim() };
+  save();
+}
+function quitarViaje(fechaStr){ delete DATA.viajes[fechaStr]; save(); }
+function diaSinComida(fechaStr){ return !!DATA.sinComida[fechaStr]; }
+function marcarSinComida(fechaStr){ DATA.sinComida[fechaStr] = true; save(); }
+function quitarSinComida(fechaStr){ delete DATA.sinComida[fechaStr]; save(); }
 
 function sumIntervals(list, now){
   let total = 0;
@@ -554,11 +575,21 @@ function jornadaNormalMsForFecha(fechaStr){
   return Math.round((horas || 0) * 3600000);
 }
 
+// Horas fijas de compensación por día de la semana. A diferencia de la
+// jornada configurable en Ajustes, estas NO cambian aunque se edite el
+// horario habitual: de lunes a jueves un día de compensación siempre
+// descuenta 8,5 h del banco de horas, y el viernes siempre 6 h.
+const HORAS_COMPENSACION_FIJAS = {1:8.5, 2:8.5, 3:8.5, 4:8.5, 5:6, 6:0, 0:0};
+function horasCompensacionFijasFor(fechaStr){
+  const dow = parseDateLocal(fechaStr).getDay();
+  return HORAS_COMPENSACION_FIJAS[dow] ?? 0;
+}
+
 /* ----------------------------- Calendario laboral (festivos / vacaciones / banco de horas) ---- */
 function diaCalendarioLaboral(fechaStr){ return DATA.calendarioLaboral[fechaStr] || null; }
 function marcarDiaCalendarioLaboral(fechaStr, tipo, nombre){
   if(tipo === 'compensacion'){
-    DATA.calendarioLaboral[fechaStr] = { tipo, horas: hoursDecimal(jornadaNormalMsForFecha(fechaStr)) };
+    DATA.calendarioLaboral[fechaStr] = { tipo, horas: horasCompensacionFijasFor(fechaStr) };
   } else if(tipo === 'festivo'){
     DATA.calendarioLaboral[fechaStr] = { tipo, nombre: (nombre || '').trim() || 'Festivo' };
   } else {
@@ -570,17 +601,27 @@ function quitarMarcaCalendarioLaboral(fechaStr){
   delete DATA.calendarioLaboral[fechaStr];
   save();
 }
-function bancoHorasGeneradoMs(){
+// El parámetro opcional "hastaFecha" (YYYY-MM-DD, inclusive) permite calcular
+// el saldo del banco de horas en un momento concreto del pasado (p.ej. para
+// el informe mensual: saldo a inicio/fin de un mes), en vez de solo "a hoy".
+function bancoHorasGeneradoMs(hastaFecha){
   let total = 0;
-  DATA.jornadas.forEach(j => { total += calcJornada(j, Date.now()).extra; });
+  DATA.jornadas.forEach(j => {
+    if(hastaFecha && j.fecha > hastaFecha) return;
+    total += calcJornada(j, Date.now()).extra;
+  });
   return total;
 }
-function bancoHorasCompensadoMs(){
+function bancoHorasCompensadoMs(hastaFecha){
   let total = 0;
-  Object.values(DATA.calendarioLaboral).forEach(e => { if(e.tipo === 'compensacion') total += (Number(e.horas)||0) * 3600000; });
+  Object.entries(DATA.calendarioLaboral).forEach(([fecha, e]) => {
+    if(e.tipo !== 'compensacion') return;
+    if(hastaFecha && fecha > hastaFecha) return;
+    total += (Number(e.horas)||0) * 3600000;
+  });
   return total;
 }
-function bancoHorasSaldoMs(){ return bancoHorasGeneradoMs() - bancoHorasCompensadoMs(); }
+function bancoHorasSaldoMs(hastaFecha){ return bancoHorasGeneradoMs(hastaFecha) - bancoHorasCompensadoMs(hastaFecha); }
 
 const FESTIVOS_NAVARRA = {
   2026: [
@@ -623,10 +664,14 @@ function overlapMs(aIni, aFin, bIni, bFin){
  * nocturnos, cambios de día y jornadas de cualquier duración.
  *
  *   TIEMPO BRUTO     = salida - entrada
- *   TIEMPO NO TRAB.  = descansos + comida
- *   TIEMPO EFECTIVO  = bruto - noTrabajado (+ trayectos si se configuró así)
+ *   TIEMPO NO TRAB.  = descansos + comida (0 si ese día se avisó "no he comido")
+ *   TIEMPO EFECTIVO  = bruto - noTrabajado
  *   HORAS NORMALES   = min(efectivo, jornadaConfigurada)
- *   HORAS EXTRA      = max(0, efectivo - jornadaConfigurada)
+ *   HORAS EXTRA      = max(0, efectivo - jornadaConfigurada), y SOLO cuenta
+ *                      si ese día está marcado como "día de viaje": el resto
+ *                      de días, ese exceso sigue formando parte del tiempo
+ *                      efectivo pero no se contabiliza como hora extra ni
+ *                      suma al banco de horas.
  */
 function calcJornada(j, now = Date.now()){
   const entrada = j.entrada;
@@ -637,15 +682,15 @@ function calcJornada(j, now = Date.now()){
 
   const cfg = DATA.config;
   let descansosMs, comidasMs;
-  const diaAplicaComida = diaConfigFor(j.fecha)?.comida !== false;
+  const diaAplicaComida = diaConfigFor(j.fecha)?.comida !== false && !diaSinComida(j.fecha);
 
   if(cfg.modoDescanso === 'auto'){
     descansosMs = Math.min(bruto, (cfg.descansoMin || 0) * 60000);
   } else {
     descansosMs = sumIntervals(j.descansos, now);
   }
-  if(!diaAplicaComida && cfg.modoComida !== 'manual'){
-    comidasMs = 0;
+  if(!diaAplicaComida){
+    comidasMs = cfg.modoComida === 'manual' ? sumIntervals(j.comidas, now) : 0;
   } else if(cfg.modoComida === 'auto'){
     comidasMs = Math.min(Math.max(0, bruto - descansosMs), (cfg.comidaMin || 0) * 60000);
   } else if(cfg.modoComida === 'horario'){
@@ -655,25 +700,22 @@ function calcJornada(j, now = Date.now()){
     comidasMs = sumIntervals(j.comidas, now);
   }
 
-  const efectivoBase = Math.max(0, bruto - descansosMs - comidasMs);
-  const trayectos = trayectosDeFecha(j.fecha);
-  const trayectosMs = sumIntervals(trayectos, now);
-  const efectivoTotal = efectivoBase + (cfg.trayectoComoTrabajo ? trayectosMs : 0);
+  const efectivoTotal = Math.max(0, bruto - descansosMs - comidasMs);
 
   const normalMax = jornadaNormalMsForFecha(j.fecha);
   const normal = Math.min(efectivoTotal, normalMax);
-  const extra = Math.max(0, efectivoTotal - normalMax);
+  const excedente = Math.max(0, efectivoTotal - normalMax);
+  const esViaje = diaEsViaje(j.fecha);
+  const extra = esViaje ? excedente : 0;
 
   return {
-    bruto, descansosMs, comidasMs, efectivoBase, trayectosMs, efectivoTotal,
-    normalMax, normal, extra, abierta,
+    bruto, descansosMs, comidasMs, efectivoTotal,
+    normalMax, normal, extra, abierta, esViaje,
     dAbierto: descansoAbierto(j), cAbierta: comidaAbierta(j)
   };
 }
 
 function estadoActual(){
-  const tOpen = trayectoAbierto();
-  if(tOpen) return 'trayecto';
   const j = jornadaAbierta();
   if(!j) return 'fuera';
   if(descansoAbierto(j)) return 'descanso';
@@ -790,105 +832,60 @@ function accionFinalizarComida(){
   renderAll();
 }
 
-/* ----------------------------- Acciones: trayectos ------------------------ */
-function abrirFormularioTrayecto(){
-  openModal(`
-    <div class="modal-head"><h3>Iniciar trayecto</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <div class="field">
-      <label>Origen</label>
-      <input type="text" id="frmOrigen" placeholder="Ej. Barcelona">
-      <div class="gap8"></div>
-      <button class="btn btn-soft btn-sm" data-action="usar-ubicacion" data-target="frmOrigen">📍 Usar mi ubicación actual</button>
-    </div>
-    <div class="field">
-      <label>Destino</label>
-      <input type="text" id="frmDestino" placeholder="Ej. Sabadell">
-    </div>
-    <div class="field">
-      <label>Motivo</label>
-      <input type="text" id="frmMotivo" placeholder="Ej. Visita a cliente">
-    </div>
-    <div class="field">
-      <label>Kilómetros (opcional)</label>
-      <input type="number" id="frmKm" min="0" step="0.1" placeholder="Si los conoces">
-    </div>
-    <div class="field">
-      <label>Observaciones</label>
-      <textarea id="frmObs" placeholder="Opcional"></textarea>
-    </div>
-    <button class="btn btn-trayecto btn-lg" data-action="confirmar-iniciar-trayecto">🚗 Iniciar trayecto</button>
-  `, {onOpen: () => document.getElementById('frmOrigen').focus()});
-}
-function confirmarIniciarTrayecto(){
-  if(trayectoAbierto()){ toast('Ya tienes un trayecto en curso.'); return; }
-  const origen = document.getElementById('frmOrigen').value.trim();
-  const destino = document.getElementById('frmDestino').value.trim();
-  const motivo = document.getElementById('frmMotivo').value.trim();
-  const km = document.getElementById('frmKm').value;
-  const obs = document.getElementById('frmObs').value.trim();
-  const now = Date.now();
-  DATA.trayectos.push({
-    id: uid(), fecha: todayStr(new Date(now)), inicio: now, fin: null,
-    origen, destino, motivo, km: km === '' ? null : Number(km), observaciones: obs
-  });
-  save();
-  closeModal();
-  toast('Trayecto iniciado');
+/* ----------------------------- Acciones: día de viaje / sin comida -------- */
+/*
+ * Refresca la app tras editar la marca de un día. Si esa edición se hizo
+ * desde el modal de detalle de un día (histórico/calendario), lo vuelve a
+ * abrir con los datos actualizados; si no, simplemente repinta las pestañas.
+ */
+function refrescarTrasEditarDia(fecha){
   renderAll();
+  if(document.getElementById('activeModalOverlay')) verDia(fecha);
 }
-function abrirFormularioFinalizarTrayecto(){
-  const t = trayectoAbierto();
-  if(!t) return;
+function abrirFormularioViaje(fecha){
+  const actual = obtenerViaje(fecha);
   openModal(`
-    <div class="modal-head"><h3>Finalizar trayecto</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">${esc(t.origen||'Origen')} → ${esc(t.destino||'Destino')}</p>
+    <div class="modal-head"><h3>Día de viaje</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">Las horas extra de <b>${esc(fmtDateHuman(fecha))}</b> solo se contabilizarán si marcas este día como día de viaje.</p>
     <div class="field">
-      <label>Kilómetros (opcional)</label>
-      <input type="number" id="frmKmFin" min="0" step="0.1" value="${t.km ?? ''}">
+      <label>Lugar del viaje</label>
+      <input type="text" id="frmViajeLugar" placeholder="Ej. Zaragoza" value="${esc(actual?.lugar||'')}">
     </div>
     <div class="field">
-      <label>Observaciones</label>
-      <textarea id="frmObsFin">${esc(t.observaciones||'')}</textarea>
+      <label>Cliente</label>
+      <input type="text" id="frmViajeCliente" placeholder="Ej. Instalaciones Pérez S.L." value="${esc(actual?.cliente||'')}">
     </div>
-    <button class="btn btn-danger btn-lg" data-action="confirmar-finalizar-trayecto" data-id="${t.id}">⏹ Finalizar trayecto</button>
-  `);
+    <button class="btn btn-viaje btn-lg" data-action="confirmar-marcar-viaje" data-fecha="${fecha}">🧳 Marcar como día de viaje</button>
+  `, {onOpen: () => document.getElementById('frmViajeLugar').focus()});
 }
-function confirmarFinalizarTrayecto(id){
-  const t = getTrayecto(id);
-  if(!t || t.fin != null) return;
-  const km = document.getElementById('frmKmFin').value;
-  const obs = document.getElementById('frmObsFin').value.trim();
-  t.fin = Date.now();
-  t.km = km === '' ? t.km : Number(km);
-  t.observaciones = obs;
-  save();
+function confirmarMarcarViaje(fecha){
+  const lugar = document.getElementById('frmViajeLugar').value.trim();
+  const cliente = document.getElementById('frmViajeCliente').value.trim();
+  marcarViaje(fecha, lugar, cliente);
   closeModal();
-  toast(`Trayecto finalizado · ${fmtHM(t.fin - t.inicio)}`);
+  toast('Día marcado como viaje: sus horas extra ya se contabilizan');
+  refrescarTrasEditarDia(fecha);
+}
+async function accionQuitarViaje(fecha){
+  // confirmDialog reemplaza el modal actual (incluido el detalle del día, si
+  // estaba abierto), así que hay que recordar si había uno antes de preguntar.
+  const habiaModalAbierto = !!document.getElementById('activeModalOverlay');
+  const ok = await confirmDialog('¿Quitar la marca de día de viaje de ' + fmtDateShort(fecha) + '? Las horas extra de ese día dejarán de contabilizarse.', 'Quitar marca', true);
+  if(!ok) return;
+  quitarViaje(fecha);
+  toast('Marca de viaje eliminada');
   renderAll();
+  if(habiaModalAbierto) verDia(fecha);
 }
-function usarUbicacionActual(targetId){
-  if(!navigator.geolocation){ toast('Este navegador no admite geolocalización.'); return; }
-  toast('Obteniendo ubicación…');
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      const lat = pos.coords.latitude.toFixed(6);
-      const lng = pos.coords.longitude.toFixed(6);
-      const input = document.getElementById(targetId);
-      if(input) input.value = `${lat},${lng}`;
-      toast('Ubicación aplicada (coordenadas)');
-    },
-    err => { toast('No se pudo obtener la ubicación: ' + err.message); },
-    { enableHighAccuracy:true, timeout:10000 }
-  );
+function accionMarcarSinComida(fecha){
+  marcarSinComida(fecha);
+  toast('Anotado: hoy no se descuenta el tiempo de comida');
+  refrescarTrasEditarDia(fecha);
 }
-function abrirEnGoogleMaps(id){
-  const t = getTrayecto(id);
-  if(!t) return;
-  const origen = (t.origen||'').trim();
-  const destino = (t.destino||'').trim();
-  if(!origen || !destino){ toast('Indica origen y destino para abrir la ruta en Maps.'); return; }
-  const url = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origen)}&destination=${encodeURIComponent(destino)}&travelmode=driving`;
-  window.open(url, '_blank', 'noopener');
+function accionQuitarSinComida(fecha){
+  quitarSinComida(fecha);
+  toast('Se volverá a descontar la comida este día');
+  refrescarTrasEditarDia(fecha);
 }
 
 /* ----------------------------- Fichaje abierto de días anteriores -------- */
@@ -990,7 +987,6 @@ function renderHoy(){
   if(estado==='trabajando'){ heroClass=''; heroLabel='TRABAJANDO'; }
   else if(estado==='descanso'){ heroClass='estado-descanso'; heroLabel='EN DESCANSO'; }
   else if(estado==='comida'){ heroClass='estado-comida'; heroLabel='EN COMIDA'; }
-  else if(estado==='trayecto'){ heroClass='estado-trayecto'; heroLabel='EN TRAYECTO'; }
 
   let heroTimerValue = '00:00:00';
   let heroTimerLabel = 'Sin fichaje abierto';
@@ -1014,13 +1010,15 @@ function renderHoy(){
     progressExtra = calc.extra > 0;
     progressLabel = `${fmtHM(calc.efectivoTotal)} / ${fmtHM(calc.normalMax)}`;
 
+    const excedenteSinViaje = !calc.esViaje && calc.efectivoTotal > calc.normalMax;
     extraBlock = `
       <div class="hero-extra">
         <div>
           <strong id="liveExtra">${fmtHMS(calc.extra)}</strong>
           <span>HORAS EXTRA${calc.extra>0 ? ' · en aumento' : ''}</span>
         </div>
-      </div>`;
+      </div>
+      ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">Hoy no está marcado como día de viaje: el tiempo de más no cuenta como hora extra.</p>` : ''}`;
 
     const restante = Math.max(0, calc.normalMax - calc.efectivoTotal);
     // Si la comida es de horario fijo, se descuenta entera para la estimación
@@ -1082,24 +1080,50 @@ function renderHoy(){
 
   const detalle = j ? (() => {
     const calc = calcJornada(j, now);
-    const kmHoy = trayectosDeFecha(j.fecha).reduce((s,t)=> s + (Number(t.km)||0), 0);
     return `
     <div class="card">
       <h2>Detalle de hoy</h2>
       <div class="card-row"><span class="label">Hora entrada</span><span class="value">${fmtTimeHM(j.entrada)}</span></div>
       <div class="card-row"><span class="label">Descansos</span><span class="value">${fmtHM(calc.descansosMs)}</span></div>
       <div class="card-row"><span class="label">Comida${DATA.config.modoComida==='horario' ? ` (${DATA.config.comidaInicio}-${DATA.config.comidaFin})` : ''}</span><span class="value">${fmtHM(calc.comidasMs)}</span></div>
-      <div class="card-row"><span class="label">Tiempo en coche</span><span class="value">${fmtHM(calc.trayectosMs)}${kmHoy>0?` · ${kmHoy} km`:''}</span></div>
       <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calc.normal)}</span></div>
       <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calc.extra)}</span></div>
     </div>`;
   })() : '';
+
+  const fechaHoy = todayStr();
+  const viajeHoy = obtenerViaje(fechaHoy);
+  const viajeSeccion = (viajeHoy && viajeHoy.activo) ? `
+    <div class="card-row">
+      <span class="label">🧳 Día de viaje</span>
+      <span class="value">${esc(viajeHoy.lugar || 'Sin lugar')}${viajeHoy.cliente ? ` · ${esc(viajeHoy.cliente)}` : ''}</span>
+    </div>
+    <div class="btn-row" style="margin-top:6px;">
+      <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fechaHoy}">✎ Editar</button>
+      <button class="btn btn-outline btn-sm" data-action="quitar-viaje" data-fecha="${fechaHoy}" style="color:var(--danger);border-color:var(--danger)">Quitar marca</button>
+    </div>` : `
+    <button class="btn btn-viaje" data-action="abrir-form-viaje" data-fecha="${fechaHoy}">🧳 HOY ES DÍA DE VIAJE</button>`;
+
+  const diaCfgHoy = diaConfigFor(fechaHoy);
+  const puedeSinComida = diaCfgHoy?.comida !== false && cfg.modoComida !== 'manual';
+  let sinComidaSeccion = '';
+  if(puedeSinComida){
+    sinComidaSeccion = diaSinComida(fechaHoy) ? `
+      <div class="card-row"><span class="label">🚫 Comida</span><span class="value">No se descuenta hoy</span></div>
+      <button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fechaHoy}">↩ Deshacer</button>` : `
+      <button class="btn btn-outline btn-sm" data-action="marcar-sin-comida" data-fecha="${fechaHoy}">🚫 No he comido hoy</button>`;
+  }
 
   el.innerHTML = `
     ${heroHtml}
     <div class="card" style="box-shadow:none;border:none;background:none;padding:0;margin-bottom:14px;">
       <div class="btn-row single" style="margin-bottom:10px;">${mainBtn}</div>
       <div class="btn-row">${descansoBtn}${comidaBtn}</div>
+    </div>
+    <div class="card">
+      <h2>Viaje y comida de hoy</h2>
+      ${viajeSeccion}
+      ${sinComidaSeccion ? `<div class="gap8"></div>${sinComidaSeccion}` : ''}
     </div>
     ${detalle}
   `;
@@ -1142,115 +1166,6 @@ function tickLive(){
   renderBanner();
 }
 
-/* ----------------------------- Render: pestaña TRAYECTOS ------------------ */
-function renderTrayectos(){
-  const el = document.getElementById('tab-trayectos');
-  const tOpen = trayectoAbierto();
-  const now = Date.now();
-
-  let openCard = '';
-  if(tOpen){
-    openCard = `
-      <div class="hero estado-trayecto">
-        <div class="hero-top">
-          <span class="badge-estado"><span class="dot"></span>EN TRAYECTO</span>
-          <span class="hero-fecha">${esc(fmtDateHuman(tOpen.fecha))}</span>
-        </div>
-        <div class="hero-timer" id="trayTimer">${fmtHMS(now - tOpen.inicio)}</div>
-        <div class="hero-timer-label">${esc(tOpen.origen||'Origen')} → ${esc(tOpen.destino||'Destino')}</div>
-      </div>
-      <button class="btn btn-danger btn-lg" style="margin-bottom:16px" data-action="abrir-finalizar-trayecto">⏹ FINALIZAR TRAYECTO</button>
-    `;
-  } else {
-    openCard = `<button class="btn btn-trayecto btn-lg" style="margin-bottom:16px" data-action="abrir-iniciar-trayecto">🚗 INICIAR TRAYECTO</button>`;
-  }
-
-  const todos = [...DATA.trayectos].sort((a,b)=> b.inicio - a.inicio).slice(0, 40);
-  const totalHoyMs = sumIntervals(trayectosDeFecha(todayStr()), now);
-  const kmHoy = trayectosDeFecha(todayStr()).reduce((s,t)=>s+(Number(t.km)||0),0);
-
-  const lista = todos.length ? todos.map(t => `
-    <div class="trayecto-item">
-      <div class="tr-route">🚗 ${esc(t.origen||'Origen')} → ${esc(t.destino||'Destino')}</div>
-      <div class="tr-meta">${esc(fmtDateShort(t.fecha))} · ${fmtTimeHM(t.inicio)} - ${t.fin?fmtTimeHM(t.fin):'en curso'} · ${fmtHM((t.fin??now)-t.inicio)}${t.km?` · ${t.km} km`:''}${t.motivo?` · ${esc(t.motivo)}`:''}</div>
-      <div class="tr-actions">
-        <button class="btn btn-soft btn-sm" data-action="abrir-maps" data-id="${t.id}">🗺 Abrir en Google Maps</button>
-        <button class="btn btn-soft btn-sm" data-action="editar-trayecto" data-id="${t.id}">✎ Editar</button>
-        <button class="btn btn-outline btn-sm" data-action="eliminar-trayecto" data-id="${t.id}" style="color:var(--danger);border-color:var(--danger)">🗑</button>
-      </div>
-    </div>
-  `).join('') : `<div class="empty-state"><div class="ic">🚗</div>Todavía no has registrado ningún trayecto.</div>`;
-
-  el.innerHTML = `
-    ${openCard}
-    <div class="card">
-      <h2>Hoy</h2>
-      <div class="card-row"><span class="label">Tiempo en coche</span><span class="value">${fmtHM(totalHoyMs)}</span></div>
-      <div class="card-row"><span class="label">Kilómetros</span><span class="value">${kmHoy} km</span></div>
-    </div>
-    <div class="section-title">Trayectos recientes</div>
-    ${lista}
-  `;
-}
-function tickTrayecto(){
-  if(UI.tab !== 'trayectos') return;
-  const t = trayectoAbierto();
-  const elTimer = document.getElementById('trayTimer');
-  if(t && elTimer) elTimer.textContent = fmtHMS(Date.now() - t.inicio);
-}
-
-function abrirFormEditarTrayecto(id){
-  const t = getTrayecto(id);
-  if(!t) return;
-  openModal(`
-    <div class="modal-head"><h3>Editar trayecto</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <div class="field-row">
-      <div class="field"><label>Inicio</label><input type="datetime-local" id="edInicio" value="${toDatetimeLocalValue(t.inicio)}"></div>
-      <div class="field"><label>Fin</label><input type="datetime-local" id="edFin" value="${t.fin?toDatetimeLocalValue(t.fin):''}"></div>
-    </div>
-    <div class="field"><label>Origen</label><input type="text" id="edOrigen" value="${esc(t.origen||'')}"></div>
-    <div class="field"><label>Destino</label><input type="text" id="edDestino" value="${esc(t.destino||'')}"></div>
-    <div class="field"><label>Motivo</label><input type="text" id="edMotivo" value="${esc(t.motivo||'')}"></div>
-    <div class="field"><label>Kilómetros</label><input type="number" step="0.1" id="edKm" value="${t.km ?? ''}"></div>
-    <div class="field"><label>Observaciones</label><textarea id="edObs">${esc(t.observaciones||'')}</textarea></div>
-    <div class="btn-row">
-      <button class="btn btn-outline" data-action="eliminar-trayecto" data-id="${t.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
-      <button class="btn btn-primary" data-action="guardar-trayecto-editado" data-id="${t.id}">Guardar</button>
-    </div>
-  `);
-}
-function guardarTrayectoEditado(id){
-  const t = getTrayecto(id);
-  if(!t) return;
-  const ini = fromDatetimeLocalValue(document.getElementById('edInicio').value);
-  const finVal = document.getElementById('edFin').value;
-  const fin = finVal ? fromDatetimeLocalValue(finVal) : null;
-  if(ini == null){ toast('Fecha de inicio inválida.'); return; }
-  if(fin != null && fin < ini){ toast('El fin no puede ser anterior al inicio.'); return; }
-  t.inicio = ini;
-  t.fin = fin;
-  t.fecha = todayStr(new Date(ini));
-  t.origen = document.getElementById('edOrigen').value.trim();
-  t.destino = document.getElementById('edDestino').value.trim();
-  t.motivo = document.getElementById('edMotivo').value.trim();
-  const km = document.getElementById('edKm').value;
-  t.km = km === '' ? null : Number(km);
-  t.observaciones = document.getElementById('edObs').value.trim();
-  save();
-  closeModal();
-  toast('Trayecto actualizado');
-  renderAll();
-}
-async function eliminarTrayecto(id){
-  const ok = await confirmDialog('¿Eliminar este trayecto? Esta acción no se puede deshacer.');
-  if(!ok) return;
-  DATA.trayectos = DATA.trayectos.filter(t => t.id !== id);
-  save();
-  closeModal();
-  toast('Trayecto eliminado');
-  renderAll();
-}
-
 /* ----------------------------- Render: pestaña HISTORICO ------------------ */
 function rangoParaFiltro(){
   const f = UI.historico.filtro;
@@ -1282,19 +1197,16 @@ function rangoParaFiltro(){
 function diasEnRango(ini, fin){
   const set = new Set();
   DATA.jornadas.forEach(j => { if(j.fecha >= ini && j.fecha <= fin) set.add(j.fecha); });
-  DATA.trayectos.forEach(t => { if(t.fecha >= ini && t.fecha <= fin) set.add(t.fecha); });
+  Object.keys(DATA.viajes).forEach(f => { if(f >= ini && f <= fin) set.add(f); });
+  Object.keys(DATA.sinComida).forEach(f => { if(f >= ini && f <= fin) set.add(f); });
   return [...set].sort((a,b)=> b < a ? -1 : b > a ? 1 : 0);
 }
 
 function statsDia(fecha){
   const j = jornadaDeFecha(fecha);
-  const trs = trayectosDeFecha(fecha);
-  const now = Date.now();
   let calc = null;
-  if(j) calc = calcJornada(j, now);
-  const trayectosMs = sumIntervals(trs, now);
-  const km = trs.reduce((s,t)=> s + (Number(t.km)||0), 0);
-  return { j, trs, calc, trayectosMs, km };
+  if(j) calc = calcJornada(j, Date.now());
+  return { j, calc, esViaje: diaEsViaje(fecha), viaje: obtenerViaje(fecha), sinComida: diaSinComida(fecha) };
 }
 
 function renderHistorico(){
@@ -1315,27 +1227,29 @@ function renderHistorico(){
   const q = UI.historico.busqueda.trim().toLowerCase();
   if(q){
     fechas = fechas.filter(f => {
-      const {j, trs} = statsDia(f);
-      const hay = [f, j?.observaciones||'', ...trs.map(t=>`${t.origen} ${t.destino} ${t.motivo} ${t.observaciones}`)].join(' ').toLowerCase();
+      const {j, viaje} = statsDia(f);
+      const hay = [f, j?.observaciones||'', viaje?.lugar||'', viaje?.cliente||''].join(' ').toLowerCase();
       return hay.includes(q);
     });
   }
 
   const items = fechas.length ? fechas.map(f => {
-    const {j, calc, trayectosMs, km} = statsDia(f);
+    const {j, calc, esViaje, sinComida} = statsDia(f);
     const extraPill = calc && calc.extra > 0 ? `<span class="pill extra">+${fmtHM(calc.extra)} extra</span>` : '';
     const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
+    const viajePill = esViaje ? `<span class="pill viaje">🧳 Viaje</span>` : '';
+    const sinComidaPill = sinComida ? `<span class="pill sincomida">🚫 Sin comida</span>` : '';
     return `
     <div class="day-item" data-action="ver-dia" data-fecha="${f}">
       <div class="di-top">
         <div class="di-date">${esc(fmtDateHuman(f))}<small>${esc(fmtDateShort(f))}</small></div>
-        <div>${extraPill}${openPill}</div>
+        <div>${extraPill}${openPill}${viajePill}${sinComidaPill}</div>
       </div>
       <div class="di-stats">
         <span>Entrada <b>${j?fmtTimeHM(j.entrada):'--:--'}</b></span>
         <span>Salida <b>${j&&j.salida?fmtTimeHM(j.salida):'--:--'}</b></span>
         <span>Efectivas <b>${calc?fmtHM(calc.efectivoTotal):'00:00'}</b></span>
-        <span>Coche <b>${fmtHM(trayectosMs)}${km?` (${km} km)`:''}</b></span>
+        <span>Normales <b>${calc?fmtHM(calc.normal):'00:00'}</b></span>
       </div>
     </div>`;
   }).join('') : `<div class="empty-state"><div class="ic">📭</div>No hay registros en este periodo.</div>`;
@@ -1353,7 +1267,6 @@ function renderHistorico(){
 /* Modal de detalle / edición de un día completo */
 function verDia(fecha){
   const j = jornadaDeFecha(fecha);
-  const trs = trayectosDeFecha(fecha).sort((a,b)=>a.inicio-b.inicio);
   const calc = j ? calcJornada(j, Date.now()) : null;
 
   const filaJornada = j ? `
@@ -1399,25 +1312,38 @@ function verDia(fecha){
     <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="comida" data-jid="${j.id}">+ Añadir comida</button>
   ` : '';
 
-  const trayectosHtml = `
-    <div class="section-title">Trayectos</div>
-    ${trs.length ? trs.map(t => `
-      <div class="mini-list-item">
-        <div class="mli-top"><span>🚗 ${esc(t.origen||'?')} → ${esc(t.destino||'?')}</span><span>${fmtHM((t.fin??Date.now())-t.inicio)}</span></div>
-        <div class="mli-actions">
-          <button class="btn btn-soft btn-sm" data-action="editar-trayecto" data-id="${t.id}">Editar</button>
-          <button class="btn btn-outline btn-sm" data-action="eliminar-trayecto" data-id="${t.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar</button>
-        </div>
-      </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin trayectos este día.</p>`}
-    <button class="btn btn-soft btn-sm" data-action="agregar-trayecto-dia" data-fecha="${fecha}">+ Añadir trayecto</button>
+  const viajeDia = obtenerViaje(fecha);
+  const viajeHtml = `
+    <div class="section-title">Día de viaje</div>
+    ${(viajeDia && viajeDia.activo) ? `
+    <div class="mini-list-item">
+      <div class="mli-top"><span>🧳 ${esc(viajeDia.lugar||'Sin lugar')}</span><span>${esc(viajeDia.cliente||'')}</span></div>
+      <div class="mli-actions">
+        <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fecha}">Editar</button>
+        <button class="btn btn-outline btn-sm" data-action="quitar-viaje" data-fecha="${fecha}" style="color:var(--danger);border-color:var(--danger)">Quitar marca</button>
+      </div>
+    </div>` : `
+    <p style="color:var(--muted);font-size:13px;">Este día no está marcado como viaje: las horas extra no cuentan.</p>
+    <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fecha}">🧳 Marcar como día de viaje</button>`}
   `;
+
+  const diaCfgDia = diaConfigFor(fecha);
+  const puedeSinComidaDia = diaCfgDia?.comida !== false && DATA.config.modoComida !== 'manual';
+  const sinComidaHtml = puedeSinComidaDia ? `
+    <div class="section-title">Comida</div>
+    ${diaSinComida(fecha) ? `
+    <p style="color:var(--muted);font-size:13px;">Marcado como "no comió" este día: no se descuenta tiempo de comida.</p>
+    <button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fecha}">↩ Deshacer</button>` : `
+    <button class="btn btn-soft btn-sm" data-action="marcar-sin-comida" data-fecha="${fecha}">🚫 No comió este día</button>`}
+  ` : '';
 
   openModal(`
     <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
     ${filaJornada}
     ${descansosHtml}
     ${comidasHtml}
-    ${trayectosHtml}
+    ${viajeHtml}
+    ${sinComidaHtml}
   `);
 }
 /*
@@ -1439,7 +1365,7 @@ function abrirDiaCalendario(fecha){
   })() : `<p style="color:var(--muted);font-size:13.5px;">Sin fichaje registrado este día.</p>`;
 
   const saldoActual = bancoHorasSaldoMs();
-  const horasCompensacion = marca && marca.tipo === 'compensacion' ? marca.horas : hoursDecimal(jornadaNormalMsForFecha(fecha));
+  const horasCompensacion = marca && marca.tipo === 'compensacion' ? marca.horas : horasCompensacionFijasFor(fecha);
 
   openModal(`
     <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
@@ -1488,44 +1414,53 @@ async function cargarFestivosNavarra(){
   renderAll();
 }
 
-/* Genera una vista de impresión del mes visible y abre el diálogo de impresión (Guardar como PDF). */
+/* Genera una vista de impresión con el AÑO COMPLETO del calendario laboral
+   en una sola página (Guardar como PDF), con los mismos colores que la app. */
 function exportarCalendarioPDF(){
-  const ref = parseDateLocal(UI.resumen.mesRef);
-  const firstDow = (new Date(ref.getFullYear(), ref.getMonth(), 1).getDay()+6)%7;
-  const totalDias = new Date(ref.getFullYear(), ref.getMonth()+1, 0).getDate();
-  const dowLabels = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  let cells = dowLabels.map(d => `<div class="print-cal-dow">${d}</div>`).join('');
-  for(let i=0;i<firstDow;i++) cells += `<div class="print-cal-day empty"></div>`;
-  for(let d=1; d<=totalDias; d++){
-    const fecha = `${ref.getFullYear()}-${pad2(ref.getMonth()+1)}-${pad2(d)}`;
-    const marca = diaCalendarioLaboral(fecha);
-    const j = jornadaDeFecha(fecha);
-    const diaCfg = diaConfigFor(fecha);
-    let cls = 'print-cal-day';
-    let etiqueta = '';
-    if(marca){
-      cls += ' ' + marca.tipo;
-      etiqueta = marca.tipo === 'festivo' ? (marca.nombre||'Festivo') : (marca.tipo === 'vacaciones' ? 'Vacaciones' : `Comp. ${marca.horas}h`);
-    } else if(j){
-      const c = calcJornada(j, Date.now());
-      cls += c.extra>0 ? ' has-extra' : ' worked';
-    } else if(diaCfg && diaCfg.activo === false){
-      cls += ' weekend';
+  const anio = parseDateLocal(UI.resumen.mesRef).getFullYear();
+  const dowLabels = ['L','M','X','J','V','S','D'];
+
+  const mesesHtml = [];
+  for(let mes=0; mes<12; mes++){
+    const firstDow = (new Date(anio, mes, 1).getDay()+6)%7;
+    const totalDias = new Date(anio, mes+1, 0).getDate();
+    let cells = dowLabels.map(d => `<div class="print-cal-dow">${d}</div>`).join('');
+    for(let i=0;i<firstDow;i++) cells += `<div class="print-cal-day empty"></div>`;
+    for(let d=1; d<=totalDias; d++){
+      const fecha = `${anio}-${pad2(mes+1)}-${pad2(d)}`;
+      const marca = diaCalendarioLaboral(fecha);
+      const j = jornadaDeFecha(fecha);
+      const diaCfg = diaConfigFor(fecha);
+      let cls = 'print-cal-day';
+      if(marca){
+        cls += ' ' + marca.tipo;
+      } else if(j){
+        const c = calcJornada(j, Date.now());
+        cls += c.extra>0 ? ' has-extra' : ' worked';
+      } else if(diaCfg && diaCfg.activo === false){
+        cls += ' weekend';
+      }
+      cells += `<div class="${cls}">${d}</div>`;
     }
-    cells += `<div class="${cls}"><div>${d}</div>${etiqueta?`<div style="font-size:8px;font-weight:600;margin-top:2px;line-height:1.2;">${esc(etiqueta)}</div>`:''}</div>`;
+    mesesHtml.push(`
+      <div class="print-cal-month">
+        <div class="print-cal-month-title">${MONTH_NAMES[mes]}</div>
+        <div class="print-cal-grid">${cells}</div>
+      </div>`);
   }
+
   const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
   document.getElementById('printArea').innerHTML = `
-    <div class="print-cal-title">Calendario laboral · ${MONTH_NAMES[ref.getMonth()]} ${ref.getFullYear()}</div>
+    <div class="print-cal-title">Calendario laboral · ${anio}</div>
     <div class="print-cal-sub">${esc(nombreTrabajador)}</div>
-    <div class="print-cal-grid">${cells}</div>
+    <div class="print-cal-year">${mesesHtml.join('')}</div>
     <div class="print-cal-legend">
-      <div class="li"><span class="sw" style="background:#dbeafe;"></span>Trabajado</div>
-      <div class="li"><span class="sw" style="background:#fde0c2;"></span>Con horas extra</div>
-      <div class="li"><span class="sw" style="background:#f2f2f2;"></span>Fin de semana</div>
-      <div class="li"><span class="sw" style="background:#fbd7de;"></span>Festivo</div>
-      <div class="li"><span class="sw" style="background:#d6f0dc;"></span>Vacaciones</div>
-      <div class="li"><span class="sw" style="background:#dcdafb;"></span>Compensación</div>
+      <div class="li"><span class="sw" style="background:#ede9fe;"></span>Trabajado</div>
+      <div class="li"><span class="sw" style="background:#fed7aa;"></span>Con horas extra</div>
+      <div class="li"><span class="sw" style="background:#f7f8fb;"></span>Fin de semana</div>
+      <div class="li"><span class="sw" style="background:rgba(225,29,72,.16);"></span>Festivo</div>
+      <div class="li"><span class="sw" style="background:rgba(22,163,74,.16);"></span>Vacaciones</div>
+      <div class="li"><span class="sw" style="background:rgba(79,70,229,.16);"></span>Compensación</div>
     </div>
   `;
   setTimeout(() => window.print(), 50);
@@ -1579,6 +1514,7 @@ function agregarIntervalo(tipo, jid){
 }
 function editarIntervalo(tipo, jid, iid){
   const j = getJornada(jid);
+  if(!j) return;
   const item = (tipo==='descanso'?j.descansos:j.comidas).find(x=>x.id===iid);
   if(!item) return;
   openModal(`
@@ -1590,6 +1526,7 @@ function editarIntervalo(tipo, jid, iid){
 }
 function guardarIntervaloEditado(tipo, jid, iid){
   const j = getJornada(jid);
+  if(!j) return;
   const item = (tipo==='descanso'?j.descansos:j.comidas).find(x=>x.id===iid);
   if(!item) return;
   const ini = fromDatetimeLocalValue(document.getElementById('edIntIni').value);
@@ -1608,6 +1545,7 @@ async function eliminarIntervalo(tipo, jid, iid){
   const ok = await confirmDialog('¿Eliminar este registro?');
   if(!ok) return;
   const j = getJornada(jid);
+  if(!j) return;
   if(tipo==='descanso') j.descansos = j.descansos.filter(x=>x.id!==iid);
   else j.comidas = j.comidas.filter(x=>x.id!==iid);
   save();
@@ -1615,20 +1553,11 @@ async function eliminarIntervalo(tipo, jid, iid){
   renderAll();
   verDia(j.fecha);
 }
-function agregarTrayectoDia(fecha){
-  const d = parseDateLocal(fecha); d.setHours(9,0,0,0);
-  const inicio = d.getTime();
-  DATA.trayectos.push({ id: uid(), fecha, inicio, fin: inicio+30*60000, origen:'', destino:'', motivo:'', km:null, observaciones:'' });
-  save();
-  toast('Trayecto añadido, edítalo con los datos correctos.');
-  renderAll();
-  verDia(fecha);
-}
 
 /* ----------------------------- Render: pestaña RESUMEN -------------------- */
 function agregarRango(ini, fin){
   const now = Date.now();
-  let efectivo=0, normal=0, extra=0, descansos=0, comidas=0, trayectosMs=0, km=0, diasTrabajados=new Set();
+  let efectivo=0, normal=0, extra=0, descansos=0, comidas=0, diasTrabajados=new Set();
   DATA.jornadas.forEach(j => {
     if(j.fecha < ini || j.fecha > fin) return;
     const c = calcJornada(j, now);
@@ -1636,12 +1565,7 @@ function agregarRango(ini, fin){
     descansos += c.descansosMs; comidas += c.comidasMs;
     diasTrabajados.add(j.fecha);
   });
-  DATA.trayectos.forEach(t => {
-    if(t.fecha < ini || t.fecha > fin) return;
-    trayectosMs += Math.max(0,(t.fin??now)-t.inicio);
-    km += Number(t.km)||0;
-  });
-  return { efectivo, normal, extra, descansos, comidas, trayectosMs, km, dias: diasTrabajados.size };
+  return { efectivo, normal, extra, descansos, comidas, dias: diasTrabajados.size };
 }
 
 function renderResumen(){
@@ -1699,34 +1623,7 @@ function renderResumen(){
         <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(bancoGenerado)}</b><small>Horas extra generadas</small></div>
         <div class="summary-tile"><b style="color:var(--compensacion)">${fmtHM(bancoCompensado)}</b><small>Ya compensadas</small></div>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Se calcula con todas las horas extra registradas hasta hoy, menos los días que hayas marcado como "Compensación de horas" en el calendario de abajo.</p>
-    </div>
-
-    <div class="card">
-      <h2>Resumen semanal (${fmtDateShort(semIni)} - ${fmtDateShort(semFin)})</h2>
-      <div class="summary-grid">
-        <div class="summary-tile"><b>${fmtHM(rSem.efectivo)}</b><small>Horas trabajadas</small></div>
-        <div class="summary-tile"><b>${fmtHM(rSem.normal)}</b><small>Horas normales</small></div>
-        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rSem.extra)}</b><small>Horas extra</small></div>
-        <div class="summary-tile"><b>${fmtHM(rSem.descansos)}</b><small>Descansos</small></div>
-        <div class="summary-tile"><b>${fmtHM(rSem.comidas)}</b><small>Comidas</small></div>
-        <div class="summary-tile"><b>${fmtHM(rSem.trayectosMs)}</b><small>Tiempo en coche</small></div>
-      </div>
-      <div class="card-row" style="margin-top:6px;"><span class="label">Kilómetros</span><span class="value">${rSem.km} km</span></div>
-    </div>
-
-    <div class="card">
-      <h2>Resumen mensual (${MONTH_NAMES[dHoy.getMonth()]})</h2>
-      <div class="summary-grid">
-        <div class="summary-tile"><b>${rMes.dias}</b><small>Días trabajados</small></div>
-        <div class="summary-tile"><b>${fmtHM(mediaMes)}</b><small>Media horas/día</small></div>
-        <div class="summary-tile"><b>${fmtHM(rMes.normal)}</b><small>Horas normales</small></div>
-        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rMes.extra)}</b><small>Horas extra</small></div>
-        <div class="summary-tile"><b>${fmtHM(rMes.descansos)}</b><small>Descansos</small></div>
-        <div class="summary-tile"><b>${fmtHM(rMes.comidas)}</b><small>Comida</small></div>
-        <div class="summary-tile"><b>${fmtHM(rMes.trayectosMs)}</b><small>Trayectos</small></div>
-        <div class="summary-tile"><b>${rMes.km} km</b><small>Kilómetros</small></div>
-      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Se calcula con las horas extra registradas en días marcados como "viaje" hasta hoy, menos los días que hayas marcado como "Compensación de horas" en el calendario de abajo.</p>
     </div>
 
     <div class="card">
@@ -1740,18 +1637,47 @@ function renderResumen(){
       </div>
       <div class="cal-grid">${calCells}</div>
       <div class="cal-legend">
-        <div class="li"><span class="sw" style="background:#dbeafe;"></span>Trabajado</div>
+        <div class="li"><span class="sw" style="background:#ede9fe;"></span>Trabajado</div>
         <div class="li"><span class="sw" style="background:#fed7aa;"></span>Con horas extra</div>
         <div class="li"><span class="sw" style="background:var(--surface-2);border:1px solid var(--border);"></span>Fin de semana</div>
         <div class="li"><span class="sw" style="background:var(--festivo);"></span>Festivo</div>
         <div class="li"><span class="sw" style="background:var(--success);"></span>Vacaciones</div>
         <div class="li"><span class="sw" style="background:var(--compensacion);"></span>Compensación</div>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Toca cualquier día para ver su fichaje o marcarlo como festivo, vacaciones o compensación de horas.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Toca cualquier día para ver su fichaje o marcarlo como festivo, vacaciones o compensación de horas: así distribuyes las horas del banco de arriba.</p>
       <div class="btn-row" style="margin-top:10px;">
         <button class="btn btn-outline btn-sm" data-action="cargar-festivos-navarra">📅 Cargar festivos Navarra 2026</button>
         <button class="btn btn-outline btn-sm" data-action="exportar-calendario-pdf">🖨 Exportar calendario a PDF</button>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Resumen semanal (${fmtDateShort(semIni)} - ${fmtDateShort(semFin)})</h2>
+      <div class="summary-grid">
+        <div class="summary-tile"><b>${fmtHM(rSem.efectivo)}</b><small>Horas trabajadas</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.normal)}</b><small>Horas normales</small></div>
+        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rSem.extra)}</b><small>Horas extra</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.descansos)}</b><small>Descansos</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.comidas)}</b><small>Comidas</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Resumen mensual (${MONTH_NAMES[dHoy.getMonth()]})</h2>
+      <div class="summary-grid">
+        <div class="summary-tile"><b>${rMes.dias}</b><small>Días trabajados</small></div>
+        <div class="summary-tile"><b>${fmtHM(mediaMes)}</b><small>Media horas/día</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.normal)}</b><small>Horas normales</small></div>
+        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rMes.extra)}</b><small>Horas extra</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.descansos)}</b><small>Descansos</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.comidas)}</b><small>Comida</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Informe mensual</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel día a día de un mes, coloreado por tipo de día (viaje en verde, vacaciones en azul, festivo en amarillo, compensación en naranja), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
+      <button class="btn btn-primary btn-lg" data-action="abrir-informe-mensual">🗓️ Informe mensual coloreado</button>
     </div>
 
     <div class="card">
@@ -1797,39 +1723,26 @@ function construirFilasExportacion(ini, fin, columnas){
   const filas = [];
   fechas.forEach(f => {
     const j = jornadaDeFecha(f);
-    const trs = trayectosDeFecha(f).sort((a,b)=>a.inicio-b.inicio);
+    const viaje = obtenerViaje(f);
     const dowName = DOW_NAMES[parseDateLocal(f).getDay()];
     if(j){
       const c = calcJornada(j, Date.now());
-      const primerTrayecto = trs[0];
       filas.push({
         trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
         horaEntrada: fmtTimeHM(j.entrada), horaSalida: j.salida ? fmtTimeHM(j.salida) : '(abierto)',
         tiempoBruto: hoursDecimal(c.bruto), descansos: hoursDecimal(c.descansosMs), comida: hoursDecimal(c.comidasMs),
         horasEfectivas: hoursDecimal(c.efectivoTotal), horasNormales: hoursDecimal(c.normal), horasExtra: hoursDecimal(c.extra),
-        tiempoTrayectos: hoursDecimal(c.trayectosMs), km: primerTrayecto ? (Number(primerTrayecto.km)||0) : 0,
-        origen: primerTrayecto ? primerTrayecto.origen : '', destino: primerTrayecto ? primerTrayecto.destino : '',
+        diaViaje: (viaje && viaje.activo) ? 'Sí' : 'No',
+        lugarViaje: viaje ? (viaje.lugar||'') : '', clienteViaje: viaje ? (viaje.cliente||'') : '',
         observaciones: j.observaciones || ''
       });
-      for(let i=1;i<trs.length;i++){
-        const t = trs[i];
-        filas.push({
-          trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
-          horaEntrada: '', horaSalida: '', tiempoBruto: '', descansos: '', comida: '',
-          horasEfectivas: '', horasNormales: '', horasExtra: '',
-          tiempoTrayectos: hoursDecimal((t.fin??Date.now())-t.inicio), km: Number(t.km)||0,
-          origen: t.origen||'', destino: t.destino||'', observaciones: t.observaciones||''
-        });
-      }
-    } else if(trs.length){
-      trs.forEach(t => {
-        filas.push({
-          trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
-          horaEntrada: '', horaSalida: '', tiempoBruto: '', descansos: '', comida: '',
-          horasEfectivas: '', horasNormales: '', horasExtra: '',
-          tiempoTrayectos: hoursDecimal((t.fin??Date.now())-t.inicio), km: Number(t.km)||0,
-          origen: t.origen||'', destino: t.destino||'', observaciones: t.observaciones||''
-        });
+    } else if(viaje && viaje.activo){
+      filas.push({
+        trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
+        horaEntrada: '', horaSalida: '', tiempoBruto: '', descansos: '', comida: '',
+        horasEfectivas: '', horasNormales: '', horasExtra: '',
+        diaViaje: 'Sí', lugarViaje: viaje.lugar||'', clienteViaje: viaje.cliente||'',
+        observaciones: ''
       });
     }
   });
@@ -1964,29 +1877,211 @@ function buildSheetXml(headers, rows){
   });
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${xml}</sheetData></worksheet>`;
 }
-function buildXlsxBlob(sheetName, headers, rows){
+/* Empaqueta un .xlsx mínimo (ZIP sin compresión + Open XML) a partir de una o
+ * varias hojas ya construidas y de los estilos compartidos. Reutilizado por
+ * el exportador genérico, el informe mensual individual y el Excel combinado
+ * del equipo (una hoja por informe). */
+function buildXlsxPackageMultiSheet(sheets, stylesXml){
   const enc = new TextEncoder();
-  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+  const worksheetOverrides = sheets.map((_,i) => `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('');
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${worksheetOverrides}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
   const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
-  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${escXml(sheetName).slice(0,31)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
-  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
-  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>`;
-  const sheet = buildSheetXml(headers, rows);
+  const sheetEntries = sheets.map((s,i) => `<sheet name="${escXml(s.name).slice(0,31)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheetEntries}</sheets></workbook>`;
+  const wbRelParts = sheets.map((s,i) => `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${wbRelParts}<Relationship Id="rId${sheets.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
   const files = [
     {name:'[Content_Types].xml', data:enc.encode(contentTypes)},
     {name:'_rels/.rels', data:enc.encode(rootRels)},
     {name:'xl/workbook.xml', data:enc.encode(workbook)},
     {name:'xl/_rels/workbook.xml.rels', data:enc.encode(workbookRels)},
-    {name:'xl/styles.xml', data:enc.encode(styles)},
-    {name:'xl/worksheets/sheet1.xml', data:enc.encode(sheet)}
+    {name:'xl/styles.xml', data:enc.encode(stylesXml)},
+    ...sheets.map((s,i) => ({name:`xl/worksheets/sheet${i+1}.xml`, data:enc.encode(s.sheetXml)}))
   ];
   const zip = buildZipStore(files);
   return new Blob([zip], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function buildXlsxPackage(sheetName, sheetXml, stylesXml){
+  return buildXlsxPackageMultiSheet([{name:sheetName, sheetXml}], stylesXml);
+}
+// Nombres de hoja únicos y válidos para Excel (máx. 31 car., sin : \ / ? * [ ]).
+function nombresHojaUnicos(nombresDeseados){
+  const usados = new Set();
+  return nombresDeseados.map(deseado => {
+    let base = String(deseado || 'Hoja').replace(/[:\\/?*[\]]/g, ' ').trim().slice(0,31) || 'Hoja';
+    let nombre = base, n = 2;
+    while(usados.has(nombre.toLowerCase())){
+      const sufijo = ' (' + n + ')';
+      nombre = base.slice(0, 31 - sufijo.length) + sufijo;
+      n++;
+    }
+    usados.add(nombre.toLowerCase());
+    return nombre;
+  });
+}
+const XLSX_ESTILOS_BASICOS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>`;
+function buildXlsxBlob(sheetName, headers, rows){
+  const sheet = buildSheetXml(headers, rows);
+  return buildXlsxPackage(sheetName, sheet, XLSX_ESTILOS_BASICOS);
 }
 function exportarXLSX(ini, fin, columnas){
   const { headers, rows } = construirFilasExportacion(ini, fin, columnas);
   const blob = buildXlsxBlob('Fichajes', headers, rows);
   descargarBlob(blob, nombreArchivo(ini, fin, 'xlsx'), 'Excel exportado');
+}
+
+/* ---- Informe mensual coloreado (día a día, por trabajador) ------------ */
+/*
+ * Estilos: 0 normal, 1 negrita (títulos/cabecera), 2 negrita grande (nombre),
+ * 3 relleno verde (viaje), 4 relleno azul claro (vacaciones),
+ * 5 relleno amarillo (festivo), 6 relleno naranja (compensación).
+ */
+const INFORME_MENSUAL_ESTILO_POR_TIPO = { viaje:3, vacaciones:4, festivo:5, compensacion:6 };
+function buildStylesXmlInformeMensual(){
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+    `<fonts count="3">` +
+      `<font><sz val="11"/><name val="Calibri"/></font>` +
+      `<font><b/><sz val="11"/><name val="Calibri"/></font>` +
+      `<font><b/><sz val="18"/><name val="Calibri"/></font>` +
+    `</fonts>` +
+    `<fills count="6">` +
+      `<fill><patternFill patternType="none"/></fill>` +
+      `<fill><patternFill patternType="gray125"/></fill>` +
+      `<fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill>` +
+      `<fill><patternFill patternType="solid"><fgColor rgb="FFBDD7EE"/><bgColor indexed="64"/></patternFill></fill>` +
+      `<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill>` +
+      `<fill><patternFill patternType="solid"><fgColor rgb="FFFFD9B3"/><bgColor indexed="64"/></patternFill></fill>` +
+    `</fills>` +
+    `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>` +
+    `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
+    `<cellXfs count="7">` +
+      `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+      `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
+      `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
+      `<xf numFmtId="0" fontId="0" fillId="2" borderId="0" xfId="0" applyFill="1"/>` +
+      `<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/>` +
+      `<xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/>` +
+      `<xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/>` +
+    `</cellXfs>` +
+  `</styleSheet>`;
+}
+// Etiqueta de texto plano del tipo de día: se guarda en la última columna
+// ("Tipo") para poder reconstruir el color al volver a importar el informe
+// (el color de la celda en sí no es fiable de releer entre distintos lectores).
+const INFORME_MENSUAL_TIPO_LABEL = { normal:'Normal', viaje:'Viaje', vacaciones:'Vacaciones', festivo:'Festivo', compensacion:'Compensación' };
+const INFORME_MENSUAL_TIPO_DESDE_LABEL = Object.fromEntries(Object.entries(INFORME_MENSUAL_TIPO_LABEL).map(([k,v]) => [v, k]));
+
+function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs){
+  const headers = ['Fecha','Hora inicio','Hora fin','Horas efectivas','Horas extra','Horas compensadas','Comentario','Tipo'];
+  const NUM_COLS = headers.length;
+  const ULTIMA_COL = colName(NUM_COLS - 1);
+  const cellXml = (colIdx, rowIdx, value, styleId) => {
+    const ref = colName(colIdx) + rowIdx;
+    const sAttr = styleId ? ` s="${styleId}"` : '';
+    if(typeof value === 'number' && isFinite(value)) return `<c r="${ref}"${sAttr}><v>${value}</v></c>`;
+    const s = value == null ? '' : String(value);
+    return `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${escXml(s)}</t></is></c>`;
+  };
+  const filaMerged = (rowIdx, texto, styleId) => `<row r="${rowIdx}">${cellXml(0, rowIdx, texto, styleId)}</row>`;
+
+  let r = 1;
+  let xml = '';
+  const merges = [];
+
+  xml += filaMerged(r, nombre || 'Trabajador', 2); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  xml += filaMerged(r, 'Mes: ' + mesLabel, 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  xml += filaMerged(r, 'Horas acumuladas a inicio de mes: ' + fmtHMSigned(saldoInicioMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  r++; // fila en blanco
+
+  xml += `<row r="${r}">${headers.map((h,i) => cellXml(i, r, h, 1)).join('')}</row>`;
+  r++;
+
+  filas.forEach(f => {
+    const styleId = INFORME_MENSUAL_ESTILO_POR_TIPO[f.tipo] || 0;
+    const tipoLabel = INFORME_MENSUAL_TIPO_LABEL[f.tipo] || INFORME_MENSUAL_TIPO_LABEL.normal;
+    const valores = [f.fecha, f.horaInicio, f.horaFin, f.horasEfectivas, f.horasExtra, f.horasCompensadas, f.comentario, tipoLabel];
+    xml += `<row r="${r}">${valores.map((v,i) => cellXml(i, r, v, styleId)).join('')}</row>`;
+    r++;
+  });
+
+  r++; // fila en blanco
+  xml += filaMerged(r, 'Horas extra acumuladas después de este mes: ' + fmtHMSigned(saldoFinMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+
+  const colsXml = `<cols><col min="1" max="${NUM_COLS-2}" width="15" customWidth="1"/><col min="${NUM_COLS-1}" max="${NUM_COLS-1}" width="34" customWidth="1"/><col min="${NUM_COLS}" max="${NUM_COLS}" width="15" customWidth="1"/></cols>`;
+  const mergeXml = `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${colsXml}<sheetData>${xml}</sheetData>${mergeXml}</worksheet>`;
+}
+function buildXlsxBlobInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs){
+  const sheetXml = buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs);
+  return buildXlsxPackage('Informe mensual', sheetXml, buildStylesXmlInformeMensual());
+}
+// Clasifica cada día del mes (normal/viaje/festivo/vacaciones/compensación) y
+// arma las columnas del informe mensual coloreado a partir de los datos ya
+// guardados (fichajes, marcas de calendario y días de viaje).
+function construirFilasInformeMensual(anio, mesIdx){
+  const totalDias = new Date(anio, mesIdx+1, 0).getDate();
+  const filas = [];
+  for(let d=1; d<=totalDias; d++){
+    const fecha = `${anio}-${pad2(mesIdx+1)}-${pad2(d)}`;
+    const j = jornadaDeFecha(fecha);
+    const marca = diaCalendarioLaboral(fecha);
+    const viaje = obtenerViaje(fecha);
+    const calc = j ? calcJornada(j, Date.now()) : null;
+
+    let tipo = 'normal';
+    if(marca) tipo = marca.tipo;
+    else if(viaje && viaje.activo) tipo = 'viaje';
+
+    let comentario = '';
+    if(tipo === 'festivo') comentario = marca.nombre ? `Festivo: ${marca.nombre}` : 'Festivo';
+    else if(tipo === 'vacaciones') comentario = 'Vacaciones';
+    else if(tipo === 'compensacion') comentario = 'Compensación de horas';
+    else if(tipo === 'viaje') comentario = [viaje.lugar, viaje.cliente].filter(Boolean).join(' · ') || 'Viaje';
+    else comentario = (j && j.observaciones) || '';
+
+    filas.push({
+      fecha, tipo,
+      horaInicio: j ? fmtTimeHM(j.entrada) : '',
+      horaFin: j ? (j.salida ? fmtTimeHM(j.salida) : '(abierto)') : '',
+      horasEfectivas: j ? fmtHM(calc.efectivoTotal) : '',
+      // calc.extra ya solo es >0 en días de viaje (lo decide calcJornada); se
+      // muestra siempre que exista, aunque ese mismo día también esté marcado
+      // como festivo/vacaciones/compensación en el calendario.
+      horasExtra: (j && calc.extra > 0) ? fmtHM(calc.extra) : '',
+      horasCompensadas: tipo === 'compensacion' ? fmtHM((Number(marca.horas)||0) * 3600000) : '',
+      comentario
+    });
+  }
+  return filas;
+}
+function generarInformeMensualTrabajador(anio, mesIdx){
+  const mesIni = `${anio}-${pad2(mesIdx+1)}-01`;
+  const totalDias = new Date(anio, mesIdx+1, 0).getDate();
+  const mesFin = `${anio}-${pad2(mesIdx+1)}-${pad2(totalDias)}`;
+  const saldoInicio = bancoHorasSaldoMs(addDays(mesIni, -1));
+  const saldoFin = bancoHorasSaldoMs(mesFin);
+  const filas = construirFilasInformeMensual(anio, mesIdx);
+  const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
+  const mesLabel = `${MONTH_NAMES[mesIdx]} ${anio}`;
+  const blob = buildXlsxBlobInformeMensual(nombreTrabajador, mesLabel, saldoInicio, filas, saldoFin);
+  const sufijoNombre = nombreTrabajador ? '_' + nombreTrabajador.trim().replace(/\s+/g,'_').replace(/[^A-Za-z0-9_ñÑáéíóúÁÉÍÓÚ-]/g,'') : '';
+  descargarBlob(blob, `informe_mensual${sufijoNombre}_${anio}_${pad2(mesIdx+1)}.xlsx`, 'Informe mensual exportado');
+}
+function abrirModalInformeMensual(){
+  const mesDefault = todayStr().slice(0,7);
+  openModal(`
+    <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px;">Genera un Excel con el detalle día a día del mes elegido: viaje en verde, vacaciones en azul, festivo en amarillo y compensación en naranja, con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
+    <div class="field"><label>Mes</label><input type="month" id="informeMesInput" value="${mesDefault}"></div>
+    <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">📊 Descargar informe del mes</button>
+  `, {onOpen: () => document.getElementById('informeMesInput').focus()});
+}
+function confirmarInformeMensual(){
+  const val = document.getElementById('informeMesInput').value;
+  if(!val){ toast('Selecciona un mes.'); return; }
+  const [y, m] = val.split('-').map(Number);
+  closeModal();
+  generarInformeMensualTrabajador(y, m - 1);
 }
 
 /* ---------------------------------------------------------------------
@@ -2027,13 +2122,18 @@ function extraerEntradaZip(bytes, nombreBuscado){
   }
   throw new Error('El archivo no contiene los datos esperados (¿es un Excel exportado por esta app?).');
 }
-function parseXlsxRows(arrayBuffer){
+// Lectura "en bruto" de la única hoja de un .xlsx: array de filas, cada una
+// como array de valores de celda en el orden en que aparecen en el XML.
+// Como nuestro propio generador siempre escribe una celda por columna usada
+// (incluso vacía) y omite del todo las filas separadoras en blanco, esta
+// lectura posicional reconstruye exactamente la estructura del informe.
+function leerFilasCrudasXlsx(arrayBuffer){
   const bytes = new Uint8Array(arrayBuffer);
   const xmlBytes = extraerEntradaZip(bytes, 'xl/worksheets/sheet1.xml');
   const xml = new TextDecoder('utf-8').decode(xmlBytes);
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   if(doc.querySelector('parsererror')) throw new Error('No se pudo leer el contenido del Excel.');
-  const filas = Array.from(doc.getElementsByTagName('row')).map(rowEl =>
+  return Array.from(doc.getElementsByTagName('row')).map(rowEl =>
     Array.from(rowEl.getElementsByTagName('c')).map(c => {
       if(c.getAttribute('t') === 'inlineStr'){
         const tEl = c.getElementsByTagName('t')[0];
@@ -2045,36 +2145,71 @@ function parseXlsxRows(arrayBuffer){
       return isNaN(num) ? vEl.textContent : num;
     })
   );
+}
+function parseXlsxRows(arrayBuffer){
+  const filas = leerFilasCrudasXlsx(arrayBuffer);
   if(!filas.length) throw new Error('El Excel está vacío.');
   return { headers: filas[0].map(h => String(h).trim()), rows: filas.slice(1) };
+}
+
+/*
+ * Lee un "Informe mensual" (el .xlsx coloreado que cada trabajador descarga
+ * desde Resumen) reconstruyendo su estructura fija: nombre, mes, saldo de
+ * inicio, cabecera de columnas, filas día a día (con su tipo de día) y saldo
+ * final. No sirve para leer el exportador genérico "Exportar a Excel/CSV".
+ */
+function parseInformeMensualXlsx(arrayBuffer){
+  const filas = leerFilasCrudasXlsx(arrayBuffer);
+  if(filas.length < 5) throw new Error('El archivo no tiene el formato de un informe mensual.');
+  const nombre = String(filas[0][0] || '').trim();
+  const mesLabel = String(filas[1][0] || '').replace(/^Mes:\s*/, '').trim();
+  const saldoInicioMs = parseHMTexto(String(filas[2][0] || '').replace(/^Horas acumuladas a inicio de mes:\s*/, ''));
+
+  const headerRow = (filas[3] || []).map(h => String(h).trim());
+  const colIdx = nombreCol => headerRow.indexOf(nombreCol);
+  const cFecha = colIdx('Fecha'), cIni = colIdx('Hora inicio'), cFin = colIdx('Hora fin'),
+        cEfec = colIdx('Horas efectivas'), cExtra = colIdx('Horas extra'), cComp = colIdx('Horas compensadas'),
+        cCom = colIdx('Comentario'), cTipo = colIdx('Tipo');
+  if(cFecha < 0 || cTipo < 0){
+    throw new Error('El archivo no tiene el formato esperado. Importa el "Informe mensual" descargado desde la pestaña Resumen.');
+  }
+
+  const dataRows = [];
+  let saldoFinMs = 0;
+  for(let i = 4; i < filas.length; i++){
+    const fila = filas[i];
+    const primera = String((fila && fila[0]) || '');
+    if(/^Horas extra acumuladas/.test(primera)){
+      saldoFinMs = parseHMTexto(primera.replace(/^Horas extra acumuladas después de este mes:\s*/, ''));
+      break;
+    }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(primera)) continue; // fila inesperada: se ignora
+    const tipoLabel = String(fila[cTipo] ?? '').trim();
+    dataRows.push({
+      fecha: primera,
+      tipo: INFORME_MENSUAL_TIPO_DESDE_LABEL[tipoLabel] || 'normal',
+      horaInicio: String(fila[cIni] ?? ''),
+      horaFin: String(fila[cFin] ?? ''),
+      horasEfectivas: String(fila[cEfec] ?? ''),
+      horasExtra: String(fila[cExtra] ?? ''),
+      horasCompensadas: String(fila[cComp] ?? ''),
+      comentario: String(fila[cCom] ?? '')
+    });
+  }
+  if(!dataRows.length) throw new Error('El informe no contiene ningún día.');
+  return { nombre, mesLabel, saldoInicioMs, saldoFinMs, filas: dataRows };
 }
 
 let _pendienteImportEquipo = null;
 async function importarExcelEquipo(file){
   try{
     const buf = await file.arrayBuffer();
-    const { headers, rows } = parseXlsxRows(buf);
-    const idx = nombre => headers.indexOf(nombre);
-    const cols = {
-      trabajador: idx('Trabajador'), fecha: idx('Fecha'),
-      horasNormales: idx('Horas normales'), horasExtra: idx('Horas extra'),
-      horasEfectivas: idx('Horas efectivas'), km: idx('Kilómetros')
-    };
-    if(cols.fecha < 0 || cols.horasNormales < 0 || cols.horasExtra < 0){
-      toast('Este archivo no tiene el formato esperado. Importa el .xlsx que la app exporta desde "Resumen".');
-      return;
-    }
-    let nombreDetectado = '';
-    if(cols.trabajador >= 0){
-      const fila = rows.find(r => r[cols.trabajador]);
-      if(fila) nombreDetectado = String(fila[cols.trabajador]).trim();
-    }
-    _pendienteImportEquipo = { rows, cols, archivoNombre: file.name };
-    const diasDetectados = rows.filter(r => r[cols.fecha]).length;
+    const informe = parseInformeMensualXlsx(buf);
+    _pendienteImportEquipo = { informe, archivoNombre: file.name };
     openModal(`
-      <div class="modal-head"><h3>Importar informe</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-      <div class="field"><label>Nombre del trabajador</label><input type="text" id="impNombreTrabajador" value="${esc(nombreDetectado)}" placeholder="Nombre y apellidos"></div>
-      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">Se han detectado ${diasDetectados} días en «${esc(file.name)}».</p>
+      <div class="modal-head"><h3>Importar informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+      <div class="field"><label>Nombre del trabajador</label><input type="text" id="impNombreTrabajador" value="${esc(informe.nombre)}" placeholder="Nombre y apellidos"></div>
+      <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;">${esc(informe.mesLabel || '')} · ${informe.filas.length} días · «${esc(file.name)}»</p>
       <button class="btn btn-primary btn-lg" data-action="confirmar-importar-equipo">Guardar informe</button>
     `, {onOpen: () => document.getElementById('impNombreTrabajador').focus()});
   }catch(e){
@@ -2084,34 +2219,26 @@ async function importarExcelEquipo(file){
 function confirmarImportarEquipo(){
   const nombre = document.getElementById('impNombreTrabajador').value.trim();
   if(!nombre){ toast('Escribe el nombre del trabajador.'); return; }
-  const { rows, cols, archivoNombre } = _pendienteImportEquipo;
-  let horasNormalesMs = 0, horasExtraMs = 0, efectivoMs = 0, km = 0, dias = 0;
-  let fechaMin = null, fechaMax = null;
-  const filas = [];
-  rows.forEach(r => {
-    const fecha = r[cols.fecha];
-    if(!fecha) return; // fila adicional de un trayecto sin jornada propia ese día
-    dias++;
-    const hn = Number(r[cols.horasNormales]) || 0;
-    const he = Number(r[cols.horasExtra]) || 0;
-    const hef = cols.horasEfectivas >= 0 ? (Number(r[cols.horasEfectivas]) || 0) : (hn + he);
-    horasNormalesMs += Math.round(hn * 3600000);
-    horasExtraMs += Math.round(he * 3600000);
-    efectivoMs += Math.round(hef * 3600000);
-    if(cols.km >= 0) km += Number(r[cols.km]) || 0;
-    if(!fechaMin || fecha < fechaMin) fechaMin = fecha;
-    if(!fechaMax || fecha > fechaMax) fechaMax = fecha;
-    filas.push({ fecha, horasNormales: hn, horasExtra: he, horasEfectivas: hef });
+  const { informe, archivoNombre } = _pendienteImportEquipo;
+  let horasExtraMs = 0, horasCompensadasMs = 0, horasEfectivasMs = 0, diasConFichaje = 0;
+  informe.filas.forEach(f => {
+    horasExtraMs += parseHMTexto(f.horasExtra);
+    horasCompensadasMs += parseHMTexto(f.horasCompensadas);
+    horasEfectivasMs += parseHMTexto(f.horasEfectivas);
+    if(f.horaInicio) diasConFichaje++;
   });
-  if(!dias){ toast('El archivo no contiene ningún día con fichaje.'); return; }
+  const fechas = informe.filas.map(f => f.fecha).sort();
   DATA.equipo.push({
     id: uid(), nombreTrabajador: nombre, archivoNombre, fechaImportacion: Date.now(),
-    fechaMin, fechaMax, filas,
-    totales: { horasNormalesMs, horasExtraMs, efectivoMs, km, dias }
+    mesLabel: informe.mesLabel,
+    saldoInicioMs: informe.saldoInicioMs, saldoFinMs: informe.saldoFinMs,
+    fechaMin: fechas[0], fechaMax: fechas[fechas.length-1],
+    filas: informe.filas,
+    totales: { horasExtraMs, horasCompensadasMs, horasEfectivasMs, dias: diasConFichaje, totalDiasMes: informe.filas.length }
   });
   save();
   closeModal();
-  toast(`Informe de ${nombre} importado (${dias} días).`);
+  toast(`Informe de ${nombre} importado (${informe.mesLabel || informe.filas.length + ' días'}).`);
   renderEquipo();
 }
 async function eliminarInforme(id){
@@ -2147,15 +2274,16 @@ function renderEquipo(){
   }
   const trabajadores = agruparEquipo();
   const cards = trabajadores.map(w => {
-    const totalNormal = w.informes.reduce((s,i)=>s+i.totales.horasNormalesMs,0);
-    const totalExtra = w.informes.reduce((s,i)=>s+i.totales.horasExtraMs,0);
-    const totalKm = w.informes.reduce((s,i)=>s+i.totales.km,0);
-    const totalDias = w.informes.reduce((s,i)=>s+i.totales.dias,0);
+    const totalEfectivo = w.informes.reduce((s,i)=>s+(i.totales.horasEfectivasMs||0),0);
+    const totalExtra = w.informes.reduce((s,i)=>s+(i.totales.horasExtraMs||0),0);
+    const totalCompensado = w.informes.reduce((s,i)=>s+(i.totales.horasCompensadasMs||0),0);
+    const totalDias = w.informes.reduce((s,i)=>s+(i.totales.dias||0),0);
+    const saldoPendiente = totalExtra - totalCompensado;
     const iniciales = w.nombre.split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
     const informesHtml = w.informes.slice().sort((a,b)=>b.fechaImportacion-a.fechaImportacion).map(inf => `
       <div class="informe-item">
-        <span>${inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} – ${fmtDateShort(inf.fechaMax)}` : esc(inf.archivoNombre)} · ${inf.totales.dias} días</span>
-        <span class="if-meta">Extra ${fmtHM(inf.totales.horasExtraMs)}</span>
+        <span>${esc(inf.mesLabel || (inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} – ${fmtDateShort(inf.fechaMax)}` : inf.archivoNombre))} · ${inf.totales.dias} días con fichaje</span>
+        <span class="if-meta">Extra ${fmtHM(inf.totales.horasExtraMs)} · Comp. ${fmtHM(inf.totales.horasCompensadasMs)}</span>
         <button class="icon-btn" data-action="eliminar-informe" data-id="${inf.id}" title="Eliminar este informe">🗑</button>
       </div>`).join('');
     return `
@@ -2165,11 +2293,12 @@ function renderEquipo(){
         <button class="icon-btn" data-action="eliminar-trabajador" data-nombre="${esc(w.nombre)}" title="Eliminar de la lista">🗑</button>
       </div>
       <div class="summary-grid">
-        <div class="summary-tile"><b>${fmtHM(totalNormal)}</b><small>Horas normales</small></div>
-        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(totalExtra)}</b><small>Horas extra acumuladas</small></div>
-        <div class="summary-tile"><b>${totalDias}</b><small>Días importados</small></div>
-        <div class="summary-tile"><b>${totalKm} km</b><small>Kilómetros</small></div>
+        <div class="summary-tile"><b>${fmtHM(totalEfectivo)}</b><small>Horas efectivas</small></div>
+        <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(totalExtra)}</b><small>Horas extra generadas</small></div>
+        <div class="summary-tile"><b style="color:var(--compensacion)">${fmtHM(totalCompensado)}</b><small>Horas compensadas</small></div>
+        <div class="summary-tile"><b style="color:${saldoPendiente>=0?'var(--success)':'var(--danger)'}">${fmtHMSigned(saldoPendiente)}</b><small>Saldo pendiente</small></div>
       </div>
+      <div class="card-row"><span class="label">Días con fichaje</span><span class="value">${totalDias}</span></div>
       <div class="section-title">Informes recibidos</div>
       ${informesHtml}
     </div>`;
@@ -2178,26 +2307,55 @@ function renderEquipo(){
   el.innerHTML = `
     <div class="card">
       <h2>Importar informe de un trabajador</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Importa el Excel que te envíe cada trabajador (el mismo que descargan desde su pestaña Resumen). Puedes importar varios periodos del mismo trabajador para ir acumulando sus horas extra.</p>
-      <button class="btn btn-primary btn-lg" data-action="importar-excel-equipo">📥 Importar Excel de un trabajador</button>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Importa el "Informe mensual" (coloreado) que te envíe cada trabajador, descargado desde su pestaña Resumen. Puedes importar varios meses del mismo trabajador para ir acumulando sus horas extra y compensaciones.</p>
+      <button class="btn btn-primary btn-lg" data-action="importar-excel-equipo">📥 Importar informe de un trabajador</button>
     </div>
-    ${cards || `<div class="empty-state"><div class="ic">🧑‍🤝‍🧑</div>Todavía no has importado ningún Excel.</div>`}
-    ${trabajadores.length ? `<button class="btn btn-outline btn-lg" data-action="exportar-resumen-equipo" style="margin-bottom:20px;">📊 Exportar resumen del equipo</button>` : ''}
+    ${cards || `<div class="empty-state"><div class="ic">🧑‍🤝‍🧑</div>Todavía no has importado ningún informe.</div>`}
+    ${trabajadores.length ? `
+    <div class="btn-row" style="margin-bottom:20px;">
+      <button class="btn btn-outline" data-action="exportar-resumen-equipo">📊 Resumen del equipo</button>
+      <button class="btn btn-primary" data-action="exportar-informes-equipo-combinado">📦 Todos los informes en un Excel</button>
+    </div>` : ''}
   `;
 }
 function exportarResumenEquipo(){
   const trabajadores = agruparEquipo();
-  const headers = ['Trabajador','Nº de informes','Días acumulados','Horas normales','Horas extra acumuladas','Kilómetros','Periodo más antiguo','Periodo más reciente'];
+  const headers = ['Trabajador','Nº de informes','Días con fichaje','Horas efectivas','Horas extra generadas','Horas compensadas','Saldo pendiente','Periodo más antiguo','Periodo más reciente'];
   const rows = trabajadores.map(w => {
-    const totalNormal = w.informes.reduce((s,i)=>s+i.totales.horasNormalesMs,0);
-    const totalExtra = w.informes.reduce((s,i)=>s+i.totales.horasExtraMs,0);
-    const totalKm = w.informes.reduce((s,i)=>s+i.totales.km,0);
-    const totalDias = w.informes.reduce((s,i)=>s+i.totales.dias,0);
+    const totalEfectivo = w.informes.reduce((s,i)=>s+(i.totales.horasEfectivasMs||0),0);
+    const totalExtra = w.informes.reduce((s,i)=>s+(i.totales.horasExtraMs||0),0);
+    const totalCompensado = w.informes.reduce((s,i)=>s+(i.totales.horasCompensadasMs||0),0);
+    const totalDias = w.informes.reduce((s,i)=>s+(i.totales.dias||0),0);
     const fechas = w.informes.flatMap(i => [i.fechaMin, i.fechaMax]).filter(Boolean).sort();
-    return [w.nombre, w.informes.length, totalDias, hoursDecimal(totalNormal), hoursDecimal(totalExtra), totalKm, fechas[0]||'', fechas[fechas.length-1]||''];
+    return [w.nombre, w.informes.length, totalDias, hoursDecimal(totalEfectivo), hoursDecimal(totalExtra), hoursDecimal(totalCompensado), hoursDecimal(totalExtra-totalCompensado), fechas[0]||'', fechas[fechas.length-1]||''];
   });
   const blob = buildXlsxBlob('Equipo', headers, rows);
   descargarBlob(blob, `resumen_equipo_${todayStr()}.xlsx`, 'Resumen del equipo exportado');
+}
+// Reempaqueta cada informe importado (uno por trabajador y mes) como una hoja
+// coloreada dentro de un único .xlsx, listo para reenviar a quien lo necesite.
+function exportarTodosInformesEquipo(){
+  if(!DATA.equipo.length){ toast('No hay informes importados.'); return; }
+  const informesOrdenados = DATA.equipo.slice().sort((a,b) =>
+    a.nombreTrabajador.localeCompare(b.nombreTrabajador) || (a.fechaMin||'').localeCompare(b.fechaMin||'')
+  );
+  const nombresHoja = nombresHojaUnicos(informesOrdenados.map(inf => `${inf.nombreTrabajador} ${inf.mesLabel||''}`.trim()));
+  const sheets = informesOrdenados.map((inf, i) => {
+    // Los informes con el formato antiguo (previo a esta función) no tienen
+    // estos campos por día: se normalizan para no dejar celdas con "undefined".
+    const filas = (inf.filas||[]).map(f => ({
+      fecha: f.fecha||'', tipo: f.tipo||'normal',
+      horaInicio: f.horaInicio||'', horaFin: f.horaFin||'',
+      horasEfectivas: f.horasEfectivas||'', horasExtra: f.horasExtra||'',
+      horasCompensadas: f.horasCompensadas||'', comentario: f.comentario||''
+    }));
+    return {
+      name: nombresHoja[i],
+      sheetXml: buildSheetXmlInformeMensual(inf.nombreTrabajador, inf.mesLabel || '', inf.saldoInicioMs||0, filas, inf.saldoFinMs||0)
+    };
+  });
+  const blob = buildXlsxPackageMultiSheet(sheets, buildStylesXmlInformeMensual());
+  descargarBlob(blob, `informes_equipo_${todayStr()}.xlsx`, 'Informes del equipo exportados en un solo archivo');
 }
 
 function abrirModalExportar(tipo){
@@ -2337,14 +2495,6 @@ function renderAjustes(){
     </div>
 
     <div class="card">
-      <h2>Trayectos</h2>
-      <div class="switch-row">
-        <div class="txt"><b>Contabilizar trayecto como tiempo trabajado</b><small>Si está desactivado, el tiempo en coche se contabiliza aparte.</small></div>
-        <button class="switch ${c.trayectoComoTrabajo?'on':''}" data-action="toggle-trayecto-trabajo"></button>
-      </div>
-    </div>
-
-    <div class="card">
       <h2>Acceso directo</h2>
       <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Añade un icono en la pantalla de inicio de tu móvil para abrir la app con un toque, como cualquier otra aplicación.</p>
       <button class="btn btn-primary" data-action="instalar-app">📱 Añadir a pantalla de inicio</button>
@@ -2371,8 +2521,8 @@ function renderAjustes(){
     <div class="card">
       <h2>Privacidad</h2>
       <p style="font-size:13px;color:var(--muted);line-height:1.6;">
-        Ningún dato (horarios, trayectos, ubicaciones, histórico) sale de este dispositivo, salvo que tú mismo abras
-        voluntariamente Google Maps desde un trayecto. La aplicación no incluye analítica ni publicidad.
+        Ningún dato (horarios, viajes, clientes, histórico) sale de este dispositivo. La aplicación no incluye
+        analítica ni publicidad.
       </p>
     </div>
   `;
@@ -2389,7 +2539,7 @@ function importarBackupSeleccionado(file){
     let parsed;
     try{ parsed = JSON.parse(reader.result); }
     catch(e){ toast('El archivo no es un JSON válido.'); return; }
-    if(!parsed || !Array.isArray(parsed.jornadas) || !Array.isArray(parsed.trayectos) || !parsed.config){
+    if(!parsed || !Array.isArray(parsed.jornadas) || !parsed.config){
       toast('El archivo no tiene el formato esperado.'); return;
     }
     const ok = await confirmDialog('Vas a sobrescribir TODOS los datos actuales con los de esta copia de seguridad. ¿Continuar?', 'Restaurar', true);
@@ -2402,15 +2552,18 @@ function importarBackupSeleccionado(file){
     }
     const idsValidos = COLUMNAS_EXPORT.map(c => c.id);
     const columnasGuardadas = Array.isArray(parsed.config.exportColumnas) ? parsed.config.exportColumnas.filter(id => idsValidos.includes(id)) : [];
+    // Las copias de seguridad antiguas (con "trayectos") se aceptan igualmente;
+    // esos viajes en coche ya no existen como función y se descartan.
     DATA = {
       version: 1,
       config: Object.assign({}, def.config, parsed.config, {dias: diasFusionados, exportColumnas: columnasGuardadas.length ? columnasGuardadas : idsValidos}),
       jornadas: parsed.jornadas,
-      trayectos: parsed.trayectos,
       perfil: parsed.perfil || null,
       sesionAbierta: !!parsed.sesionAbierta,
       equipo: Array.isArray(parsed.equipo) ? parsed.equipo : [],
-      calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {}
+      calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
+      viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
+      sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {}
     };
     save();
     toast('Copia de seguridad restaurada');
@@ -2433,7 +2586,7 @@ function configurarAccesoDirecto(){
     const canvas = document.createElement('canvas');
     canvas.width = 512; canvas.height = 512;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#2563eb';
+    ctx.fillStyle = '#7c3aed';
     if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(0,0,512,512,112); ctx.fill(); }
     else { ctx.fillRect(0,0,512,512); }
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 34; ctx.lineCap = 'round';
@@ -2569,7 +2722,9 @@ function arrancarAppPrincipal(){
   document.getElementById('tabbar').classList.remove('hidden');
   document.getElementById('tabbarEquipoBtn').classList.toggle('hidden', !esDirectivo());
   aplicarTema();
-  setTab('hoy');
+  let tabInicial = obtenerUltimaPestana();
+  if(tabInicial === 'equipo' && !esDirectivo()) tabInicial = 'hoy';
+  setTab(tabInicial);
   renderAll();
 }
 
@@ -2591,8 +2746,22 @@ function procesarAccesoDirecto(){
 }
 
 /* ----------------------------- Navegación / render general -------------- */
+// Recuerda la última pestaña visitada para que un refresco de página no
+// vuelva siempre a "Hoy" (se guarda aparte de DATA: es solo estado de UI).
+const TABS_VALIDAS = ['hoy','historico','resumen','equipo','ajustes'];
+const TAB_STORAGE_KEY = 'controlHorario_ultimaPestana_v1';
+function obtenerUltimaPestana(){
+  try{
+    const t = localStorage.getItem(TAB_STORAGE_KEY);
+    return TABS_VALIDAS.includes(t) ? t : 'hoy';
+  }catch(e){ return 'hoy'; }
+}
+function guardarUltimaPestana(tab){
+  try{ localStorage.setItem(TAB_STORAGE_KEY, tab); }catch(e){}
+}
 function setTab(tab){
   UI.tab = tab;
+  guardarUltimaPestana(tab);
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === tab));
   document.querySelectorAll('.tabbar-item').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   renderTabContent(tab);
@@ -2601,7 +2770,6 @@ function setTab(tab){
 function renderTabContent(tab){
   if(tab === 'hoy') renderHoy();
   else if(tab === 'historico') renderHistorico();
-  else if(tab === 'trayectos') renderTrayectos();
   else if(tab === 'resumen') renderResumen();
   else if(tab === 'equipo') renderEquipo();
   else if(tab === 'ajustes') renderAjustes();
@@ -2627,16 +2795,11 @@ document.addEventListener('click', async (e) => {
     case 'iniciar-comida': accionIniciarComida(); break;
     case 'finalizar-comida': accionFinalizarComida(); break;
 
-    case 'abrir-iniciar-trayecto': abrirFormularioTrayecto(); break;
-    case 'confirmar-iniciar-trayecto': confirmarIniciarTrayecto(); break;
-    case 'abrir-finalizar-trayecto': abrirFormularioFinalizarTrayecto(); break;
-    case 'confirmar-finalizar-trayecto': confirmarFinalizarTrayecto(d.id); break;
-    case 'usar-ubicacion': usarUbicacionActual(d.target); break;
-    case 'abrir-maps': abrirEnGoogleMaps(d.id); break;
-    case 'editar-trayecto': abrirFormEditarTrayecto(d.id); break;
-    case 'guardar-trayecto-editado': guardarTrayectoEditado(d.id); break;
-    case 'eliminar-trayecto': await eliminarTrayecto(d.id); break;
-    case 'agregar-trayecto-dia': agregarTrayectoDia(d.fecha); break;
+    case 'abrir-form-viaje': abrirFormularioViaje(d.fecha); break;
+    case 'confirmar-marcar-viaje': confirmarMarcarViaje(d.fecha); break;
+    case 'quitar-viaje': await accionQuitarViaje(d.fecha); break;
+    case 'marcar-sin-comida': accionMarcarSinComida(d.fecha); break;
+    case 'quitar-sin-comida': accionQuitarSinComida(d.fecha); break;
 
     case 'fichaje-abierto-cerrar-ahora': fichajeAbiertoCerrarAhora(d.id); break;
     case 'fichaje-abierto-manual': fichajeAbiertoManual(d.id); break;
@@ -2669,17 +2832,23 @@ document.addEventListener('click', async (e) => {
       break;
     }
     case 'abrir-dia-calendario': abrirDiaCalendario(d.fecha); break;
-    case 'marcar-dia':
+    case 'marcar-dia': {
+      const marcaActual = diaCalendarioLaboral(d.fecha);
       if(d.tipo === 'normal') quitarMarcaCalendarioLaboral(d.fecha);
-      else marcarDiaCalendarioLaboral(d.fecha, d.tipo);
+      // Si ya estaba en ese mismo tipo, no se vuelve a marcar: evita perder
+      // un nombre de festivo o unas horas de compensación editados a mano.
+      else if(!marcaActual || marcaActual.tipo !== d.tipo) marcarDiaCalendarioLaboral(d.fecha, d.tipo);
       renderAll();
       abrirDiaCalendario(d.fecha);
       break;
+    }
     case 'cargar-festivos-navarra': await cargarFestivosNavarra(); break;
     case 'exportar-calendario-pdf': exportarCalendarioPDF(); break;
     case 'abrir-exportar-excel': abrirModalExportar('xlsx'); break;
     case 'abrir-exportar-csv': abrirModalExportar('csv'); break;
     case 'confirmar-exportar': confirmarExportar(d.tipo); break;
+    case 'abrir-informe-mensual': abrirModalInformeMensual(); break;
+    case 'confirmar-informe-mensual': confirmarInformeMensual(); break;
     case 'export-cols-todos':
       document.querySelectorAll('.export-col-chk').forEach(chk => chk.checked = true);
       break;
@@ -2694,10 +2863,6 @@ document.addEventListener('click', async (e) => {
       break;
     case 'set-modo':
       DATA.config[d.campo] = d.valor;
-      save(); renderAll();
-      break;
-    case 'toggle-trayecto-trabajo':
-      DATA.config.trayectoComoTrabajo = !DATA.config.trayectoComoTrabajo;
       save(); renderAll();
       break;
     case 'set-tema':
@@ -2720,6 +2885,7 @@ document.addEventListener('click', async (e) => {
     case 'eliminar-informe': await eliminarInforme(d.id); break;
     case 'eliminar-trabajador': await eliminarTrabajadorEquipo(d.nombre); break;
     case 'exportar-resumen-equipo': exportarResumenEquipo(); break;
+    case 'exportar-informes-equipo-combinado': exportarTodosInformesEquipo(); break;
 
     case 'cerrar-modal': closeModal(); break;
   }
@@ -2813,7 +2979,7 @@ function init(){
   }
   setInterval(() => {
     if(!sesionActiva()) return;
-    tickLive(); tickTrayecto();
+    tickLive();
     document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' · ' + fmtTimeHM(Date.now());
   }, 1000);
 }
