@@ -161,6 +161,7 @@ button{font-family:inherit;}
 
 /* History list */
 .hist-filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
+.hist-filters-secondary{margin-top:-6px;}
 .chip{flex:none;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;}
 .chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
 .search-box{margin-bottom:12px;}
@@ -185,6 +186,13 @@ button{font-family:inherit;}
 [data-theme="dark"] .pill.viaje{background:#0e3a44;color:#67e8f9;}
 .pill.sincomida{background:#fce7e7;color:#9f1239;}
 [data-theme="dark"] .pill.sincomida{background:#3f1620;color:#fda4af;}
+
+.informe-meses-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.mes-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface-2);cursor:pointer;font-size:13.5px;}
+.mes-card input{flex:none;}
+.mes-card-nombre{font-weight:600;}
+.mes-card-badge{width:100%;font-size:11px;color:var(--success);}
+.mes-card:has(input:checked){border-color:var(--primary);}
 
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(15,17,21,.55);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
@@ -534,7 +542,7 @@ function esDirectivo(){ return !!(DATA.perfil && DATA.perfil.rol === 'directivo'
 /* ----------------------------- Estado UI -------------------------------- */
 const UI = {
   tab: 'hoy',
-  historico: { filtro: 'semana', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '', soloViaje: false },
+  historico: { filtro: 'mes', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '', soloViaje: false },
   resumen: { periodo: 'semana', mesRef: todayStr() },
   bannerDismissed: false,
   avisoDescartadoFecha: null,
@@ -1264,7 +1272,10 @@ function renderHistorico(){
   }).join('') : `<div class="empty-state"><div class="ic">📭</div>No hay registros en este periodo.</div>`;
 
   el.innerHTML = `
-    <div class="hist-filters">${chips}<button class="chip ${UI.historico.soloViaje?'active':''}" data-action="toggle-solo-viaje">🧳 Solo viaje</button></div>
+    <div class="hist-filters">${chips}</div>
+    <div class="hist-filters hist-filters-secondary">
+      <button class="chip ${UI.historico.soloViaje?'active':''}" data-action="toggle-solo-viaje">🧳 Solo viaje</button>
+    </div>
     ${rangoInputs}
     <div class="field search-box">
       <input type="text" placeholder="Buscar en el histórico…" id="buscadorHistorico" value="${esc(UI.historico.busqueda)}">
@@ -1980,7 +1991,9 @@ function buildStylesXmlInformeMensual(){
 const INFORME_MENSUAL_TIPO_LABEL = { normal:'Normal', viaje:'Viaje', vacaciones:'Vacaciones', festivo:'Festivo', compensacion:'Compensación' };
 const INFORME_MENSUAL_TIPO_DESDE_LABEL = Object.fromEntries(Object.entries(INFORME_MENSUAL_TIPO_LABEL).map(([k,v]) => [v, k]));
 
-function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs){
+// Cabeceras/estilos/anchos comunes a cualquier hoja de "informe mensual"
+// (tanto si lleva un único mes como si lleva varios apilados en la misma hoja).
+function contextoHojaInformeMensual(){
   const headers = ['Fecha','Hora inicio','Hora fin','Horas efectivas','Horas extra','Horas compensadas','Comentario','Tipo'];
   const NUM_COLS = headers.length;
   const ULTIMA_COL = colName(NUM_COLS - 1);
@@ -1992,12 +2005,18 @@ function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, sal
     return `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${escXml(s)}</t></is></c>`;
   };
   const filaMerged = (rowIdx, texto, styleId) => `<row r="${rowIdx}">${cellXml(0, rowIdx, texto, styleId)}</row>`;
-
-  let r = 1;
+  const colsXml = `<cols><col min="1" max="${NUM_COLS-2}" width="15" customWidth="1"/><col min="${NUM_COLS-1}" max="${NUM_COLS-1}" width="34" customWidth="1"/><col min="${NUM_COLS}" max="${NUM_COLS}" width="15" customWidth="1"/></cols>`;
+  return { headers, ULTIMA_COL, cellXml, filaMerged, colsXml };
+}
+// Escribe el bloque de un único mes (etiqueta + saldo inicial + cabecera +
+// filas día a día + saldo final) a partir de la fila "r0", devolviendo el XML
+// generado, sus fusiones de celdas y la fila siguiente libre.
+function construirBloqueMesInforme(ctx, r0, mesLabel, saldoInicioMs, filas, saldoFinMs){
+  const { headers, ULTIMA_COL, cellXml, filaMerged } = ctx;
+  let r = r0;
   let xml = '';
   const merges = [];
 
-  xml += filaMerged(r, nombre || 'Trabajador', 2); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   xml += filaMerged(r, 'Mes: ' + mesLabel, 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   xml += filaMerged(r, 'Horas extra acumuladas a inicio de mes: ' + fmtHMSigned(saldoInicioMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   r++; // fila en blanco
@@ -2016,9 +2035,41 @@ function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, sal
   r++; // fila en blanco
   xml += filaMerged(r, 'Horas extra acumuladas después de este mes: ' + fmtHMSigned(saldoFinMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
 
-  const colsXml = `<cols><col min="1" max="${NUM_COLS-2}" width="15" customWidth="1"/><col min="${NUM_COLS-1}" max="${NUM_COLS-1}" width="34" customWidth="1"/><col min="${NUM_COLS}" max="${NUM_COLS}" width="15" customWidth="1"/></cols>`;
+  return { xml, merges, r };
+}
+function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs){
+  const ctx = contextoHojaInformeMensual();
+  let r = 1;
+  let xml = '';
+  const merges = [];
+
+  xml += ctx.filaMerged(r, nombre || 'Trabajador', 2); merges.push(`A${r}:${ctx.ULTIMA_COL}${r}`); r++;
+  const bloque = construirBloqueMesInforme(ctx, r, mesLabel, saldoInicioMs, filas, saldoFinMs);
+  xml += bloque.xml; merges.push(...bloque.merges); r = bloque.r;
+
   const mergeXml = `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`;
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${colsXml}<sheetData>${xml}</sheetData>${mergeXml}</worksheet>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${ctx.colsXml}<sheetData>${xml}</sheetData>${mergeXml}</worksheet>`;
+}
+// Hoja de un único empleado con TODOS sus meses apilados uno debajo de otro
+// (mismo bloque por mes que el informe individual), usada por el Excel
+// combinado del equipo para no tener que abrir una hoja distinta por mes.
+function buildSheetXmlInformeMensualEmpleado(nombre, meses){
+  const ctx = contextoHojaInformeMensual();
+  let r = 1;
+  let xml = '';
+  const merges = [];
+
+  xml += ctx.filaMerged(r, nombre || 'Trabajador', 2); merges.push(`A${r}:${ctx.ULTIMA_COL}${r}`); r++;
+  r++; // fila en blanco tras el nombre
+
+  meses.forEach(m => {
+    const bloque = construirBloqueMesInforme(ctx, r, m.mesLabel, m.saldoInicioMs, m.filas, m.saldoFinMs);
+    xml += bloque.xml; merges.push(...bloque.merges); r = bloque.r;
+    r++; // fila en blanco entre un mes y el siguiente
+  });
+
+  const mergeXml = `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${ctx.colsXml}<sheetData>${xml}</sheetData>${mergeXml}</worksheet>`;
 }
 function buildXlsxBlobInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs){
   const sheetXml = buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, saldoFinMs);
@@ -2067,46 +2118,45 @@ function construirFilasInformeMensual(anio, mesIdx){
   }
   return filas;
 }
-// Meses "disponibles" para el informe: desde el primer dato que exista
-// (fichaje, viaje, marca de calendario...) hasta el mes en curso, incluido.
+// Meses "disponibles" para el informe: solo los que tienen algún dato
+// registrado (fichaje, viaje, marca de calendario o "sin comida"), para no
+// ofrecer meses vacíos. El mes en curso se incluye siempre que tenga algo,
+// aunque sea un único día.
 function mesesDisponiblesInforme(){
   const hoy = new Date();
-  const fechas = [
+  const claves = new Set([
     ...DATA.jornadas.map(j => j.fecha),
     ...Object.keys(DATA.calendarioLaboral),
     ...Object.keys(DATA.viajes),
     ...Object.keys(DATA.sinComida)
-  ].filter(Boolean).sort();
+  ].filter(Boolean).map(f => f.slice(0, 7)));
 
-  let inicio;
-  if(fechas.length){
-    const d0 = parseDateLocal(fechas[0]);
-    inicio = new Date(d0.getFullYear(), d0.getMonth(), 1);
-  } else {
-    inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  }
-  const limite = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   const claveActual = `${hoy.getFullYear()}-${pad2(hoy.getMonth()+1)}`;
 
-  const meses = [];
-  let cursor = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
-  while(cursor <= limite){
-    const clave = `${cursor.getFullYear()}-${pad2(cursor.getMonth()+1)}`;
-    meses.push({ anio: cursor.getFullYear(), mesIdx: cursor.getMonth(), clave, esActual: clave === claveActual });
-    cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1);
-  }
-  return meses.reverse(); // el más reciente primero
+  const meses = [...claves].filter(clave => clave <= claveActual).map(clave => {
+    const [anioStr, mesStr] = clave.split('-');
+    return { anio: Number(anioStr), mesIdx: Number(mesStr)-1, clave, esActual: clave === claveActual };
+  }).sort((a,b) => b.clave.localeCompare(a.clave)); // el más reciente primero
+  return meses;
 }
 
 // El modal muestra primero un selector de año (chips) y debajo solo los meses
 // de ese año, para no acabar con una lista larga y con scroll al acumular
 // varios años de datos. La selección de meses se guarda en UI.informeMensual
 // .seleccionados (no en el DOM) precisamente para no perderla al cambiar de
-// año. mesesDisponiblesInforme() ya limita el rango a "desde el primer dato
-// fichado hasta el mes actual", así que nunca aparecen años/meses sin datos.
+// año. mesesDisponiblesInforme() ya solo devuelve los meses con algún dato
+// registrado, así que nunca aparecen meses (ni años) vacíos.
 function abrirModalInformeMensual(){
   const meses = mesesDisponiblesInforme();
   const anios = [...new Set(meses.map(m => m.anio))].sort((a,b) => b - a);
+
+  if(!anios.length){
+    openModal(`
+      <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+      <div class="empty-state"><div class="ic">📭</div>Todavía no hay ningún día registrado (fichaje, viaje, festivo o vacación) para generar un informe.</div>
+    `);
+    return;
+  }
 
   if(!UI.informeMensual) UI.informeMensual = { anio: anios[0], seleccionados: new Set() };
   if(!anios.includes(UI.informeMensual.anio)) UI.informeMensual.anio = anios[0];
@@ -2118,14 +2168,15 @@ function abrirModalInformeMensual(){
   const mesesAnio = meses.filter(m => m.anio === UI.informeMensual.anio).sort((a,b) => a.mesIdx - b.mesIdx);
   const mesesHtml = mesesAnio.map(m => {
     const info = DATA.informesDescargados[m.clave];
-    const estado = info
-      ? `<span style="color:var(--success);font-size:12px;display:block;">✅ Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}${info.incompleto ? ' (incompleto)' : ''}</span>`
+    const badge = info
+      ? `<span class="mes-card-badge" title="Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}${info.incompleto ? ' (incompleto)' : ''}">✅ Descargado${info.incompleto ? ' · incompleto' : ''}</span>`
       : '';
     const checked = UI.informeMensual.seleccionados.has(m.clave) ? 'checked' : '';
     return `
-    <label class="mini-list-item" style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:8px;">
-      <input type="checkbox" class="informe-mes-chk" value="${m.clave}" ${checked} style="margin-top:3px;">
-      <span style="flex:1;font-size:14px;">${MONTH_NAMES[m.mesIdx]}${m.esActual ? ' · en curso' : ''}${estado}</span>
+    <label class="mes-card">
+      <input type="checkbox" class="informe-mes-chk" value="${m.clave}" ${checked}>
+      <span class="mes-card-nombre">${MONTH_NAMES[m.mesIdx]}${m.esActual ? ' · en curso' : ''}</span>
+      ${badge}
     </label>`;
   }).join('');
 
@@ -2134,7 +2185,7 @@ function abrirModalInformeMensual(){
     <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Elige uno o varios meses: viaje en verde, vacaciones en azul, festivo en amarillo y compensación en naranja. Si eliges varios, el Excel llevará una tabla separada por cada mes. El mes en curso se descarga marcado como incompleto (solo hasta hoy).</p>
     <p style="color:var(--muted);font-size:12px;margin-bottom:8px;">Toca un año para ver sus meses. Vuelve a tocar el año activo para marcar (o desmarcar) todos sus meses.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${aniosHtml}</div>
-    <div style="margin-bottom:14px;">${mesesHtml || '<p style="color:var(--muted);font-size:13px;">No hay meses con datos en este año.</p>'}</div>
+    <div class="informe-meses-grid">${mesesHtml || '<p style="color:var(--muted);font-size:13px;">No hay meses con datos en este año.</p>'}</div>
     <button class="btn btn-primary btn-lg" data-action="confirmar-informe-mensual">📊 Descargar seleccionados (<span id="informeMesSelCount">${UI.informeMensual.seleccionados.size}</span>)</button>
   `);
 }
@@ -2512,7 +2563,11 @@ function renderEquipo(){
     </div>` : ''}
   `;
 }
-function exportarResumenEquipo(){
+// Tabla con el estado global de horas extra de cada trabajador (nº de
+// informes, días fichados, horas efectivas/extra/compensadas y saldo
+// pendiente). La usan tanto el "Resumen del equipo" descargable por separado
+// como la hoja de resumen del Excel combinado.
+function filasResumenEquipo(){
   const trabajadores = agruparEquipo();
   const headers = ['Trabajador','Nº de informes','Días con fichaje','Horas efectivas','Horas extra generadas','Horas compensadas','Saldo pendiente','Periodo más antiguo','Periodo más reciente'];
   const rows = trabajadores.map(w => {
@@ -2523,31 +2578,45 @@ function exportarResumenEquipo(){
     const fechas = w.informes.flatMap(i => [i.fechaMin, i.fechaMax]).filter(Boolean).sort();
     return [w.nombre, w.informes.length, totalDias, hoursDecimal(totalEfectivo), hoursDecimal(totalExtra), hoursDecimal(totalCompensado), hoursDecimal(totalExtra-totalCompensado), fechas[0]||'', fechas[fechas.length-1]||''];
   });
+  return { headers, rows };
+}
+function exportarResumenEquipo(){
+  const { headers, rows } = filasResumenEquipo();
   const blob = buildXlsxBlob('Equipo', headers, rows);
   descargarBlob(blob, `resumen_equipo_${todayStr()}.xlsx`, 'Resumen del equipo exportado');
 }
-// Reempaqueta cada informe importado (uno por trabajador y mes) como una hoja
-// coloreada dentro de un único .xlsx, listo para reenviar a quien lo necesite.
+// Arma el Excel combinado del equipo: una primera hoja de "Resumen" con el
+// estado global de horas extra de todos los trabajadores, seguida de una hoja
+// por trabajador con TODOS sus meses apilados uno debajo de otro (mismo
+// formato que el informe individual), listo para reenviar a quien lo necesite.
 function exportarTodosInformesEquipo(){
   if(!DATA.equipo.length){ toast('No hay informes importados.'); return; }
-  const informesOrdenados = DATA.equipo.slice().sort((a,b) =>
-    a.nombreTrabajador.localeCompare(b.nombreTrabajador) || (a.fechaMin||'').localeCompare(b.fechaMin||'')
-  );
-  const nombresHoja = nombresHojaUnicos(informesOrdenados.map(inf => `${inf.nombreTrabajador} ${inf.mesLabel||''}`.trim()));
-  const sheets = informesOrdenados.map((inf, i) => {
-    // Los informes con el formato antiguo (previo a esta función) no tienen
-    // estos campos por día: se normalizan para no dejar celdas con "undefined".
-    const filas = (inf.filas||[]).map(f => ({
-      fecha: f.fecha||'', tipo: f.tipo||'normal',
-      horaInicio: f.horaInicio||'', horaFin: f.horaFin||'',
-      horasEfectivas: f.horasEfectivas||'', horasExtra: f.horasExtra||'',
-      horasCompensadas: f.horasCompensadas||'', comentario: f.comentario||''
-    }));
-    return {
-      name: nombresHoja[i],
-      sheetXml: buildSheetXmlInformeMensual(inf.nombreTrabajador, inf.mesLabel || '', inf.saldoInicioMs||0, filas, inf.saldoFinMs||0)
-    };
-  });
+  const empleados = agruparEquipo(); // ya viene ordenado alfabéticamente por nombre
+
+  const nombresHoja = nombresHojaUnicos(['Resumen', ...empleados.map(e => e.nombre)]);
+  const { headers: resumenHeaders, rows: resumenRows } = filasResumenEquipo();
+  const sheets = [
+    { name: nombresHoja[0], sheetXml: buildSheetXml(resumenHeaders, resumenRows) },
+    ...empleados.map((emp, i) => {
+      const meses = emp.informes.slice()
+        .sort((a,b) => (a.fechaMin||'').localeCompare(b.fechaMin||''))
+        .map(inf => ({
+          mesLabel: inf.mesLabel || (inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} – ${fmtDateShort(inf.fechaMax)}` : inf.archivoNombre),
+          saldoInicioMs: inf.saldoInicioMs||0,
+          saldoFinMs: inf.saldoFinMs||0,
+          // Los informes con el formato antiguo (previo a esta función) no
+          // tienen estos campos por día: se normalizan para no dejar celdas
+          // con "undefined".
+          filas: (inf.filas||[]).map(f => ({
+            fecha: f.fecha||'', tipo: f.tipo||'normal',
+            horaInicio: f.horaInicio||'', horaFin: f.horaFin||'',
+            horasEfectivas: f.horasEfectivas||'', horasExtra: f.horasExtra||'',
+            horasCompensadas: f.horasCompensadas||'', comentario: f.comentario||''
+          }))
+        }));
+      return { name: nombresHoja[i+1], sheetXml: buildSheetXmlInformeMensualEmpleado(emp.nombre, meses) };
+    })
+  ];
   const blob = buildXlsxPackageMultiSheet(sheets, buildStylesXmlInformeMensual());
   descargarBlob(blob, `informes_equipo_${todayStr()}.xlsx`, 'Informes del equipo exportados en un solo archivo');
 }
