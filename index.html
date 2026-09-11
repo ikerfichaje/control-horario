@@ -554,7 +554,9 @@ function jornadaAbierta(){ return DATA.jornadas.find(j => j.salida == null) || n
 function descansoAbierto(j){ return j ? j.descansos.find(d => d.fin == null) || null : null; }
 function comidaAbierta(j){ return j ? j.comidas.find(c => c.fin == null) || null : null; }
 function getJornada(id){ return DATA.jornadas.find(j => j.id === id) || null; }
-function jornadaDeFecha(fecha){ return DATA.jornadas.find(j => j.fecha === fecha) || null; }
+// Un mismo día puede tener varios tramos fichados (p.ej. se ficha entrada y
+// salida dos veces): se devuelven TODOS, ordenados por hora de entrada.
+function jornadasDeFecha(fecha){ return DATA.jornadas.filter(j => j.fecha === fecha).sort((a,b) => a.entrada - b.entrada); }
 
 /* ----------------------------- Días de viaje / sin comida ----------------- */
 function obtenerViaje(fechaStr){ return DATA.viajes[fechaStr] || null; }
@@ -619,9 +621,13 @@ function quitarMarcaCalendarioLaboral(fechaStr){
 // el informe mensual: saldo a inicio/fin de un mes), en vez de solo "a hoy".
 function bancoHorasGeneradoMs(hastaFecha){
   let total = 0;
-  DATA.jornadas.forEach(j => {
-    if(hastaFecha && j.fecha > hastaFecha) return;
-    total += calcJornada(j, Date.now()).extra;
+  // Se recorre por DÍA (no por tramo/jornada) para que el límite de la
+  // jornada normal se aplique una sola vez sobre el total del día, incluso si
+  // ese día se fichó entrada/salida varias veces (ver calcDia).
+  const fechas = new Set(DATA.jornadas.map(j => j.fecha));
+  fechas.forEach(fecha => {
+    if(hastaFecha && fecha > hastaFecha) return;
+    total += calcDia(fecha, Date.now()).extra;
   });
   return total;
 }
@@ -672,9 +678,10 @@ function overlapMs(aIni, aFin, bIni, bFin){
 }
 
 /*
- * Motor de cálculo. Usa SIEMPRE timestamps reales (ms desde época), nunca
- * resta de strings "HH:MM", por lo que gestiona correctamente turnos
- * nocturnos, cambios de día y jornadas de cualquier duración.
+ * Motor de cálculo de UN tramo (una entrada/salida). Usa SIEMPRE timestamps
+ * reales (ms desde época), nunca resta de strings "HH:MM", por lo que
+ * gestiona correctamente turnos nocturnos, cambios de día y jornadas de
+ * cualquier duración.
  *
  *   TIEMPO BRUTO     = salida - entrada
  *   TIEMPO NO TRAB.  = descansos + comida (0 si ese día se avisó "no he comido")
@@ -685,6 +692,12 @@ function overlapMs(aIni, aFin, bIni, bFin){
  *                      de días, ese exceso sigue formando parte del tiempo
  *                      efectivo pero no se contabiliza como hora extra ni
  *                      suma al banco de horas.
+ *
+ * IMPORTANTE: si un día tiene varios tramos (se ficha entrada/salida más de
+ * una vez), el límite "jornadaConfigurada" NO debe aplicarse por separado en
+ * cada tramo (repartiría mal las horas extra). Para cualquier cálculo que
+ * represente un DÍA completo, usar calcDia(fecha), que suma los tramos y
+ * aplica el límite una sola vez.
  */
 function calcJornada(j, now = Date.now()){
   const entrada = j.entrada;
@@ -726,6 +739,32 @@ function calcJornada(j, now = Date.now()){
     normalMax, normal, extra, abierta, esViaje,
     dAbierto: descansoAbierto(j), cAbierta: comidaAbierta(j)
   };
+}
+
+/*
+ * Agrega TODOS los tramos (fichajes de entrada/salida) de un mismo día: si un
+ * día se ficha varias veces, las horas de cada tramo se SUMAN y el límite de
+ * la jornada normal (y por tanto las horas extra) se aplica UNA SOLA VEZ
+ * sobre el total del día, en vez de por separado en cada tramo (lo que
+ * podría "perder" horas extra repartidas entre dos tramos que individualmente
+ * no superan la jornada normal pero sí lo hacen sumados).
+ */
+function calcDia(fecha, now = Date.now()){
+  const jornadas = jornadasDeFecha(fecha);
+  const calcs = jornadas.map(j => calcJornada(j, now));
+  const bruto = calcs.reduce((s,c) => s + c.bruto, 0);
+  const descansosMs = calcs.reduce((s,c) => s + c.descansosMs, 0);
+  const comidasMs = calcs.reduce((s,c) => s + c.comidasMs, 0);
+  const efectivoTotal = calcs.reduce((s,c) => s + c.efectivoTotal, 0);
+
+  const normalMax = jornadaNormalMsForFecha(fecha);
+  const normal = Math.min(efectivoTotal, normalMax);
+  const excedente = Math.max(0, efectivoTotal - normalMax);
+  const esViaje = diaEsViaje(fecha);
+  const extra = esViaje ? excedente : 0;
+  const abierta = calcs.some(c => c.abierta);
+
+  return { jornadas, calcs, bruto, descansosMs, comidasMs, efectivoTotal, normalMax, normal, extra, abierta, esViaje };
 }
 
 function estadoActual(){
@@ -919,7 +958,7 @@ function debeAvisarFichaje(){
   const dia = diaConfigFor(todayStr());
   if(!dia || dia.activo === false) return false;
   if(diaCalendarioLaboral(todayStr())) return false;
-  if(jornadaDeFecha(todayStr()) || jornadaAbierta()) return false;
+  if(jornadasDeFecha(todayStr()).length || jornadaAbierta()) return false;
   const [h, m] = (cfg.avisoEntradaHora || '08:30').split(':').map(Number);
   const limite = new Date();
   limite.setHours(h, m, 0, 0);
@@ -1216,10 +1255,15 @@ function diasEnRango(ini, fin){
 }
 
 function statsDia(fecha){
-  const j = jornadaDeFecha(fecha);
-  let calc = null;
-  if(j) calc = calcJornada(j, Date.now());
-  return { j, calc, esViaje: diaEsViaje(fecha), viaje: obtenerViaje(fecha), sinComida: diaSinComida(fecha) };
+  const jornadas = jornadasDeFecha(fecha);
+  const calc = jornadas.length ? calcDia(fecha, Date.now()) : null;
+  return { jornadas, calc, esViaje: diaEsViaje(fecha), viaje: obtenerViaje(fecha), sinComida: diaSinComida(fecha) };
+}
+// Texto compacto "08:00–12:00, 13:00–17:30" con todos los tramos de un día
+// (o "en curso" en el tramo todavía abierto).
+function formatTramosDia(jornadas){
+  if(!jornadas.length) return '--:-- – --:--';
+  return jornadas.map(j => `${fmtTimeHM(j.entrada)}–${j.salida ? fmtTimeHM(j.salida) : 'en curso'}`).join(', ');
 }
 
 function renderHistorico(){
@@ -1240,8 +1284,9 @@ function renderHistorico(){
   const q = UI.historico.busqueda.trim().toLowerCase();
   if(q){
     fechas = fechas.filter(f => {
-      const {j, viaje} = statsDia(f);
-      const hay = [f, j?.observaciones||'', viaje?.lugar||'', viaje?.cliente||''].join(' ').toLowerCase();
+      const {jornadas, viaje} = statsDia(f);
+      const obsTexto = jornadas.map(x => x.observaciones||'').join(' ');
+      const hay = [f, obsTexto, viaje?.lugar||'', viaje?.cliente||''].join(' ').toLowerCase();
       return hay.includes(q);
     });
   }
@@ -1250,7 +1295,7 @@ function renderHistorico(){
   }
 
   const items = fechas.length ? fechas.map(f => {
-    const {j, calc, esViaje, sinComida} = statsDia(f);
+    const {jornadas, calc, esViaje, sinComida} = statsDia(f);
     const extraPill = esViaje && calc && calc.extra > 0 ? `<span class="pill extra">+${fmtHM(calc.extra)} extra</span>` : '';
     const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
     const viajePill = esViaje ? `<span class="pill viaje">🧳 Viaje</span>` : '';
@@ -1263,8 +1308,7 @@ function renderHistorico(){
         <div>${extraPill}${openPill}${viajePill}${sinComidaPill}</div>
       </div>
       <div class="di-stats">
-        <span>Entrada <b>${j?fmtTimeHM(j.entrada):'--:--'}</b></span>
-        <span>Salida <b>${j&&j.salida?fmtTimeHM(j.salida):'--:--'}</b></span>
+        <span>${jornadas.length>1?'Tramos':'Horario'} <b>${esc(formatTramosDia(jornadas))}</b></span>
         <span>Total trabajado <b>${calc?fmtHM(calc.efectivoTotal):'00:00'}</b></span>
         ${extraStat}
       </div>
@@ -1286,28 +1330,29 @@ function renderHistorico(){
 
 /* Modal de detalle / edición de un día completo */
 function verDia(fecha){
-  const j = jornadaDeFecha(fecha);
-  const calc = j ? calcJornada(j, Date.now()) : null;
+  const jornadas = jornadasDeFecha(fecha);
+  const multiTramo = jornadas.length > 1;
 
-  const filaJornada = j ? `
+  // Un mismo día puede tener varios tramos (se ficha entrada/salida más de
+  // una vez): cada uno se edita por separado, con sus propios descansos y
+  // comidas, y el resumen del día suma todos los tramos (ver calcDia).
+  const tramosHtml = jornadas.map((j, idx) => {
+    const calc = calcJornada(j, Date.now());
+    const etiquetaTramo = multiTramo ? ` (tramo ${idx+1})` : '';
+    return `
+    <div class="section-title">${multiTramo ? `Tramo ${idx+1}` : 'Fichaje'}</div>
     <div class="field-row">
-      <div class="field"><label>Entrada</label><input type="datetime-local" id="edJEntrada" value="${toDatetimeLocalValue(j.entrada)}"></div>
-      <div class="field"><label>Salida</label><input type="datetime-local" id="edJSalida" value="${j.salida?toDatetimeLocalValue(j.salida):''}"></div>
+      <div class="field"><label>Entrada</label><input type="datetime-local" id="edJEntrada-${j.id}" value="${toDatetimeLocalValue(j.entrada)}"></div>
+      <div class="field"><label>Salida</label><input type="datetime-local" id="edJSalida-${j.id}" value="${j.salida?toDatetimeLocalValue(j.salida):''}"></div>
     </div>
-    <div class="field"><label>Observaciones del día</label><textarea id="edJObs">${esc(j.observaciones||'')}</textarea></div>
+    <div class="field"><label>Observaciones${multiTramo ? ' de este tramo' : ' del día'}</label><textarea id="edJObs-${j.id}">${esc(j.observaciones||'')}</textarea></div>
     <div class="btn-row">
-      <button class="btn btn-outline" data-action="eliminar-jornada" data-id="${j.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar jornada</button>
+      <button class="btn btn-outline" data-action="eliminar-jornada" data-id="${j.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar ${multiTramo ? 'tramo' : 'jornada'}</button>
       <button class="btn btn-primary" data-action="guardar-jornada-editada" data-id="${j.id}">Guardar</button>
     </div>
-    <div class="section-title">Resumen</div>
-    <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calc.efectivoTotal)}</span></div>
-    <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calc.normal)}</span></div>
-    <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calc.extra)}</span></div>
-  ` : `<p style="color:var(--muted);font-size:14px;">No hay fichaje de entrada/salida este día.</p>
-       <button class="btn btn-soft" data-action="crear-jornada-manual" data-fecha="${fecha}">+ Añadir fichaje para este día</button>`;
+    ${multiTramo ? `<div class="card-row"><span class="label">Horas efectivas de este tramo</span><span class="value">${fmtHM(calc.efectivoTotal)}</span></div>` : ''}
 
-  const descansosHtml = j ? `
-    <div class="section-title">Descansos</div>
+    <div class="section-title">Descansos${etiquetaTramo}</div>
     ${j.descansos.length ? j.descansos.map(d => `
       <div class="mini-list-item">
         <div class="mli-top"><span>☕ ${fmtTimeHM(d.inicio)} - ${d.fin?fmtTimeHM(d.fin):'en curso'}</span><span>${fmtHM((d.fin??Date.now())-d.inicio)}</span></div>
@@ -1317,10 +1362,8 @@ function verDia(fecha){
         </div>
       </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin descansos registrados.</p>`}
     <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="descanso" data-jid="${j.id}">+ Añadir descanso</button>
-  ` : '';
 
-  const comidasHtml = j ? `
-    <div class="section-title">Comida</div>
+    <div class="section-title">Comida${etiquetaTramo}</div>
     ${j.comidas.length ? j.comidas.map(c => `
       <div class="mini-list-item">
         <div class="mli-top"><span>🍽 ${fmtTimeHM(c.inicio)} - ${c.fin?fmtTimeHM(c.fin):'en curso'}</span><span>${fmtHM((c.fin??Date.now())-c.inicio)}</span></div>
@@ -1330,7 +1373,21 @@ function verDia(fecha){
         </div>
       </div>`).join('') : `<p style="color:var(--muted);font-size:13px;">Sin comidas registradas.</p>`}
     <button class="btn btn-soft btn-sm" data-action="agregar-intervalo" data-tipo="comida" data-jid="${j.id}">+ Añadir comida</button>
-  ` : '';
+    `;
+  }).join('<hr style="border:none;border-top:1px solid var(--border);margin:16px 0;">');
+
+  const seccionFichaje = jornadas.length ? (() => {
+    const calcDiaResult = calcDia(fecha, Date.now());
+    return `
+    ${tramosHtml}
+    <button class="btn btn-soft" style="margin-top:4px;" data-action="agregar-tramo-dia" data-fecha="${fecha}">+ Añadir otro tramo este día</button>
+    <div class="section-title">Resumen del día</div>
+    <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calcDiaResult.efectivoTotal)}</span></div>
+    <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calcDiaResult.normal)}</span></div>
+    <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calcDiaResult.extra)}</span></div>
+    `;
+  })() : `<p style="color:var(--muted);font-size:14px;">No hay fichaje de entrada/salida este día.</p>
+       <button class="btn btn-soft" data-action="crear-jornada-manual" data-fecha="${fecha}">+ Añadir fichaje para este día</button>`;
 
   const viajeDia = obtenerViaje(fecha);
   const viajeHtml = `
@@ -1359,9 +1416,7 @@ function verDia(fecha){
 
   openModal(`
     <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    ${filaJornada}
-    ${descansosHtml}
-    ${comidasHtml}
+    ${seccionFichaje}
     ${viajeHtml}
     ${sinComidaHtml}
   `);
@@ -1372,14 +1427,14 @@ function verDia(fecha){
  * Cada pulsación guarda al instante y vuelve a pintar este mismo modal.
  */
 function abrirDiaCalendario(fecha){
-  const j = jornadaDeFecha(fecha);
+  const jornadas = jornadasDeFecha(fecha);
   const marca = diaCalendarioLaboral(fecha);
   const tipo = marca ? marca.tipo : 'normal';
 
-  const resumenFichaje = j ? (() => {
-    const calc = calcJornada(j, Date.now());
+  const resumenFichaje = jornadas.length ? (() => {
+    const calc = calcDia(fecha, Date.now());
     return `
-    <div class="card-row"><span class="label">Fichaje</span><span class="value">${fmtTimeHM(j.entrada)} - ${j.salida?fmtTimeHM(j.salida):'(abierto)'}</span></div>
+    <div class="card-row"><span class="label">Fichaje</span><span class="value">${esc(formatTramosDia(jornadas))}</span></div>
     <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calc.efectivoTotal)}</span></div>
     `;
   })() : `<p style="color:var(--muted);font-size:13.5px;">Sin fichaje registrado este día.</p>`;
@@ -1449,13 +1504,13 @@ function exportarCalendarioPDF(){
     for(let d=1; d<=totalDias; d++){
       const fecha = `${anio}-${pad2(mes+1)}-${pad2(d)}`;
       const marca = diaCalendarioLaboral(fecha);
-      const j = jornadaDeFecha(fecha);
+      const hayJornada = DATA.jornadas.some(x => x.fecha === fecha);
       const diaCfg = diaConfigFor(fecha);
       let cls = 'print-cal-day';
       if(marca){
         cls += ' ' + marca.tipo;
-      } else if(j){
-        const c = calcJornada(j, Date.now());
+      } else if(hayJornada){
+        const c = calcDia(fecha, Date.now());
         cls += c.extra>0 ? ' has-extra' : ' worked';
       } else if(diaCfg && diaCfg.activo === false){
         cls += ' weekend';
@@ -1496,31 +1551,50 @@ function crearJornadaManual(fecha){
   renderAll();
   verDia(fecha);
 }
+// Añade un tramo MÁS a un día que ya tiene al menos un fichaje (p.ej. se
+// entra y sale, y más tarde se vuelve a entrar). Se coloca 1h después de que
+// terminase el último tramo para que no se solape visualmente por defecto;
+// el usuario lo ajusta con los datos reales a continuación.
+function agregarTramoDia(fecha){
+  const existentes = jornadasDeFecha(fecha);
+  const ultima = existentes[existentes.length-1];
+  const base = ultima ? (ultima.salida ?? ultima.entrada) + 3600000 : (() => {
+    const d = parseDateLocal(fecha); d.setHours(8,0,0,0); return d.getTime();
+  })();
+  DATA.jornadas.push({ id: uid(), fecha, entrada: base, salida: null, descansos:[], comidas:[], observaciones:'' });
+  save();
+  toast('Tramo añadido, edítalo con los datos correctos.');
+  renderAll();
+  verDia(fecha);
+}
 function guardarJornadaEditada(id){
   const j = getJornada(id);
   if(!j) return;
-  const entrada = fromDatetimeLocalValue(document.getElementById('edJEntrada').value);
-  const salidaVal = document.getElementById('edJSalida').value;
+  const entrada = fromDatetimeLocalValue(document.getElementById(`edJEntrada-${id}`).value);
+  const salidaVal = document.getElementById(`edJSalida-${id}`).value;
   const salida = salidaVal ? fromDatetimeLocalValue(salidaVal) : null;
   if(entrada == null){ toast('Fecha de entrada inválida.'); return; }
   if(salida != null && salida < entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
   j.entrada = entrada;
   j.salida = salida;
   j.fecha = todayStr(new Date(entrada));
-  j.observaciones = document.getElementById('edJObs').value.trim();
+  j.observaciones = document.getElementById(`edJObs-${id}`).value.trim();
   save();
-  closeModal();
   toast('Jornada actualizada');
   renderAll();
+  verDia(j.fecha);
 }
 async function eliminarJornada(id){
+  const j = getJornada(id);
+  if(!j) return;
+  const fecha = j.fecha;
   const ok = await confirmDialog('¿Eliminar este fichaje completo (entrada, salida, descansos y comidas)? Esta acción no se puede deshacer.');
   if(!ok) return;
-  DATA.jornadas = DATA.jornadas.filter(j => j.id !== id);
+  DATA.jornadas = DATA.jornadas.filter(x => x.id !== id);
   save();
-  closeModal();
   toast('Jornada eliminada');
   renderAll();
+  verDia(fecha);
 }
 function agregarIntervalo(tipo, jid){
   const j = getJornada(jid);
@@ -1577,13 +1651,14 @@ async function eliminarIntervalo(tipo, jid, iid){
 /* ----------------------------- Render: pestaña RESUMEN -------------------- */
 function agregarRango(ini, fin){
   const now = Date.now();
-  let efectivo=0, normal=0, extra=0, descansos=0, comidas=0, diasTrabajados=new Set();
-  DATA.jornadas.forEach(j => {
-    if(j.fecha < ini || j.fecha > fin) return;
-    const c = calcJornada(j, now);
+  let efectivo=0, normal=0, extra=0, descansos=0, comidas=0;
+  // Se agrupa por DÍA (no por tramo) para que el límite de la jornada normal
+  // se aplique una sola vez sobre el total del día (ver calcDia).
+  const diasTrabajados = new Set(DATA.jornadas.filter(j => j.fecha >= ini && j.fecha <= fin).map(j => j.fecha));
+  diasTrabajados.forEach(fecha => {
+    const c = calcDia(fecha, now);
     efectivo += c.efectivoTotal; normal += c.normal; extra += c.extra;
     descansos += c.descansosMs; comidas += c.comidasMs;
-    diasTrabajados.add(j.fecha);
   });
   return { efectivo, normal, extra, descansos, comidas, dias: diasTrabajados.size };
 }
@@ -1616,14 +1691,14 @@ function renderResumen(){
   for(let d=1; d<=totalDias; d++){
     const fecha = `${ref.getFullYear()}-${pad2(ref.getMonth()+1)}-${pad2(d)}`;
     const marca = diaCalendarioLaboral(fecha);
-    const j = jornadaDeFecha(fecha);
+    const hayJornada = DATA.jornadas.some(x => x.fecha === fecha);
     const diaCfg = diaConfigFor(fecha);
     let cls = 'cal-day';
     if(fecha === hoy) cls += ' today';
     if(marca){
       cls += ' ' + marca.tipo;
-    } else if(j){
-      const c = calcJornada(j, Date.now());
+    } else if(hayJornada){
+      const c = calcDia(fecha, Date.now());
       cls += c.extra>0 ? ' has-extra' : ' worked';
     } else if(diaCfg && diaCfg.activo === false){
       cls += ' weekend';
@@ -1742,19 +1817,22 @@ function construirFilasExportacion(ini, fin, columnas){
   const fechas = diasEnRango(ini, fin).sort();
   const filas = [];
   fechas.forEach(f => {
-    const j = jornadaDeFecha(f);
+    // Un mismo día puede tener varios tramos fichados: se juntan las horas de
+    // entrada/salida de cada uno y se suman sus totales (ver calcDia).
+    const jornadasDia = jornadasDeFecha(f);
     const viaje = obtenerViaje(f);
     const dowName = DOW_NAMES[parseDateLocal(f).getDay()];
-    if(j){
-      const c = calcJornada(j, Date.now());
+    if(jornadasDia.length){
+      const c = calcDia(f, Date.now());
       filas.push({
         trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
-        horaEntrada: fmtTimeHM(j.entrada), horaSalida: j.salida ? fmtTimeHM(j.salida) : '(abierto)',
+        horaEntrada: jornadasDia.map(j => fmtTimeHM(j.entrada)).join(', '),
+        horaSalida: jornadasDia.map(j => j.salida ? fmtTimeHM(j.salida) : '(abierto)').join(', '),
         tiempoBruto: hoursDecimal(c.bruto), descansos: hoursDecimal(c.descansosMs), comida: hoursDecimal(c.comidasMs),
         horasEfectivas: hoursDecimal(c.efectivoTotal), horasNormales: hoursDecimal(c.normal), horasExtra: hoursDecimal(c.extra),
         diaViaje: (viaje && viaje.activo) ? 'Sí' : 'No',
         lugarViaje: viaje ? (viaje.lugar||'') : '', clienteViaje: viaje ? (viaje.cliente||'') : '',
-        observaciones: j.observaciones || ''
+        observaciones: jornadasDia.map(j => j.observaciones).filter(Boolean).join(' · ')
       });
     } else if(viaje && viaje.activo){
       filas.push({
@@ -2084,16 +2162,13 @@ function construirFilasInformeMensual(anio, mesIdx){
   for(let d=1; d<=totalDias; d++){
     const fecha = `${anio}-${pad2(mesIdx+1)}-${pad2(d)}`;
     // Un mismo día puede tener varios tramos fichados (entrada/salida repetidos
-    // varias veces), así que se suman todos en vez de quedarse con el primero.
-    const jornadasDia = DATA.jornadas.filter(j => j.fecha === fecha).sort((a,b) => a.entrada - b.entrada);
+    // varias veces): se suman todos y el límite de la jornada normal (y por
+    // tanto las horas extra) se aplica una sola vez sobre el total del día
+    // en vez de por separado en cada tramo (ver calcDia).
+    const jornadasDia = jornadasDeFecha(fecha);
     const marca = diaCalendarioLaboral(fecha);
     const viaje = obtenerViaje(fecha);
-    const calcs = jornadasDia.map(j => calcJornada(j, Date.now()));
-    const efectivoTotalMs = calcs.reduce((s,c) => s + c.efectivoTotal, 0);
-    // calc.extra ya solo es >0 en días de viaje (lo decide calcJornada); se
-    // muestra siempre que exista, aunque ese mismo día también esté marcado
-    // como festivo/vacaciones/compensación en el calendario.
-    const extraTotalMs = calcs.reduce((s,c) => s + c.extra, 0);
+    const calc = jornadasDia.length ? calcDia(fecha, Date.now()) : null;
 
     let tipo = 'normal';
     if(marca) tipo = marca.tipo;
@@ -2110,8 +2185,8 @@ function construirFilasInformeMensual(anio, mesIdx){
       fecha, tipo,
       horaInicio: jornadasDia.map(j => fmtTimeHM(j.entrada)).join(', '),
       horaFin: jornadasDia.map(j => j.salida ? fmtTimeHM(j.salida) : '(abierto)').join(', '),
-      horasEfectivas: jornadasDia.length ? fmtHM(efectivoTotalMs) : '',
-      horasExtra: extraTotalMs > 0 ? fmtHM(extraTotalMs) : '',
+      horasEfectivas: calc ? fmtHM(calc.efectivoTotal) : '',
+      horasExtra: calc && calc.extra > 0 ? fmtHM(calc.extra) : '',
       horasCompensadas: tipo === 'compensacion' ? fmtHM((Number(marca.horas)||0) * 3600000) : '',
       comentario
     });
@@ -3085,6 +3160,7 @@ document.addEventListener('click', async (e) => {
       break;
     case 'ver-dia': verDia(d.fecha); break;
     case 'crear-jornada-manual': crearJornadaManual(d.fecha); break;
+    case 'agregar-tramo-dia': agregarTramoDia(d.fecha); break;
     case 'guardar-jornada-editada': guardarJornadaEditada(d.id); break;
     case 'eliminar-jornada': await eliminarJornada(d.id); break;
     case 'agregar-intervalo': agregarIntervalo(d.tipo, d.jid); break;
