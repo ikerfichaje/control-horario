@@ -166,6 +166,8 @@ button{font-family:inherit;}
 .search-box{margin-bottom:12px;}
 .day-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;margin-bottom:9px;cursor:pointer;box-shadow:var(--shadow);}
 .day-item:active{transform:scale(.99);}
+.day-item.es-viaje{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);}
+[data-theme="dark"] .day-item.es-viaje{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.4);}
 .day-item .di-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
 .day-item .di-date{font-weight:700;font-size:14.5px;text-transform:capitalize;}
 .day-item .di-date small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;text-transform:none;}
@@ -532,7 +534,7 @@ function esDirectivo(){ return !!(DATA.perfil && DATA.perfil.rol === 'directivo'
 /* ----------------------------- Estado UI -------------------------------- */
 const UI = {
   tab: 'hoy',
-  historico: { filtro: 'semana', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '' },
+  historico: { filtro: 'semana', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '', soloViaje: false },
   resumen: { periodo: 'semana', mesRef: todayStr() },
   bannerDismissed: false,
   avisoDescartadoFecha: null,
@@ -1074,7 +1076,7 @@ function renderHoy(){
       ? `<button class="btn btn-danger" data-action="finalizar-descanso">⏸ FINALIZAR DESCANSO</button>`
       : `<button class="btn btn-descanso" data-action="iniciar-descanso" ${comidaAbierta(j)?'disabled':''}>☕ INICIAR DESCANSO</button>`;
   }
-  if(j && cfg.modoComida === 'manual' && diaConfigFor(j.fecha)?.comida !== false){
+  if(j && cfg.modoComida === 'manual' && diaConfigFor(j.fecha)?.comida !== false && !diaSinComida(j.fecha)){
     const c = comidaAbierta(j);
     comidaBtn = c
       ? `<button class="btn btn-danger" data-action="finalizar-comida">⏸ FINALIZAR COMIDA</button>`
@@ -1108,7 +1110,7 @@ function renderHoy(){
     <button class="btn btn-viaje" data-action="abrir-form-viaje" data-fecha="${fechaHoy}">🧳 HOY ES DÍA DE VIAJE</button>`;
 
   const diaCfgHoy = diaConfigFor(fechaHoy);
-  const puedeSinComida = diaCfgHoy?.comida !== false && cfg.modoComida !== 'manual';
+  const puedeSinComida = diaCfgHoy?.comida !== false;
   let sinComidaSeccion = '';
   if(puedeSinComida){
     sinComidaSeccion = diaSinComida(fechaHoy) ? `
@@ -1235,15 +1237,19 @@ function renderHistorico(){
       return hay.includes(q);
     });
   }
+  if(UI.historico.soloViaje){
+    fechas = fechas.filter(f => diaEsViaje(f));
+  }
 
   const items = fechas.length ? fechas.map(f => {
     const {j, calc, esViaje, sinComida} = statsDia(f);
-    const extraPill = calc && calc.extra > 0 ? `<span class="pill extra">+${fmtHM(calc.extra)} extra</span>` : '';
+    const extraPill = esViaje && calc && calc.extra > 0 ? `<span class="pill extra">+${fmtHM(calc.extra)} extra</span>` : '';
     const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
     const viajePill = esViaje ? `<span class="pill viaje">🧳 Viaje</span>` : '';
     const sinComidaPill = sinComida ? `<span class="pill sincomida">🚫 Sin comida</span>` : '';
+    const extraStat = esViaje ? `<span>Extra compensable <b style="color:var(--extra)">${calc?fmtHM(calc.extra):'00:00'}</b></span>` : '';
     return `
-    <div class="day-item" data-action="ver-dia" data-fecha="${f}">
+    <div class="day-item ${esViaje?'es-viaje':''}" data-action="ver-dia" data-fecha="${f}">
       <div class="di-top">
         <div class="di-date">${esc(fmtDateHuman(f))}<small>${esc(fmtDateShort(f))}</small></div>
         <div>${extraPill}${openPill}${viajePill}${sinComidaPill}</div>
@@ -1251,14 +1257,14 @@ function renderHistorico(){
       <div class="di-stats">
         <span>Entrada <b>${j?fmtTimeHM(j.entrada):'--:--'}</b></span>
         <span>Salida <b>${j&&j.salida?fmtTimeHM(j.salida):'--:--'}</b></span>
-        <span>Efectivas <b>${calc?fmtHM(calc.efectivoTotal):'00:00'}</b></span>
-        <span>Normales <b>${calc?fmtHM(calc.normal):'00:00'}</b></span>
+        <span>Total trabajado <b>${calc?fmtHM(calc.efectivoTotal):'00:00'}</b></span>
+        ${extraStat}
       </div>
     </div>`;
   }).join('') : `<div class="empty-state"><div class="ic">📭</div>No hay registros en este periodo.</div>`;
 
   el.innerHTML = `
-    <div class="hist-filters">${chips}</div>
+    <div class="hist-filters">${chips}<button class="chip ${UI.historico.soloViaje?'active':''}" data-action="toggle-solo-viaje">🧳 Solo viaje</button></div>
     ${rangoInputs}
     <div class="field search-box">
       <input type="text" placeholder="Buscar en el histórico…" id="buscadorHistorico" value="${esc(UI.historico.busqueda)}">
@@ -1331,7 +1337,7 @@ function verDia(fecha){
   `;
 
   const diaCfgDia = diaConfigFor(fecha);
-  const puedeSinComidaDia = diaCfgDia?.comida !== false && DATA.config.modoComida !== 'manual';
+  const puedeSinComidaDia = diaCfgDia?.comida !== false;
   const sinComidaHtml = puedeSinComidaDia ? `
     <div class="section-title">Comida</div>
     ${diaSinComida(fecha) ? `
@@ -1513,7 +1519,7 @@ function agregarIntervalo(tipo, jid){
   (tipo==='descanso' ? j.descansos : j.comidas).push(item);
   save();
   toast((tipo==='descanso'?'Descanso':'Comida') + ' añadido, edítalo si hace falta.');
-  verDia(j.fecha);
+  refrescarTrasEditarDia(j.fecha);
 }
 function editarIntervalo(tipo, jid, iid){
   const j = getJornada(jid);
@@ -1993,7 +1999,7 @@ function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, sal
 
   xml += filaMerged(r, nombre || 'Trabajador', 2); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   xml += filaMerged(r, 'Mes: ' + mesLabel, 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
-  xml += filaMerged(r, 'Horas acumuladas a inicio de mes: ' + fmtHMSigned(saldoInicioMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  xml += filaMerged(r, 'Horas extra acumuladas a inicio de mes: ' + fmtHMSigned(saldoInicioMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   r++; // fila en blanco
 
   xml += `<row r="${r}">${headers.map((h,i) => cellXml(i, r, h, 1)).join('')}</row>`;
@@ -2271,7 +2277,7 @@ function parseHojaInformeMensual(filas){
   if(filas.length < 5) throw new Error('El archivo no tiene el formato de un informe mensual.');
   const nombre = String(filas[0][0] || '').trim();
   const mesLabel = String(filas[1][0] || '').replace(/^Mes:\s*/, '').trim();
-  const saldoInicioMs = parseHMTexto(String(filas[2][0] || '').replace(/^Horas acumuladas a inicio de mes:\s*/, ''));
+  const saldoInicioMs = parseHMTexto(String(filas[2][0] || '').replace(/^Horas (?:extra )?acumuladas a inicio de mes:\s*/, ''));
 
   const headerRow = (filas[3] || []).map(h => String(h).trim());
   const colIdx = nombreCol => headerRow.indexOf(nombreCol);
@@ -3002,6 +3008,10 @@ document.addEventListener('click', async (e) => {
 
     case 'filtro-historico':
       UI.historico.filtro = d.filtro;
+      renderHistorico();
+      break;
+    case 'toggle-solo-viaje':
+      UI.historico.soloViaje = !UI.historico.soloViaje;
       renderHistorico();
       break;
     case 'ver-dia': verDia(d.fecha); break;
