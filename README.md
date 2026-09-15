@@ -5,11 +5,11 @@ Aplicación de control horario / fichaje de trabajo, pensada para el móvil, **1
 ## Funciones principales
 
 - **Fichaje** de entrada/salida, descansos y comidas con un toque.
-- **Horas extra ligadas a días de viaje**: solo se contabilizan (y suman al banco de horas) los días marcados explícitamente como "día de viaje" (con lugar y cliente).
+- **Horas extra imputables (viaje o reunión)**: solo se contabilizan (y suman al banco de horas) los días marcados explícitamente como imputables. Al fichar la salida, si ese día se han trabajado horas por encima de la jornada normal, la app pregunta si son imputables y, de ser así, si es un viaje (con lugar y cliente) o una reunión (con cliente).
 - **Banco de horas**: horas extra generadas menos horas ya compensadas, con saldo disponible.
 - **Calendario laboral**: marca días como festivo, vacaciones o compensación de horas (horas fijas: 8,5 h de lunes a jueves, 6 h los viernes) directamente sobre el calendario del banco de horas.
 - **Histórico** filtrable y buscable, con edición manual de cualquier fichaje, descanso, comida o marca de viaje.
-- **Informe mensual coloreado**: exporta un `.xlsx` día a día (viaje en verde, vacaciones en azul, festivo en amarillo, compensación en naranja) con el saldo del banco de horas al inicio y al final del mes.
+- **Informe mensual coloreado**: exporta un `.xlsx` día a día (viaje en verde, reunión en lila, vacaciones en azul, festivo en amarillo, compensación en naranja) con el saldo del banco de horas al inicio y al final del mes.
 - **Exportación** genérica a Excel/CSV con columnas configurables, para cualquier periodo.
 - **Perfil directivo**: importa los informes mensuales de cada trabajador y descárgalos todos juntos en un único Excel (una hoja por informe) para reenviarlos.
 - **Modo claro/oscuro/automático**, copia de seguridad (exportar/importar JSON) y aviso configurable si se te olvida fichar.
