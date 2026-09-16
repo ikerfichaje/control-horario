@@ -190,6 +190,8 @@ button{font-family:inherit;}
 [data-theme="dark"] .pill.viaje{background:#0e3a44;color:#67e8f9;}
 .pill.reunion{background:#ede9fe;color:#5b21b6;}
 [data-theme="dark"] .pill.reunion{background:#2e1f4d;color:#c4b5fd;}
+.pill.otros{background:#fee2e2;color:#991b1b;}
+[data-theme="dark"] .pill.otros{background:#3f1d1d;color:#fca5a5;}
 .pill.sincomida{background:#fce7e7;color:#9f1239;}
 [data-theme="dark"] .pill.sincomida{background:#3f1620;color:#fda4af;}
 
@@ -443,9 +445,10 @@ const COLUMNAS_EXPORT = [
   {id:'horasNormales',  label:'Horas normales'},
   {id:'horasExtra',     label:'Horas extra'},
   {id:'diaViaje',    label:'Horas extra imputables'},
-  {id:'tipoViaje',   label:'Tipo (viaje/reunión)'},
+  {id:'tipoViaje',   label:'Tipo (viaje/reunión/otros)'},
   {id:'lugarViaje',  label:'Lugar del viaje'},
-  {id:'clienteViaje', label:'Cliente'},
+  {id:'motivoViaje', label:'Motivo (otros)'},
+  {id:'clienteViaje', label:'Cliente / distribuidor'},
   {id:'observaciones', label:'Observaciones'}
 ];
 function esc(s){
@@ -580,18 +583,30 @@ function getJornada(id){ return DATA.jornadas.find(j => j.id === id) || null; }
 // salida dos veces): se devuelven TODOS, ordenados por hora de entrada.
 function jornadasDeFecha(fecha){ return DATA.jornadas.filter(j => j.fecha === fecha).sort((a,b) => a.entrada - b.entrada); }
 
-/* ----------------------------- Días de viaje / sin comida ----------------- */
-// tipo: 'viaje' (con lugar) o 'reunion' (sin lugar) — ambos imputan las horas
-// extra del día. Las marcas antiguas no tenían "tipo": se tratan como 'viaje'.
+/* ----------------------------- Días de viaje / reunión / otros ------------ */
+// tipo: 'viaje' (con lugar), 'reunion' (con cliente) u 'otros' (con motivo
+// elegido de una lista + cliente/distribuidor) — los tres imputan las horas
+// extra del día por igual. Las marcas antiguas no tenían "tipo": se tratan
+// como 'viaje'; las marcadas con el nombre antiguo 'incidencia' se leen como
+// 'otros'.
+const TIPOS_IMPUTACION = ['viaje', 'reunion', 'otros'];
+// Motivos predefinidos para el tipo "Otros" (desplegable, no texto libre).
+const MOTIVOS_OTROS = ['Avería', 'Imprevisto', 'Guardia', 'Formación', 'Gestión administrativa', 'Cobertura de compañero', 'Otro'];
 function obtenerViaje(fechaStr){
   const v = DATA.viajes[fechaStr];
   if(!v) return null;
-  return Object.assign({}, v, { tipo: v.tipo === 'reunion' ? 'reunion' : 'viaje' });
+  const tipo = TIPOS_IMPUTACION.includes(v.tipo) ? v.tipo : (v.tipo === 'incidencia' ? 'otros' : 'viaje');
+  return Object.assign({}, v, { tipo, motivo: v.motivo || '' });
 }
 function diaEsViaje(fechaStr){ return !!(DATA.viajes[fechaStr] && DATA.viajes[fechaStr].activo); }
-function marcarViaje(fechaStr, tipo, lugar, cliente){
-  const t = tipo === 'reunion' ? 'reunion' : 'viaje';
-  DATA.viajes[fechaStr] = { activo:true, tipo:t, lugar: t==='viaje' ? (lugar||'').trim() : '', cliente:(cliente||'').trim() };
+function marcarViaje(fechaStr, tipo, lugar, cliente, motivo){
+  const t = TIPOS_IMPUTACION.includes(tipo) ? tipo : 'viaje';
+  DATA.viajes[fechaStr] = {
+    activo:true, tipo:t,
+    lugar: t==='viaje' ? (lugar||'').trim() : '',
+    cliente: (cliente||'').trim(),
+    motivo: t==='otros' ? (motivo||'').trim() : ''
+  };
   save();
 }
 function quitarViaje(fechaStr){ delete DATA.viajes[fechaStr]; save(); }
@@ -729,10 +744,11 @@ function overlapMs(aIni, aFin, bIni, bFin){
  *   TIEMPO EFECTIVO  = bruto - noTrabajado
  *   HORAS NORMALES   = min(efectivo, jornadaConfigurada)
  *   HORAS EXTRA      = max(0, efectivo - jornadaConfigurada), y SOLO cuenta
- *                      si ese día está marcado como "día de viaje": el resto
- *                      de días, ese exceso sigue formando parte del tiempo
- *                      efectivo pero no se contabiliza como hora extra ni
- *                      suma al banco de horas.
+ *                      si ese día está marcado como viaje, reunión u otros
+ *                      (ver TIPOS_IMPUTACION): el resto de días,
+ *                      ese exceso sigue formando parte del tiempo efectivo
+ *                      pero no se contabiliza como hora extra ni suma al
+ *                      banco de horas.
  *
  * IMPORTANTE: si un día tiene varios tramos (se ficha entrada/salida más de
  * una vez), el límite "jornadaConfigurada" NO debe aplicarse por separado en
@@ -831,11 +847,31 @@ function toast(msg, ms = 2600){
   setTimeout(() => { el.style.transition = 'opacity .25s ease'; el.style.opacity = '0'; setTimeout(()=>el.remove(), 250); }, ms);
 }
 
+/*
+ * En móvil, cuando el teclado (o el desplegable nativo de un <select>) ocupa
+ * parte de la pantalla, el navegador reduce el "visual viewport" pero un
+ * elemento position:fixed con inset:0 sigue midiendo el viewport de layout
+ * completo — así que el modal (anclado abajo) puede quedar tapado detrás del
+ * teclado. Ajustando el overlay al visualViewport en cada apertura y cada
+ * vez que cambia (aparece/desaparece teclado) se evita ese problema.
+ */
+function ajustarOverlayViewport(){
+  const overlay = document.getElementById('activeModalOverlay');
+  const vv = window.visualViewport;
+  if(!overlay || !vv) return;
+  overlay.style.top = vv.offsetTop + 'px';
+  overlay.style.left = vv.offsetLeft + 'px';
+  overlay.style.width = vv.width + 'px';
+  overlay.style.height = vv.height + 'px';
+  const box = overlay.querySelector('.modal-box');
+  if(box) box.style.maxHeight = Math.round(vv.height * 0.92) + 'px';
+}
 function openModal(html, opts = {}){
   const root = document.getElementById('modalRoot');
   root.innerHTML = `<div class="modal-overlay ${opts.center ? 'center':''}" id="activeModalOverlay"><div class="modal-box">${html}</div></div>`;
   const overlay = document.getElementById('activeModalOverlay');
   overlay.addEventListener('click', (e) => { if(e.target === overlay && !opts.persistent) closeModal(); });
+  ajustarOverlayViewport();
   if(opts.onOpen) opts.onOpen(overlay);
 }
 function closeModal(){
@@ -950,52 +986,76 @@ function refrescarTrasEditarDia(fecha){
 }
 function abrirFormularioViaje(fecha){
   const actual = obtenerViaje(fecha);
-  const tipoActual = actual?.tipo === 'reunion' ? 'reunion' : 'viaje';
+  const tipoActual = TIPOS_IMPUTACION.includes(actual?.tipo) ? actual.tipo : 'viaje';
+  const motivoActual = actual?.motivo && MOTIVOS_OTROS.includes(actual.motivo) ? actual.motivo : MOTIVOS_OTROS[0];
   openModal(`
     <div class="modal-head"><h3>Horas extra imputables</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">Las horas extra de <b>${esc(fmtDateHuman(fecha))}</b> solo se contabilizarán si imputas este día como viaje o reunión.</p>
+    <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">Las horas extra de <b>${esc(fmtDateHuman(fecha))}</b> solo se contabilizarán si imputas este día como viaje, reunión u otros.</p>
     <div class="field">
       <label>Motivo</label>
       <select id="frmImputTipo">
         <option value="viaje" ${tipoActual==='viaje'?'selected':''}>🧳 Viaje</option>
         <option value="reunion" ${tipoActual==='reunion'?'selected':''}>🤝 Reunión</option>
+        <option value="otros" ${tipoActual==='otros'?'selected':''}>⚠️ Otros</option>
       </select>
     </div>
     <div class="field" id="frmImputLugarWrap">
       <label>Lugar del viaje</label>
       <input type="text" id="frmImputLugar" placeholder="Ej. Zaragoza" value="${esc(actual?.lugar||'')}">
     </div>
+    <div class="field" id="frmImputMotivoWrap">
+      <label>¿Qué ha ocurrido?</label>
+      <select id="frmImputMotivo">
+        ${MOTIVOS_OTROS.map(m => `<option value="${esc(m)}" ${m===motivoActual?'selected':''}>${esc(m)}</option>`).join('')}
+      </select>
+    </div>
     <div class="field">
-      <label>Cliente</label>
+      <label id="frmImputClienteLabel">Cliente</label>
       <input type="text" id="frmImputCliente" placeholder="Ej. Instalaciones Pérez S.L." value="${esc(actual?.cliente||'')}">
     </div>
     <button class="btn btn-viaje btn-lg" data-action="confirmar-marcar-viaje" data-fecha="${fecha}">Guardar</button>
   `, {onOpen: () => {
     const sel = document.getElementById('frmImputTipo');
     const lugarWrap = document.getElementById('frmImputLugarWrap');
-    const sync = () => lugarWrap.classList.toggle('hidden', sel.value !== 'viaje');
+    const motivoWrap = document.getElementById('frmImputMotivoWrap');
+    const clienteInput = document.getElementById('frmImputCliente');
+    const clienteLabel = document.getElementById('frmImputClienteLabel');
+    const sync = () => {
+      lugarWrap.classList.toggle('hidden', sel.value !== 'viaje');
+      motivoWrap.classList.toggle('hidden', sel.value !== 'otros');
+      if(sel.value === 'otros'){
+        clienteLabel.textContent = 'Cliente / distribuidor';
+        clienteInput.placeholder = 'Ej. Instalaciones Pérez S.L.';
+      } else {
+        clienteLabel.textContent = 'Cliente';
+        clienteInput.placeholder = 'Ej. Instalaciones Pérez S.L.';
+      }
+    };
     sel.addEventListener('change', sync);
     sync();
     document.getElementById(tipoActual === 'viaje' ? 'frmImputLugar' : 'frmImputCliente').focus();
   }});
 }
 function confirmarMarcarViaje(fecha){
-  const tipo = document.getElementById('frmImputTipo').value === 'reunion' ? 'reunion' : 'viaje';
+  const tipoSel = document.getElementById('frmImputTipo').value;
+  const tipo = TIPOS_IMPUTACION.includes(tipoSel) ? tipoSel : 'viaje';
   const lugar = tipo === 'viaje' ? document.getElementById('frmImputLugar').value.trim() : '';
   const cliente = document.getElementById('frmImputCliente').value.trim();
-  marcarViaje(fecha, tipo, lugar, cliente);
+  const motivo = tipo === 'otros' ? document.getElementById('frmImputMotivo').value : '';
+  marcarViaje(fecha, tipo, lugar, cliente, motivo);
   closeModal();
-  toast(tipo === 'viaje' ? 'Día marcado como viaje: sus horas extra ya se contabilizan' : 'Día marcado como reunión: sus horas extra ya se contabilizan');
+  const etiquetaTipo = tipo === 'viaje' ? 'viaje' : (tipo === 'otros' ? 'otros' : 'reunión');
+  toast(`Día marcado como ${etiquetaTipo}: sus horas extra ya se contabilizan`);
   refrescarTrasEditarDia(fecha);
 }
 async function accionQuitarViaje(fecha){
   // confirmDialog reemplaza el modal actual (incluido el detalle del día, si
   // estaba abierto), así que hay que recordar si había uno antes de preguntar.
   const habiaModalAbierto = !!document.getElementById('activeModalOverlay');
-  const ok = await confirmDialog('¿Quitar la marca de día de viaje de ' + fmtDateShort(fecha) + '? Las horas extra de ese día dejarán de contabilizarse.', 'Quitar marca', true);
+  const ok = await confirmDialog('¿Quitar la marca de viaje/reunión/otros de ' + fmtDateShort(fecha) + '? Las horas extra de ese día dejarán de contabilizarse.', 'Quitar marca', true);
   if(!ok) return;
   quitarViaje(fecha);
-  toast('Marca de viaje eliminada');
+  toast('Marca eliminada');
   renderAll();
   if(habiaModalAbierto) verDia(fecha);
 }
@@ -1235,7 +1295,7 @@ function renderHoy(){
           <span>HORAS EXTRA${calc.extra>0 ? ' · en aumento' : ''}</span>
         </div>
       </div>
-      ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">Hoy no está marcado como día de viaje: el tiempo de más no cuenta como hora extra.</p>` : ''}`;
+      ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">Hoy no está marcado como viaje, reunión ni otros: el tiempo de más no cuenta como hora extra.</p>` : ''}`;
 
     const restante = Math.max(0, calc.normalMax - calc.efectivoTotal);
     // Si la comida es de horario fijo y todavía no ha terminado, se suma el
@@ -1319,10 +1379,9 @@ function renderHoy(){
   const fechaHoy = todayStr();
   const viajeHoy = obtenerViaje(fechaHoy);
   const viajeSeccion = (viajeHoy && viajeHoy.activo) ? (() => {
-    const esTipoViaje = viajeHoy.tipo !== 'reunion';
-    const icono = esTipoViaje ? '🧳' : '🤝';
-    const etiqueta = esTipoViaje ? 'Día de viaje' : 'Reunión';
-    const detalleVal = esTipoViaje
+    const icono = viajeHoy.tipo === 'reunion' ? '🤝' : (viajeHoy.tipo === 'otros' ? '⚠️' : '🧳');
+    const etiqueta = viajeHoy.tipo === 'reunion' ? 'Reunión' : (viajeHoy.tipo === 'otros' ? esc(viajeHoy.motivo || 'Otros') : 'Día de viaje');
+    const detalleVal = viajeHoy.tipo === 'viaje'
       ? `${esc(viajeHoy.lugar || 'Sin lugar')}${viajeHoy.cliente ? ` · ${esc(viajeHoy.cliente)}` : ''}`
       : esc(viajeHoy.cliente || 'Sin cliente');
     return `
@@ -1358,7 +1417,7 @@ function renderHoy(){
     </div>
     ${viajeSeccion ? `
     <div class="card">
-      <h2>Viaje / reunión de hoy</h2>
+      <h2>Viaje / reunión / otros de hoy</h2>
       ${viajeSeccion}
     </div>` : ''}
     ${sinComidaSeccion ? `
@@ -1477,7 +1536,7 @@ function renderHistorico(){
     fechas = fechas.filter(f => {
       const {jornadas, viaje} = statsDia(f);
       const obsTexto = jornadas.map(x => x.observaciones||'').join(' ');
-      const hay = [f, obsTexto, viaje?.lugar||'', viaje?.cliente||''].join(' ').toLowerCase();
+      const hay = [f, obsTexto, viaje?.lugar||'', viaje?.cliente||'', viaje?.motivo||''].join(' ').toLowerCase();
       return hay.includes(q);
     });
   }
@@ -1488,7 +1547,11 @@ function renderHistorico(){
   const items = fechas.length ? fechas.map(f => {
     const {jornadas, calc, esViaje, viaje, sinComida} = statsDia(f);
     const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
-    const viajePill = esViaje ? (viaje.tipo === 'reunion' ? `<span class="pill reunion">Reunión</span>` : `<span class="pill viaje">Viaje</span>`) : '';
+    const viajePill = esViaje
+      ? (viaje.tipo === 'reunion' ? `<span class="pill reunion">Reunión</span>`
+        : viaje.tipo === 'otros' ? `<span class="pill otros">Otros</span>`
+        : `<span class="pill viaje">Viaje</span>`)
+      : '';
     const sinComidaPill = sinComida ? `<span class="pill sincomida">Sin comida</span>` : '';
     const extraStat = esViaje ? `<span>Extra compensable <b style="color:var(--extra)">${calc?fmtHM(calc.extra):'00:00'}</b></span>` : '';
     return `
@@ -1508,7 +1571,7 @@ function renderHistorico(){
   el.innerHTML = `
     <div class="hist-filters">${chips}</div>
     <div class="hist-filters hist-filters-secondary">
-      <button class="chip ${UI.historico.soloViaje?'active':''}" data-action="toggle-solo-viaje">🧳 Solo viaje/reunión</button>
+      <button class="chip ${UI.historico.soloViaje?'active':''}" data-action="toggle-solo-viaje">🧳 Solo imputados</button>
     </div>
     ${rangoInputs}
     <div class="field search-box">
@@ -1581,11 +1644,10 @@ function verDia(fecha){
 
   const viajeDia = obtenerViaje(fecha);
   const viajeHtml = `
-    <div class="section-title">Viaje / reunión (horas extra imputables)</div>
+    <div class="section-title">Viaje / reunión / otros (horas extra imputables)</div>
     ${(viajeDia && viajeDia.activo) ? (() => {
-      const esTipoViaje = viajeDia.tipo !== 'reunion';
-      const icono = esTipoViaje ? '🧳' : '🤝';
-      const detalleVal = esTipoViaje ? esc(viajeDia.lugar||'Sin lugar') : 'Reunión';
+      const icono = viajeDia.tipo === 'reunion' ? '🤝' : (viajeDia.tipo === 'otros' ? '⚠️' : '🧳');
+      const detalleVal = viajeDia.tipo === 'viaje' ? esc(viajeDia.lugar||'Sin lugar') : (viajeDia.tipo === 'otros' ? esc(viajeDia.motivo||'Otros') : 'Reunión');
       return `
     <div class="mini-list-item">
       <div class="mli-top"><span>${icono} ${detalleVal}</span><span>${esc(viajeDia.cliente||'')}</span></div>
@@ -1595,7 +1657,7 @@ function verDia(fecha){
       </div>
     </div>`;
     })() : `
-    <p style="color:var(--muted);font-size:13px;">Este día no está marcado como viaje ni reunión: las horas extra no cuentan.</p>
+    <p style="color:var(--muted);font-size:13px;">Este día no está marcado como viaje, reunión ni otros: las horas extra no cuentan.</p>
     <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fecha}">🧳 Marcar horas extra imputables</button>`}
   `;
 
@@ -1946,7 +2008,7 @@ function renderResumen(){
         <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(bancoGenerado)}</b><small>Horas extra generadas</small></div>
         <div class="summary-tile"><b style="color:var(--compensacion)">${fmtHM(bancoCompensado)}</b><small>Ya compensadas</small></div>
       </div>
-      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Se calcula con las horas extra registradas en días marcados como "viaje" o "reunión" hasta hoy, menos los días que hayas marcado como "Compensación de horas" en el calendario de abajo.</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px;">Se calcula con las horas extra registradas en días marcados como "viaje", "reunión" u "otros" hasta hoy, menos los días que hayas marcado como "Compensación de horas" en el calendario de abajo.</p>
     </div>
 
     <div class="card">
@@ -2013,7 +2075,7 @@ function renderResumen(){
 
     <div class="card">
       <h2>Informe mensual</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel día a día de un mes, coloreado por tipo de día (viaje en verde, reunión en lila, vacaciones en azul, festivo en amarillo, compensación en naranja), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel día a día de un mes, coloreado por tipo de día (viaje en verde, reunión en lila, otros en rojo, vacaciones en azul, festivo en amarillo, compensación en naranja), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
       <button class="btn btn-primary btn-lg" data-action="abrir-informe-mensual">🗓️ Informe mensual</button>
     </div>
 
@@ -2073,8 +2135,9 @@ function construirFilasExportacion(ini, fin, columnas){
         tiempoBruto: hoursDecimal(c.bruto), descansos: hoursDecimal(c.descansosMs), comida: hoursDecimal(c.comidasMs),
         horasEfectivas: hoursDecimal(c.efectivoTotal), horasNormales: hoursDecimal(c.normal), horasExtra: hoursDecimal(c.extra),
         diaViaje: (viaje && viaje.activo) ? 'Sí' : 'No',
-        tipoViaje: viaje ? (viaje.tipo === 'reunion' ? 'Reunión' : 'Viaje') : '',
-        lugarViaje: viaje ? (viaje.lugar||'') : '', clienteViaje: viaje ? (viaje.cliente||'') : '',
+        tipoViaje: viaje ? (INFORME_MENSUAL_TIPO_LABEL[viaje.tipo] || 'Viaje') : '',
+        lugarViaje: viaje ? (viaje.lugar||'') : '', motivoViaje: viaje ? (viaje.motivo||'') : '',
+        clienteViaje: viaje ? (viaje.cliente||'') : '',
         observaciones: jornadasDia.map(j => j.observaciones).filter(Boolean).join(' · ')
       });
     } else if(viaje && viaje.activo){
@@ -2082,8 +2145,8 @@ function construirFilasExportacion(ini, fin, columnas){
         trabajador: nombreTrabajador, fecha: f, diaSemana: dowName,
         horaEntrada: '', horaSalida: '', tiempoBruto: '', descansos: '', comida: '',
         horasEfectivas: '', horasNormales: '', horasExtra: '',
-        diaViaje: 'Sí', tipoViaje: viaje.tipo === 'reunion' ? 'Reunión' : 'Viaje',
-        lugarViaje: viaje.lugar||'', clienteViaje: viaje.cliente||'',
+        diaViaje: 'Sí', tipoViaje: INFORME_MENSUAL_TIPO_LABEL[viaje.tipo] || 'Viaje',
+        lugarViaje: viaje.lugar||'', motivoViaje: viaje.motivo||'', clienteViaje: viaje.cliente||'',
         observaciones: ''
       });
     }
@@ -2277,9 +2340,9 @@ function exportarXLSX(ini, fin, columnas){
  * Estilos: 0 normal, 1 negrita (títulos/cabecera), 2 negrita grande (nombre),
  * 3 relleno verde (viaje), 4 relleno azul claro (vacaciones),
  * 5 relleno amarillo (festivo), 6 relleno naranja (compensación),
- * 7 relleno lila (reunión).
+ * 7 relleno lila (reunión), 8 relleno rojo claro (otros).
  */
-const INFORME_MENSUAL_ESTILO_POR_TIPO = { viaje:3, vacaciones:4, festivo:5, compensacion:6, reunion:7 };
+const INFORME_MENSUAL_ESTILO_POR_TIPO = { viaje:3, vacaciones:4, festivo:5, compensacion:6, reunion:7, otros:8 };
 function buildStylesXmlInformeMensual(){
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
     `<fonts count="3">` +
@@ -2287,7 +2350,7 @@ function buildStylesXmlInformeMensual(){
       `<font><b/><sz val="11"/><name val="Calibri"/></font>` +
       `<font><b/><sz val="18"/><name val="Calibri"/></font>` +
     `</fonts>` +
-    `<fills count="7">` +
+    `<fills count="8">` +
       `<fill><patternFill patternType="none"/></fill>` +
       `<fill><patternFill patternType="gray125"/></fill>` +
       `<fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill>` +
@@ -2295,10 +2358,11 @@ function buildStylesXmlInformeMensual(){
       `<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill>` +
       `<fill><patternFill patternType="solid"><fgColor rgb="FFFFD9B3"/><bgColor indexed="64"/></patternFill></fill>` +
       `<fill><patternFill patternType="solid"><fgColor rgb="FFE5D4F5"/><bgColor indexed="64"/></patternFill></fill>` +
+      `<fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill>` +
     `</fills>` +
     `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>` +
     `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
-    `<cellXfs count="8">` +
+    `<cellXfs count="9">` +
       `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
       `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
       `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
@@ -2307,13 +2371,14 @@ function buildStylesXmlInformeMensual(){
       `<xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/>` +
       `<xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/>` +
       `<xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/>` +
+      `<xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/>` +
     `</cellXfs>` +
   `</styleSheet>`;
 }
 // Etiqueta de texto plano del tipo de día: se guarda en la última columna
 // ("Tipo") para poder reconstruir el color al volver a importar el informe
 // (el color de la celda en sí no es fiable de releer entre distintos lectores).
-const INFORME_MENSUAL_TIPO_LABEL = { normal:'Normal', viaje:'Viaje', reunion:'Reunión', vacaciones:'Vacaciones', festivo:'Festivo', compensacion:'Compensación' };
+const INFORME_MENSUAL_TIPO_LABEL = { normal:'Normal', viaje:'Viaje', reunion:'Reunión', otros:'Otros', vacaciones:'Vacaciones', festivo:'Festivo', compensacion:'Compensación' };
 const INFORME_MENSUAL_TIPO_DESDE_LABEL = Object.fromEntries(Object.entries(INFORME_MENSUAL_TIPO_LABEL).map(([k,v]) => [v, k]));
 
 // Cabeceras/estilos/anchos comunes a cualquier hoja de "informe mensual"
@@ -2419,7 +2484,7 @@ function construirFilasInformeMensual(anio, mesIdx){
 
     let tipo = 'normal';
     if(marca) tipo = marca.tipo;
-    else if(viaje && viaje.activo) tipo = viaje.tipo === 'reunion' ? 'reunion' : 'viaje';
+    else if(viaje && viaje.activo) tipo = TIPOS_IMPUTACION.includes(viaje.tipo) ? viaje.tipo : 'viaje';
 
     let comentario = '';
     if(tipo === 'festivo') comentario = marca.nombre ? `Festivo: ${marca.nombre}` : 'Festivo';
@@ -2427,6 +2492,7 @@ function construirFilasInformeMensual(anio, mesIdx){
     else if(tipo === 'compensacion') comentario = 'Compensación de horas';
     else if(tipo === 'viaje') comentario = [viaje.lugar, viaje.cliente].filter(Boolean).join(' · ') || 'Viaje';
     else if(tipo === 'reunion') comentario = viaje.cliente || 'Reunión';
+    else if(tipo === 'otros') comentario = [viaje.motivo, viaje.cliente].filter(Boolean).join(' · ') || 'Otros';
     else comentario = jornadasDia.map(j => j.observaciones).filter(Boolean).join(' · ');
 
     filas.push({
@@ -2505,7 +2571,7 @@ function abrirModalInformeMensual(){
 
   openModal(`
     <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Elige uno o varios meses: viaje en verde, reunión en lila, vacaciones en azul, festivo en amarillo y compensación en naranja. Si eliges varios, el Excel llevará una tabla separada por cada mes. El mes en curso se descarga marcado como incompleto (solo hasta hoy).</p>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Elige uno o varios meses: viaje en verde, reunión en lila, otros en rojo, vacaciones en azul, festivo en amarillo y compensación en naranja. Si eliges varios, el Excel llevará una tabla separada por cada mes. El mes en curso se descarga marcado como incompleto (solo hasta hoy).</p>
     <p style="color:var(--muted);font-size:12px;margin-bottom:8px;">Toca un año para ver sus meses. Vuelve a tocar el año activo para marcar (o desmarcar) todos sus meses.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${aniosHtml}</div>
     <div class="informe-meses-grid">${mesesHtml || '<p style="color:var(--muted);font-size:13px;">No hay meses con datos en este año.</p>'}</div>
@@ -3625,6 +3691,21 @@ function init(){
   }, 1000);
 }
 init();
+
+// Mantiene el modal abierto encajado en la parte de pantalla realmente
+// visible (por encima del teclado) y, al enfocar un campo, lo desplaza a la
+// vista con margen — así un desplegable o input cerca del final del modal no
+// queda tapado por el teclado en móvil.
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', ajustarOverlayViewport);
+  window.visualViewport.addEventListener('scroll', ajustarOverlayViewport);
+}
+document.getElementById('modalRoot').addEventListener('focusin', (e) => {
+  const el = e.target;
+  if(el && el.matches && el.matches('input, select, textarea')){
+    setTimeout(() => el.scrollIntoView({block:'center', behavior:'smooth'}), 300);
+  }
+});
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
