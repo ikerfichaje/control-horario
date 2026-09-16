@@ -111,6 +111,7 @@ button{font-family:inherit;}
 .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .btn-row.single{grid-template-columns:1fr;}
 .icon-btn{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;color:var(--text);}
+.icon-btn:disabled{opacity:.35;cursor:not-allowed;}
 
 /* Banner aviso */
 .banner{background:#fef3c7;border:1px solid #fcd34d;color:#78350f;border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;}
@@ -1845,6 +1846,28 @@ async function eliminarIntervalo(tipo, jid, iid){
 }
 
 /* ----------------------------- Render: pestaña RESUMEN -------------------- */
+// Lunes (YYYY-MM-DD) de cada semana con al menos un fichaje, y clave "YYYY-MM"
+// de cada mes con al menos un fichaje. Se usan para limitar la navegación de
+// los resúmenes semanal/mensual a periodos con información real.
+function semanasConFichajes(){
+  const set = new Set();
+  DATA.jornadas.forEach(j => {
+    const dow = (parseDateLocal(j.fecha).getDay()+6)%7;
+    set.add(addDays(j.fecha, -dow));
+  });
+  return set;
+}
+function mesesConFichajes(){
+  const set = new Set();
+  DATA.jornadas.forEach(j => set.add(j.fecha.slice(0, 7)));
+  return set;
+}
+// hayAntes/hayDespues: si existe algún elemento del set estrictamente menor
+// (o mayor) que "actual" — set y actual deben ser comparables como strings
+// (fechas "YYYY-MM-DD" o claves "YYYY-MM", que ordenan bien lexicográficamente).
+function haySetAntes(set, actual){ return [...set].some(v => v < actual); }
+function haySetDespues(set, actual){ return [...set].some(v => v > actual); }
+
 function agregarRango(ini, fin){
   const now = Date.now();
   let efectivo=0, normal=0, extra=0, descansos=0, comidas=0;
@@ -1863,19 +1886,28 @@ function renderResumen(){
   const el = document.getElementById('tab-resumen');
   const hoy = todayStr();
 
-  // Semana del resumen semanal (navegable con ‹ ›, por defecto la actual)
+  // Semana del resumen semanal (navegable con ‹ ›, solo entre semanas con
+  // fichajes, por defecto la actual)
   const dSem = parseDateLocal(UI.resumen.semanaRef);
   const dowSem = (dSem.getDay()+6)%7;
   const semIni = addDays(UI.resumen.semanaRef, -dowSem), semFin = addDays(semIni, 6);
   const rSem = agregarRango(semIni, semFin);
+  const semanasDatos = semanasConFichajes();
+  const haySemAnterior = haySetAntes(semanasDatos, semIni);
+  const haySemSiguiente = haySetDespues(semanasDatos, semIni);
 
-  // Mes del resumen mensual (navegable con ‹ ›, por defecto el actual)
+  // Mes del resumen mensual (navegable con ‹ ›, solo entre meses con
+  // fichajes, por defecto el actual)
   const dMes = parseDateLocal(UI.resumen.mesResumenRef);
   const mesIni = `${dMes.getFullYear()}-${pad2(dMes.getMonth()+1)}-01`;
   const mesFinD = new Date(dMes.getFullYear(), dMes.getMonth()+1, 0);
   const mesFin = todayStr(mesFinD);
   const rMes = agregarRango(mesIni, mesFin);
   const mediaMes = rMes.dias>0 ? rMes.efectivo/rMes.dias : 0;
+  const claveMesActual = UI.resumen.mesResumenRef.slice(0, 7);
+  const mesesDatos = mesesConFichajes();
+  const hayMesAnterior = haySetAntes(mesesDatos, claveMesActual);
+  const hayMesSiguiente = haySetDespues(mesesDatos, claveMesActual);
 
   // Calendario del mes de referencia
   const ref = parseDateLocal(UI.resumen.mesRef);
@@ -1947,9 +1979,9 @@ function renderResumen(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h2 style="margin:0;">Resumen semanal</h2>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button class="icon-btn" data-action="resumen-semana-nav" data-dir="-1">‹</button>
+          <button class="icon-btn" data-action="resumen-semana-nav" data-dir="-1" ${haySemAnterior?'':'disabled'}>‹</button>
           <span style="font-size:12px;font-weight:700;min-width:120px;text-align:center;">${fmtDateShort(semIni)} - ${fmtDateShort(semFin)}</span>
-          <button class="icon-btn" data-action="resumen-semana-nav" data-dir="1">›</button>
+          <button class="icon-btn" data-action="resumen-semana-nav" data-dir="1" ${haySemSiguiente?'':'disabled'}>›</button>
         </div>
       </div>
       <div class="summary-grid">
@@ -1965,9 +1997,9 @@ function renderResumen(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <h2 style="margin:0;">Resumen mensual</h2>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button class="icon-btn" data-action="resumen-mes-nav" data-dir="-1">‹</button>
+          <button class="icon-btn" data-action="resumen-mes-nav" data-dir="-1" ${hayMesAnterior?'':'disabled'}>‹</button>
           <span style="font-size:13px;font-weight:700;min-width:110px;text-align:center;">${MONTH_NAMES[dMes.getMonth()]} ${dMes.getFullYear()}</span>
-          <button class="icon-btn" data-action="resumen-mes-nav" data-dir="1">›</button>
+          <button class="icon-btn" data-action="resumen-mes-nav" data-dir="1" ${hayMesSiguiente?'':'disabled'}>›</button>
         </div>
       </div>
       <div class="summary-grid">
