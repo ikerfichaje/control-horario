@@ -631,21 +631,19 @@ function jornadaNormalMsForFecha(fechaStr){
   return Math.round((horas || 0) * 3600000);
 }
 
-// Horas fijas de compensación por día de la semana. A diferencia de la
-// jornada configurable en Ajustes, estas NO cambian aunque se edite el
-// horario habitual: de lunes a jueves un día de compensación siempre
-// descuenta 8,5 h del banco de horas, y el viernes siempre 6 h.
-const HORAS_COMPENSACION_FIJAS = {1:8.5, 2:8.5, 3:8.5, 4:8.5, 5:6, 6:0, 0:0};
-function horasCompensacionFijasFor(fechaStr){
-  const dow = parseDateLocal(fechaStr).getDay();
-  return HORAS_COMPENSACION_FIJAS[dow] ?? 0;
+// Horas de compensación de un día: siempre las horas normales que tengas
+// establecidas en Ajustes para ese día de la semana (las mismas que cuentan
+// como jornada normal al fichar). No es un valor editable a mano: así un día
+// de compensación descuenta del banco exactamente lo que ese día suma.
+function horasCompensacionFor(fechaStr){
+  return jornadaNormalMsForFecha(fechaStr) / 3600000;
 }
 
 /* ----------------------------- Calendario laboral (festivos / vacaciones / banco de horas) ---- */
 function diaCalendarioLaboral(fechaStr){ return DATA.calendarioLaboral[fechaStr] || null; }
 function marcarDiaCalendarioLaboral(fechaStr, tipo, nombre){
   if(tipo === 'compensacion'){
-    DATA.calendarioLaboral[fechaStr] = { tipo, horas: horasCompensacionFijasFor(fechaStr) };
+    DATA.calendarioLaboral[fechaStr] = { tipo, horas: horasCompensacionFor(fechaStr) };
   } else if(tipo === 'festivo'){
     DATA.calendarioLaboral[fechaStr] = { tipo, nombre: (nombre || '').trim() || 'Festivo' };
   } else {
@@ -1637,7 +1635,7 @@ function abrirDiaCalendario(fecha){
   })() : `<p style="color:var(--muted);font-size:13.5px;">Sin fichaje registrado este día.</p>`;
 
   const saldoActual = bancoHorasSaldoMs();
-  const horasCompensacion = marca && marca.tipo === 'compensacion' ? marca.horas : horasCompensacionFijasFor(fecha);
+  const horasCompensacion = horasCompensacionFor(fecha);
 
   openModal(`
     <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
@@ -1659,10 +1657,11 @@ function abrirDiaCalendario(fecha){
     </div>` : ''}
 
     ${tipo === 'compensacion' ? `
-    <div class="field" style="margin-top:12px;">
-      <label>Horas a descontar del banco</label>
-      <input type="number" min="0" step="0.25" id="marcaHorasCompensacion" data-fecha="${fecha}" value="${horasCompensacion}">
+    <div class="card-row" style="margin-top:12px;">
+      <span class="label">Horas a descontar del banco</span>
+      <span class="value">${fmtHM(horasCompensacion * 3600000)}</span>
     </div>
+    <p style="font-size:12px;color:var(--muted);">Son las horas normales establecidas en Ajustes para este día de la semana: no se pueden editar a mano, para que un día de compensación descuente siempre lo mismo que ese día suma al banco.</p>
     <p style="font-size:12px;color:var(--muted);">Saldo actual del banco de horas (ya con esta compensación aplicada si está guardada): <b>${fmtHM(Math.abs(saldoActual))}${saldoActual<0?' (negativo)':''}</b>.</p>
     ` : ''}
   `);
@@ -3570,11 +3569,6 @@ document.addEventListener('change', (e) => {
   if(e.target.id === 'marcaNombreFestivo'){
     const fecha = e.target.dataset.fecha;
     if(DATA.calendarioLaboral[fecha]) DATA.calendarioLaboral[fecha].nombre = e.target.value.trim() || 'Festivo';
-    save(); renderAll();
-  }
-  if(e.target.id === 'marcaHorasCompensacion'){
-    const fecha = e.target.dataset.fecha;
-    if(DATA.calendarioLaboral[fecha]) DATA.calendarioLaboral[fecha].horas = Math.max(0, Number(e.target.value)||0);
     save(); renderAll();
   }
   if(e.target.id === 'fileImportBackup' && e.target.files[0]){
