@@ -1546,7 +1546,7 @@ function renderHistorico(){
 
   const items = fechas.length ? fechas.map(f => {
     const {jornadas, calc, esViaje, viaje, sinComida} = statsDia(f);
-    const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
+    const openPill = calc && calc.abierta ? `<span class="pill open">En curso</span>` : '';
     const viajePill = esViaje
       ? (viaje.tipo === 'reunion' ? `<span class="pill reunion">Reunión</span>`
         : viaje.tipo === 'otros' ? `<span class="pill otros">Otros</span>`
