@@ -170,10 +170,11 @@ button{font-family:inherit;}
 .day-item:active{transform:scale(.99);}
 .day-item.es-viaje{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.4);}
 [data-theme="dark"] .day-item.es-viaje{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.4);}
-.day-item .di-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.day-item .di-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;row-gap:6px;column-gap:8px;}
+.day-item .di-pills{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;}
 .day-item .di-date{font-weight:700;font-size:14.5px;text-transform:capitalize;}
 .day-item .di-date small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;text-transform:none;}
-.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;}
+.pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;flex:none;}
 .pill.extra{background:#ffedd5;color:#9a3412;}
 [data-theme="dark"] .pill.extra{background:#4a2a0f;color:#fdba74;}
 .pill.open{background:#dbeafe;color:#1e40af;}
@@ -380,6 +381,14 @@ function toDatetimeLocalValue(ts){
   return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 function fromDatetimeLocalValue(v){ const t = new Date(v).getTime(); return isNaN(t) ? null : t; }
+// Combina una fecha "YYYY-MM-DD" con una hora "HH:MM" (de un <input type=time>)
+// en un timestamp de ese mismo día. Devuelve null si la hora no es válida.
+function timeStrEnFecha(fechaStr, horaStr){
+  const m = String(horaStr || '').match(/^(\d{1,2}):(\d{2})$/);
+  if(!m) return null;
+  const d = parseDateLocal(fechaStr);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), Number(m[1]), Number(m[2])).getTime();
+}
 function fmtTimeHM(ts){ if(ts==null) return '--:--'; const d = new Date(ts); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
 function fmtDateHuman(s){
   const d = parseDateLocal(s);
@@ -443,10 +452,10 @@ function defaultConfig(){
     horasNormales: 8,
     descansoMin: 15,
     comidaMin: 45,
-    comidaInicio: '14:00',
-    comidaFin: '14:45',
+    comidaInicio: '14:30',
+    comidaFin: '15:30',
     modoDescanso: 'manual',   // 'auto' | 'manual'
-    modoComida: 'manual',     // 'auto' (duración fija) | 'manual' | 'horario' (franja fija)
+    modoComida: 'horario',    // 'auto' (duración fija) | 'manual' | 'horario' (franja fija)
     tema: 'auto',             // 'claro' | 'oscuro' | 'auto'
     avisoEntradaActivo: true,
     avisoEntradaHora: '08:30',
@@ -473,6 +482,7 @@ function defaultData(){
     calendarioLaboral: {}, // { 'YYYY-MM-DD': {tipo:'festivo'|'vacaciones'|'compensacion', nombre?, horas?} }
     viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } — días de viaje/instalación
     sinComida: {},         // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
+    comidaOverride: {},    // { 'YYYY-MM-DD': {inicio:'HH:MM', fin:'HH:MM'} } — hora de comida modificada solo ese día
     informesDescargados: {} // { 'YYYY-MM': {fecha, incompleto} } — informes mensuales ya descargados
   };
 }
@@ -505,6 +515,7 @@ function loadData(){
       calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
+      comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
       informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {}
     };
   }catch(e){
@@ -580,6 +591,18 @@ function quitarViaje(fechaStr){ delete DATA.viajes[fechaStr]; save(); }
 function diaSinComida(fechaStr){ return !!DATA.sinComida[fechaStr]; }
 function marcarSinComida(fechaStr){ DATA.sinComida[fechaStr] = true; save(); }
 function quitarSinComida(fechaStr){ delete DATA.sinComida[fechaStr]; save(); }
+
+// Hora de comida modificada solo para un día concreto (modo "horario"): no
+// toca la franja fija configurada en Ajustes, solo la sustituye ese día.
+function comidaOverrideDeFecha(fechaStr){ return DATA.comidaOverride[fechaStr] || null; }
+function marcarComidaOverride(fechaStr, inicio, fin){ DATA.comidaOverride[fechaStr] = { inicio, fin }; save(); }
+function quitarComidaOverride(fechaStr){ delete DATA.comidaOverride[fechaStr]; save(); }
+// Texto "HH:MM–HH:MM" del horario de comida que aplica realmente ese día
+// (el override de ese día si existe, si no el habitual de Ajustes).
+function comidaHorarioTextoFecha(fechaStr){
+  const o = comidaOverrideDeFecha(fechaStr);
+  return `${o?.inicio || DATA.config.comidaInicio}–${o?.fin || DATA.config.comidaFin}`;
+}
 
 function sumIntervals(list, now){
   let total = 0;
@@ -673,12 +696,14 @@ const FESTIVOS_NAVARRA = {
 
 // Franja horaria de comida preconfigurada (p.ej. 14:00-14:45) aplicada al
 // calendario de un día concreto. Si "fin" es menor o igual que "inicio" se
-// interpreta que la franja cruza la medianoche.
+// interpreta que la franja cruza la medianoche. Si ese día tiene un override
+// (ver comidaOverrideDeFecha), se usa esa franja en vez de la de Ajustes.
 function comidaHorarioParaFecha(fechaStr){
   const cfg = DATA.config;
+  const override = comidaOverrideDeFecha(fechaStr);
   const d = parseDateLocal(fechaStr);
-  const [hi, mi] = (cfg.comidaInicio || '14:00').split(':').map(Number);
-  const [hf, mf] = (cfg.comidaFin || '14:45').split(':').map(Number);
+  const [hi, mi] = (override?.inicio || cfg.comidaInicio || '14:00').split(':').map(Number);
+  const [hf, mf] = (override?.fin || cfg.comidaFin || '14:45').split(':').map(Number);
   const inicio = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hi, mi).getTime();
   let fin = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hf, mf).getTime();
   if(fin <= inicio) fin += 24*3600000;
@@ -980,6 +1005,94 @@ function accionQuitarSinComida(fecha){
   refrescarTrasEditarDia(fecha);
 }
 
+/*
+ * Formulario para fijar manualmente la hora de comida de un día (desde la
+ * pestaña Hoy), sin tener que pulsar "Iniciar/Finalizar comida" en directo.
+ * Su comportamiento depende del modo de comida configurado en Ajustes:
+ *  - 'horario' (franja fija tipo 14:00-14:45 para todos los días): guarda un
+ *    override que sustituye esa franja SOLO ese día (ver comidaOverride).
+ *  - 'manual' (se ficha con Iniciar/Finalizar): crea o corrige directamente
+ *    el intervalo de comida de la jornada de ese día.
+ *  - 'auto' (duración fija descontada automáticamente): no tiene una hora de
+ *    reloj que editar, así que esta opción no se ofrece en ese modo.
+ */
+function abrirFormularioComidaHoy(fecha){
+  const modo = DATA.config.modoComida;
+  if(modo === 'horario'){
+    const actual = comidaOverrideDeFecha(fecha);
+    const ini = actual?.inicio || DATA.config.comidaInicio || '14:00';
+    const fin = actual?.fin || DATA.config.comidaFin || '14:45';
+    openModal(`
+      <div class="modal-head"><h3>Hora de comida</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">Cambia la franja de comida solo para <b>${esc(fmtDateHuman(fecha))}</b>, sin tocar el horario habitual de Ajustes.</p>
+      <div class="field-row">
+        <div class="field"><label>Inicio</label><input type="time" id="frmComidaHoyIni" value="${ini}"></div>
+        <div class="field"><label>Fin</label><input type="time" id="frmComidaHoyFin" value="${fin}"></div>
+      </div>
+      <button class="btn btn-primary btn-lg" data-action="guardar-comida-hoy" data-fecha="${fecha}">Guardar</button>
+      ${actual ? `<button class="btn btn-outline btn-sm" style="margin-top:10px;width:100%;" data-action="quitar-comida-override" data-fecha="${fecha}">↩ Usar horario habitual</button>` : ''}
+    `);
+    return;
+  }
+  if(modo === 'manual'){
+    const jornadas = jornadasDeFecha(fecha);
+    const jObjetivo = jornadas.find(j => j.salida == null) || jornadas[jornadas.length - 1];
+    if(!jObjetivo){ toast('Primero debes fichar la entrada.'); return; }
+    const comidaExistente = jObjetivo.comidas[jObjetivo.comidas.length - 1] || null;
+    const iniVal = comidaExistente ? fmtTimeHM(comidaExistente.inicio) : '';
+    const finVal = (comidaExistente && comidaExistente.fin != null) ? fmtTimeHM(comidaExistente.fin) : '';
+    openModal(`
+      <div class="modal-head"><h3>Hora de comida</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+      <p style="color:var(--muted);font-size:13.5px;margin-bottom:14px;">${comidaExistente ? 'Corrige' : 'Introduce'} la hora de inicio y fin de la comida de hoy.</p>
+      <div class="field-row">
+        <div class="field"><label>Inicio</label><input type="time" id="frmComidaHoyIni" value="${iniVal}"></div>
+        <div class="field"><label>Fin</label><input type="time" id="frmComidaHoyFin" value="${finVal}"></div>
+      </div>
+      <button class="btn btn-primary btn-lg" data-action="guardar-comida-hoy" data-fecha="${fecha}" data-jid="${jObjetivo.id}" data-cid="${comidaExistente ? comidaExistente.id : ''}">Guardar</button>
+    `);
+    return;
+  }
+  toast('El modo de comida actual (duración automática) no usa una hora fija que editar.');
+}
+function guardarComidaHoy(fecha, jid, cid){
+  const modo = DATA.config.modoComida;
+  const iniStr = document.getElementById('frmComidaHoyIni').value;
+  const finStr = document.getElementById('frmComidaHoyFin').value;
+  if(!iniStr || !finStr){ toast('Indica hora de inicio y fin.'); return; }
+
+  if(modo === 'horario'){
+    if(finStr <= iniStr){ toast('El fin debe ser posterior al inicio.'); return; }
+    marcarComidaOverride(fecha, iniStr, finStr);
+    closeModal();
+    toast('Hora de comida de hoy actualizada');
+    renderAll();
+    return;
+  }
+
+  const j = getJornada(jid);
+  if(!j){ toast('No se encontró el fichaje de hoy.'); return; }
+  const inicio = timeStrEnFecha(fecha, iniStr);
+  const fin = timeStrEnFecha(fecha, finStr);
+  if(inicio == null || fin == null){ toast('Hora inválida.'); return; }
+  if(fin <= inicio){ toast('El fin debe ser posterior al inicio.'); return; }
+  if(cid){
+    const item = j.comidas.find(c => c.id === cid);
+    if(item){ item.inicio = inicio; item.fin = fin; }
+    else j.comidas.push({ id: uid(), inicio, fin });
+  } else {
+    j.comidas.push({ id: uid(), inicio, fin });
+  }
+  save();
+  closeModal();
+  toast('Hora de comida de hoy actualizada');
+  renderAll();
+}
+function accionQuitarComidaOverride(fecha){
+  quitarComidaOverride(fecha);
+  toast('Se usará el horario de comida habitual');
+  renderAll();
+}
+
 /* ----------------------------- Fichaje abierto de días anteriores -------- */
 function jornadaAbiertaDeAyer(){
   const j = jornadaAbierta();
@@ -1087,15 +1200,22 @@ function renderHoy(){
   let subStats = '';
 
   if(j){
-    const calc = calcJornada(j, now);
+    // Se usa calcDia (no calcJornada) porque un mismo día puede tener varios
+    // tramos fichados: el contador en vivo de horas extra tiene que reflejar
+    // el total acumulado del día, no solo el tramo actualmente abierto (si no,
+    // al reabrir un tramo nuevo después de ya haber cumplido la jornada en un
+    // tramo anterior, las horas extra dejarían de contarse correctamente).
+    const calc = calcDia(j.fecha, now);
+    const dAbiertoTramo = descansoAbierto(j);
+    const cAbiertaTramo = comidaAbierta(j);
     const desdeEntrada = now - j.entrada;
     heroTimerValue = fmtHMS(desdeEntrada);
     heroTimerLabel = `Trabajando desde las ${fmtTimeHM(j.entrada)}`;
-    if(estado==='descanso') heroTimerLabel = `En descanso desde las ${fmtTimeHM(calc.dAbierto.inicio)}`;
+    if(estado==='descanso') heroTimerLabel = `En descanso desde las ${fmtTimeHM(dAbiertoTramo.inicio)}`;
     if(estado==='comida'){
-      heroTimerLabel = calc.cAbierta
-        ? `En comida desde las ${fmtTimeHM(calc.cAbierta.inicio)}`
-        : `En comida (horario ${DATA.config.comidaInicio}–${DATA.config.comidaFin})`;
+      heroTimerLabel = cAbiertaTramo
+        ? `En comida desde las ${fmtTimeHM(cAbiertaTramo.inicio)}`
+        : `En comida (horario ${comidaHorarioTextoFecha(j.fecha)})`;
     }
 
     progressPct = calc.normalMax > 0 ? clamp((calc.efectivoTotal/calc.normalMax)*100, 0, 100) : 0;
@@ -1113,12 +1233,16 @@ function renderHoy(){
       ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">Hoy no está marcado como día de viaje: el tiempo de más no cuenta como hora extra.</p>` : ''}`;
 
     const restante = Math.max(0, calc.normalMax - calc.efectivoTotal);
-    // Si la comida es de horario fijo, se descuenta entera para la estimación
-    // aunque el tramo todavía no haya llegado (se sabe que ocurrirá).
-    const comidaParaEstimacion = (DATA.config.modoComida === 'horario' && diaConfigFor(j.fecha)?.comida !== false)
-      ? (comidaHorarioParaFecha(j.fecha).fin - comidaHorarioParaFecha(j.fecha).inicio)
-      : calc.comidasMs;
-    const estimadaFin = j.entrada + calc.normalMax + calc.descansosMs + comidaParaEstimacion;
+    // Si la comida es de horario fijo y todavía no ha terminado, se suma el
+    // tramo pendiente a la estimación (se sabe que ocurrirá aunque no haya
+    // empezado). La comida ya tomada está incluida en "restante" porque
+    // calcDia() ya la descuenta del tiempo efectivo de todo el día.
+    let comidaPendiente = 0;
+    if(DATA.config.modoComida === 'horario' && diaConfigFor(j.fecha)?.comida !== false){
+      const franja = comidaHorarioParaFecha(j.fecha);
+      comidaPendiente = Math.max(0, franja.fin - Math.max(now, franja.inicio));
+    }
+    const estimadaFin = now + restante + comidaPendiente;
 
     subStats = `
       <div class="hero-sub">
@@ -1171,13 +1295,13 @@ function renderHoy(){
   }
 
   const detalle = j ? (() => {
-    const calc = calcJornada(j, now);
+    const calc = calcDia(j.fecha, now);
     return `
     <div class="card">
       <h2>Detalle de hoy</h2>
       <div class="card-row"><span class="label">Hora entrada</span><span class="value">${fmtTimeHM(j.entrada)}</span></div>
       <div class="card-row"><span class="label">Descansos</span><span class="value">${fmtHM(calc.descansosMs)}</span></div>
-      <div class="card-row"><span class="label">Comida${DATA.config.modoComida==='horario' ? ` (${DATA.config.comidaInicio}-${DATA.config.comidaFin})` : ''}</span><span class="value">${fmtHM(calc.comidasMs)}</span></div>
+      <div class="card-row"><span class="label">Comida${DATA.config.modoComida==='horario' ? ` (${comidaHorarioTextoFecha(j.fecha)})` : ''}</span><span class="value">${fmtHM(calc.comidasMs)}</span></div>
       <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calc.normal)}</span></div>
       <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calc.extra)}</span></div>
     </div>`;
@@ -1211,10 +1335,14 @@ function renderHoy(){
   const puedeSinComida = diaCfgHoy?.comida !== false;
   let sinComidaSeccion = '';
   if(puedeSinComida){
-    sinComidaSeccion = diaSinComida(fechaHoy) ? `
-      <div class="card-row"><span class="label">🚫 Comida</span><span class="value">No se descuenta hoy</span></div>
-      <button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fechaHoy}">↩ Deshacer</button>` : `
-      <button class="btn btn-outline btn-sm" data-action="marcar-sin-comida" data-fecha="${fechaHoy}">🚫 No he comido hoy</button>`;
+    const modificarHoraBtn = cfg.modoComida !== 'auto'
+      ? `<button class="btn btn-soft btn-sm" data-action="abrir-form-comida-hoy" data-fecha="${fechaHoy}">✎ Modificar hora</button>` : '';
+    const principalBtn = diaSinComida(fechaHoy)
+      ? `<button class="btn btn-soft btn-sm" data-action="quitar-sin-comida" data-fecha="${fechaHoy}">↩ Deshacer</button>`
+      : `<button class="btn btn-outline btn-sm" data-action="marcar-sin-comida" data-fecha="${fechaHoy}">🚫 No he comido hoy</button>`;
+    sinComidaSeccion = `
+      ${diaSinComida(fechaHoy) ? `<div class="card-row"><span class="label">🚫 Comida</span><span class="value">No se descuenta hoy</span></div>` : ''}
+      <div class="btn-row${modificarHoraBtn ? '' : ' single'}">${principalBtn}${modificarHoraBtn}</div>`;
   }
 
   el.innerHTML = `
@@ -1244,7 +1372,7 @@ function tickLive(){
   const j = jornadaAbierta();
   if(!j){ return; }
   const now = Date.now();
-  const calc = calcJornada(j, now);
+  const calc = calcDia(j.fecha, now);
   const heroTimer = document.getElementById('heroTimer');
   const liveExtra = document.getElementById('liveExtra');
   const liveEfectivo = document.getElementById('liveEfectivo');
@@ -1253,8 +1381,10 @@ function tickLive(){
   const progressLabel = document.getElementById('progressLabel');
   if(heroTimer){
     const estado = estadoActual();
-    if(estado==='descanso' && calc.dAbierto) heroTimer.textContent = fmtHMS(now - calc.dAbierto.inicio);
-    else if(estado==='comida' && calc.cAbierta) heroTimer.textContent = fmtHMS(now - calc.cAbierta.inicio);
+    const dAbierto = descansoAbierto(j);
+    const cAbierta = comidaAbierta(j);
+    if(estado==='descanso' && dAbierto) heroTimer.textContent = fmtHMS(now - dAbierto.inicio);
+    else if(estado==='comida' && cAbierta) heroTimer.textContent = fmtHMS(now - cAbierta.inicio);
     else heroTimer.textContent = fmtHMS(now - j.entrada);
   }
   if(liveExtra) liveExtra.textContent = fmtHMS(calc.extra);
@@ -1361,7 +1491,7 @@ function renderHistorico(){
     <div class="day-item ${esViaje?'es-viaje':''}" data-action="ver-dia" data-fecha="${f}">
       <div class="di-top">
         <div class="di-date">${esc(fmtDateHuman(f))}<small>${esc(fmtDateShort(f))}</small></div>
-        <div>${extraPill}${openPill}${viajePill}${sinComidaPill}</div>
+        <div class="di-pills">${extraPill}${openPill}${viajePill}${sinComidaPill}</div>
       </div>
       <div class="di-stats">
         <span>${jornadas.length>1?'Tramos':'Horario'} <b>${esc(formatTramosDia(jornadas))}</b></span>
@@ -2969,6 +3099,7 @@ function importarBackupSeleccionado(file){
       calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
+      comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
       informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {}
     };
     save();
@@ -3206,6 +3337,9 @@ document.addEventListener('click', async (e) => {
     case 'quitar-viaje': await accionQuitarViaje(d.fecha); break;
     case 'marcar-sin-comida': accionMarcarSinComida(d.fecha); break;
     case 'quitar-sin-comida': accionQuitarSinComida(d.fecha); break;
+    case 'abrir-form-comida-hoy': abrirFormularioComidaHoy(d.fecha); break;
+    case 'guardar-comida-hoy': guardarComidaHoy(d.fecha, d.jid, d.cid); break;
+    case 'quitar-comida-override': accionQuitarComidaOverride(d.fecha); break;
 
     case 'fichaje-abierto-cerrar-ahora': fichajeAbiertoCerrarAhora(d.id); break;
     case 'fichaje-abierto-manual': fichajeAbiertoManual(d.id); break;
