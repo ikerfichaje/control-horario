@@ -269,8 +269,13 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
 .worker-card .wc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .worker-card .wc-name{font-weight:800;font-size:15.5px;display:flex;align-items:center;gap:8px;}
 .worker-card .wc-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-blue));color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
-.informe-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
-.informe-item .if-meta{color:var(--muted);}
+.informe-item{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.informe-item .if-main{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.informe-item .if-mes{font-weight:700;color:var(--text);}
+.informe-item .if-incompleto{font-weight:600;color:var(--muted);}
+.informe-item .if-dias{color:var(--muted);font-size:11.5px;}
+.informe-item .if-meta{color:var(--muted);display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none;text-align:right;}
+.informe-item .if-meta b{color:var(--text);}
 
 /* Impresión del calendario laboral (usado para "Guardar como PDF"): siempre
    el año completo en una sola página, con los mismos colores que la app. */
@@ -559,7 +564,7 @@ function esDirectivo(){ return !!(DATA.perfil && DATA.perfil.rol === 'directivo'
 const UI = {
   tab: 'hoy',
   historico: { filtro: 'mes', rangoIni: todayStr(), rangoFin: todayStr(), busqueda: '', soloViaje: false },
-  resumen: { periodo: 'semana', mesRef: todayStr() },
+  resumen: { periodo: 'semana', mesRef: todayStr(), semanaRef: todayStr(), mesResumenRef: todayStr() },
   bannerDismissed: false,
   avisoDescartadoFecha: null,
   informeMensual: null // { anio, seleccionados: Set<clave> } — estado del modal "Informe mensual", se resetea cada vez que se abre
@@ -1857,16 +1862,17 @@ function agregarRango(ini, fin){
 function renderResumen(){
   const el = document.getElementById('tab-resumen');
   const hoy = todayStr();
-  const dHoy = parseDateLocal(hoy);
 
-  // Semana actual (lunes-domingo)
-  const dow = (dHoy.getDay()+6)%7;
-  const semIni = addDays(hoy, -dow), semFin = addDays(semIni, 6);
+  // Semana del resumen semanal (navegable con ‹ ›, por defecto la actual)
+  const dSem = parseDateLocal(UI.resumen.semanaRef);
+  const dowSem = (dSem.getDay()+6)%7;
+  const semIni = addDays(UI.resumen.semanaRef, -dowSem), semFin = addDays(semIni, 6);
   const rSem = agregarRango(semIni, semFin);
 
-  // Mes actual
-  const mesIni = `${dHoy.getFullYear()}-${pad2(dHoy.getMonth()+1)}-01`;
-  const mesFinD = new Date(dHoy.getFullYear(), dHoy.getMonth()+1, 0);
+  // Mes del resumen mensual (navegable con ‹ ›, por defecto el actual)
+  const dMes = parseDateLocal(UI.resumen.mesResumenRef);
+  const mesIni = `${dMes.getFullYear()}-${pad2(dMes.getMonth()+1)}-01`;
+  const mesFinD = new Date(dMes.getFullYear(), dMes.getMonth()+1, 0);
   const mesFin = todayStr(mesFinD);
   const rMes = agregarRango(mesIni, mesFin);
   const mediaMes = rMes.dias>0 ? rMes.efectivo/rMes.dias : 0;
@@ -1938,7 +1944,14 @@ function renderResumen(){
     </div>
 
     <div class="card">
-      <h2>Resumen semanal (${fmtDateShort(semIni)} - ${fmtDateShort(semFin)})</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Resumen semanal</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="icon-btn" data-action="resumen-semana-nav" data-dir="-1">‹</button>
+          <span style="font-size:12px;font-weight:700;min-width:120px;text-align:center;">${fmtDateShort(semIni)} - ${fmtDateShort(semFin)}</span>
+          <button class="icon-btn" data-action="resumen-semana-nav" data-dir="1">›</button>
+        </div>
+      </div>
       <div class="summary-grid">
         <div class="summary-tile"><b>${fmtHM(rSem.efectivo)}</b><small>Horas trabajadas</small></div>
         <div class="summary-tile"><b>${fmtHM(rSem.normal)}</b><small>Horas normales</small></div>
@@ -1949,7 +1962,14 @@ function renderResumen(){
     </div>
 
     <div class="card">
-      <h2>Resumen mensual (${MONTH_NAMES[dHoy.getMonth()]})</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h2 style="margin:0;">Resumen mensual</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="icon-btn" data-action="resumen-mes-nav" data-dir="-1">‹</button>
+          <span style="font-size:13px;font-weight:700;min-width:110px;text-align:center;">${MONTH_NAMES[dMes.getMonth()]} ${dMes.getFullYear()}</span>
+          <button class="icon-btn" data-action="resumen-mes-nav" data-dir="1">›</button>
+        </div>
+      </div>
       <div class="summary-grid">
         <div class="summary-tile"><b>${rMes.dias}</b><small>Días trabajados</small></div>
         <div class="summary-tile"><b>${fmtHM(mediaMes)}</b><small>Media horas/día</small></div>
@@ -2797,12 +2817,27 @@ function renderEquipo(){
     const totalDias = w.informes.reduce((s,i)=>s+(i.totales.dias||0),0);
     const saldoPendiente = totalExtra - totalCompensado;
     const iniciales = w.nombre.split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
-    const informesHtml = w.informes.slice().sort((a,b)=>b.fechaImportacion-a.fechaImportacion).map(inf => `
+    const informesHtml = w.informes.slice().sort((a,b)=>b.fechaImportacion-a.fechaImportacion).map(inf => {
+      const etiquetaBase = inf.mesLabel || (inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} – ${fmtDateShort(inf.fechaMax)}` : inf.archivoNombre);
+      // El mesLabel de un mes en curso trae el sufijo "(incompleto, hasta hoy)"
+      // ya incrustado en el texto (ver generarInformesMensuales): se separa
+      // para mostrar el mes/año limpio y el aviso como una etiqueta aparte.
+      const m = /^(.*?)\s*\(incompleto[^)]*\)\s*$/i.exec(etiquetaBase);
+      const mesYAnio = m ? m[1] : etiquetaBase;
+      const esIncompleto = !!m;
+      return `
       <div class="informe-item">
-        <span>${esc(inf.mesLabel || (inf.fechaMin ? `${fmtDateShort(inf.fechaMin)} – ${fmtDateShort(inf.fechaMax)}` : inf.archivoNombre))} · ${inf.totales.dias} días con fichaje</span>
-        <span class="if-meta">Extra ${fmtHM(inf.totales.horasExtraMs)} · Comp. ${fmtHM(inf.totales.horasCompensadasMs)}</span>
+        <div class="if-main">
+          <div class="if-mes">${esc(mesYAnio)}${esIncompleto ? ' <span class="if-incompleto">(incompleto)</span>' : ''}</div>
+          <div class="if-dias">${inf.totales.dias} días fichados</div>
+        </div>
+        <div class="if-meta">
+          <span>Extra <b>${fmtHM(inf.totales.horasExtraMs)}</b></span>
+          <span>Comp. <b>${fmtHM(inf.totales.horasCompensadasMs)}</b></span>
+        </div>
         <button class="icon-btn" data-action="eliminar-informe" data-id="${inf.id}" title="Eliminar este informe">🗑</button>
-      </div>`).join('');
+      </div>`;
+    }).join('');
     return `
     <div class="worker-card">
       <div class="wc-top">
@@ -3368,6 +3403,18 @@ document.addEventListener('click', async (e) => {
     case 'editar-intervalo': editarIntervalo(d.tipo, d.jid, d.iid); break;
     case 'guardar-intervalo-editado': guardarIntervaloEditado(d.tipo, d.jid, d.iid); break;
     case 'eliminar-intervalo': await eliminarIntervalo(d.tipo, d.jid, d.iid); break;
+
+    case 'resumen-semana-nav':
+      UI.resumen.semanaRef = addDays(UI.resumen.semanaRef, Number(d.dir) * 7);
+      renderResumen();
+      break;
+    case 'resumen-mes-nav': {
+      const ref = parseDateLocal(UI.resumen.mesResumenRef);
+      const nuevo = new Date(ref.getFullYear(), ref.getMonth()+Number(d.dir), 1);
+      UI.resumen.mesResumenRef = todayStr(nuevo);
+      renderResumen();
+      break;
+    }
 
     case 'cal-mes': {
       const ref = parseDateLocal(UI.resumen.mesRef);
