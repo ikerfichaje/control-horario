@@ -1484,8 +1484,8 @@ function renderHistorico(){
     const {jornadas, calc, esViaje, viaje, sinComida} = statsDia(f);
     const extraPill = esViaje && calc && calc.extra > 0 ? `<span class="pill extra">+${fmtHM(calc.extra)} extra</span>` : '';
     const openPill = calc && calc.abierta ? `<span class="pill open">Abierto</span>` : '';
-    const viajePill = esViaje ? (viaje.tipo === 'reunion' ? `<span class="pill reunion">🤝 Reunión</span>` : `<span class="pill viaje">🧳 Viaje</span>`) : '';
-    const sinComidaPill = sinComida ? `<span class="pill sincomida">🚫 Sin comida</span>` : '';
+    const viajePill = esViaje ? (viaje.tipo === 'reunion' ? `<span class="pill reunion">Reunión</span>` : `<span class="pill viaje">Viaje</span>`) : '';
+    const sinComidaPill = sinComida ? `<span class="pill sincomida">Sin comida</span>` : '';
     const extraStat = esViaje ? `<span>Extra compensable <b style="color:var(--extra)">${calc?fmtHM(calc.extra):'00:00'}</b></span>` : '';
     return `
     <div class="day-item ${esViaje?'es-viaje':''}" data-action="ver-dia" data-fecha="${f}">
