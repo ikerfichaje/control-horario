@@ -442,7 +442,7 @@ const COLUMNAS_EXPORT = [
   {id:'descansos',   label:'Descansos (h)'},
   {id:'comida',      label:'Comida (h)'},
   {id:'horasEfectivas', label:'Horas efectivas'},
-  {id:'horasNormales',  label:'Horas normales'},
+  {id:'horasNormales',  label:'Jornada laboral'},
   {id:'horasExtra',     label:'Horas extra'},
   {id:'diaViaje',    label:'Horas extra imputables'},
   {id:'tipoViaje',   label:'Tipo (viaje/reunión/otros)'},
@@ -1367,7 +1367,7 @@ function renderHoy(){
       <div class="card-row"><span class="label">Hora entrada</span><span class="value">${fmtTimeHM(j.entrada)}</span></div>
       <div class="card-row"><span class="label">Descansos</span><span class="value">${fmtHM(calc.descansosMs)}</span></div>
       <div class="card-row"><span class="label">Comida${DATA.config.modoComida==='horario' ? ` (${comidaHorarioTextoFecha(j.fecha)})` : ''}</span><span class="value">${fmtHM(calc.comidasMs)}</span></div>
-      <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calc.normal)}</span></div>
+      <div class="card-row"><span class="label">Jornada laboral</span><span class="value">${fmtHM(calc.normal)}</span></div>
       <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calc.extra)}</span></div>
     </div>`;
   })() : '';
@@ -1636,7 +1636,7 @@ function verDia(fecha){
     <button class="btn btn-soft" style="margin-top:4px;" data-action="agregar-tramo-dia" data-fecha="${fecha}">+ Añadir otro tramo este día</button>
     <div class="section-title">Resumen del día</div>
     <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calcDiaResult.efectivoTotal)}</span></div>
-    <div class="card-row"><span class="label">Horas normales</span><span class="value">${fmtHM(calcDiaResult.normal)}</span></div>
+    <div class="card-row"><span class="label">Jornada laboral</span><span class="value">${fmtHM(calcDiaResult.normal)}</span></div>
     <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calcDiaResult.extra)}</span></div>
     `;
   })() : `<p style="color:var(--muted);font-size:14px;">No hay fichaje de entrada/salida este día.</p>
@@ -2047,7 +2047,7 @@ function renderResumen(){
       </div>
       <div class="summary-grid">
         <div class="summary-tile"><b>${fmtHM(rSem.efectivo)}</b><small>Horas trabajadas</small></div>
-        <div class="summary-tile"><b>${fmtHM(rSem.normal)}</b><small>Horas normales</small></div>
+        <div class="summary-tile"><b>${fmtHM(rSem.normal)}</b><small>Jornada laboral</small></div>
         <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rSem.extra)}</b><small>Horas extra</small></div>
         <div class="summary-tile"><b>${fmtHM(rSem.descansos)}</b><small>Descansos</small></div>
         <div class="summary-tile"><b>${fmtHM(rSem.comidas)}</b><small>Comidas</small></div>
@@ -2066,7 +2066,7 @@ function renderResumen(){
       <div class="summary-grid">
         <div class="summary-tile"><b>${rMes.dias}</b><small>Días trabajados</small></div>
         <div class="summary-tile"><b>${fmtHM(mediaMes)}</b><small>Media horas/día</small></div>
-        <div class="summary-tile"><b>${fmtHM(rMes.normal)}</b><small>Horas normales</small></div>
+        <div class="summary-tile"><b>${fmtHM(rMes.normal)}</b><small>Jornada laboral</small></div>
         <div class="summary-tile"><b style="color:var(--extra)">${fmtHM(rMes.extra)}</b><small>Horas extra</small></div>
         <div class="summary-tile"><b>${fmtHM(rMes.descansos)}</b><small>Descansos</small></div>
         <div class="summary-tile"><b>${fmtHM(rMes.comidas)}</b><small>Comida</small></div>
@@ -2422,7 +2422,12 @@ function construirBloqueMesInforme(ctx, r0, mesLabel, saldoInicioMs, filas, sald
     r++;
   });
 
+  // Suma a partir de los propios textos "HH:MM" ya formateados de cada fila
+  // (en vez de recalcular desde las jornadas): así funciona igual tanto para
+  // el informe propio como para uno importado de un trabajador del equipo.
+  const totalEfectivoMs = filas.reduce((s, f) => s + parseHMTexto(f.horasEfectivas), 0);
   r++; // fila en blanco
+  xml += filaMerged(r, 'Total horas efectivas del mes: ' + fmtHM(totalEfectivoMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   xml += filaMerged(r, 'Horas extra acumuladas después de este mes: ' + fmtHMSigned(saldoFinMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
 
   return { xml, merges, r };
