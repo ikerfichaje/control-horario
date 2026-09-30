@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Fichaje">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23910048'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23910048'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
 :root{
   --bg:#f5f3fb; --surface:#ffffff; --surface-2:#f7f5fc; --text:#1a1523; --muted:#6b6478;
@@ -72,6 +72,15 @@ button{font-family:inherit;}
 .hero.estado-descanso{background:linear-gradient(160deg,var(--descanso),#1d4ed8);}
 .hero.estado-comida{background:linear-gradient(160deg,var(--comida),#0f766e);}
 .hero.estado-fuera{background:linear-gradient(160deg,#64748b,#475569);}
+.hero.estado-baja{background:linear-gradient(160deg,#dc2626,#991b1b);}
+body.modo-baja{background:#fee2e2;}
+[data-theme="dark"] body.modo-baja{background:#2a0d0d;}
+.btn.btn-alta{background:#fff;color:#b91c1c;border:2px solid #dc2626;}
+[data-theme="dark"] .btn.btn-alta{background:#1f1212;color:#fca5a5;border-color:#f87171;}
+.fab-baja{position:fixed;z-index:35;right:max(16px, calc(50% - 264px));bottom:calc(78px + env(safe-area-inset-bottom));
+  background:var(--danger);color:#fff;border:none;border-radius:999px;padding:12px 16px;font-size:13.5px;font-weight:700;
+  box-shadow:0 4px 14px rgba(220,38,38,.35);cursor:pointer;}
+.fab-baja:active{transform:scale(.96);}
 .hero-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
 .badge-estado{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.02em;}
 .badge-estado .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse 1.6s infinite;}
@@ -160,6 +169,14 @@ button{font-family:inherit;}
 .dia-comida-btn{width:30px;height:30px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface-2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.4;}
 .dia-comida-btn.on{opacity:1;border-color:var(--comida);background:rgba(13,148,136,.12);}
 .dia-comida-btn:disabled{cursor:not-allowed;opacity:.25;}
+.avanzado-sep{margin-top:6px;padding-top:6px;}
+.avanzado-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;background:none;border:none;padding:4px 0;font-size:13.5px;font-weight:700;color:var(--primary);cursor:pointer;text-align:left;}
+.periodo-card{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--surface-2);}
+.periodo-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.periodo-nombre{flex:1;min-width:0;padding:8px 10px;font-size:14px;font-weight:700;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);}
+.periodo-badge{font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;background:var(--primary);color:#fff;white-space:nowrap;}
+.periodo-aviso{font-size:12px;color:var(--danger);margin:0 0 8px;}
+.periodo-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;color:var(--muted);}
 
 /* History list */
 .hist-filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;}
@@ -480,8 +497,29 @@ function defaultConfig(){
       5: {activo:true,  horas:6,   comida:true},
       6: {activo:false, horas:0,   comida:true},
       0: {activo:false, horas:0,   comida:true}
-    }
+    },
+    // Configuración avanzada: tramos de fechas con su propia distribución de
+    // horas por día (p.ej. horario de verano). Fuera de cualquier tramo se
+    // usa "dias". Cada tramo: {id, nombre, desde:'YYYY-MM-DD', hasta:'YYYY-MM-DD', dias:{...}}
+    periodos: []
   };
+}
+// Completa la configuración por día de la semana con los valores por defecto
+// (datos antiguos o parciales).
+function normalizarDias(guardados){
+  const def = defaultConfig().dias;
+  const dias = {};
+  for(const dow of Object.keys(def)){
+    dias[dow] = Object.assign({}, def[dow], (guardados && guardados[dow]) || {});
+  }
+  return dias;
+}
+function normalizarPeriodos(lista){
+  if(!Array.isArray(lista)) return [];
+  const esFecha = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  return lista
+    .filter(p => p && esFecha(p.desde) && esFecha(p.hasta))
+    .map(p => ({ id: p.id || uid(), nombre: String(p.nombre || ''), desde: p.desde, hasta: p.hasta, dias: normalizarDias(p.dias) }));
 }
 function defaultData(){
   return {
@@ -493,7 +531,8 @@ function defaultData(){
     viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } — días de viaje/instalación
     sinComida: {},         // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
     comidaOverride: {},    // { 'YYYY-MM-DD': {inicio:'HH:MM', fin:'HH:MM'} } — hora de comida modificada solo ese día
-    informesDescargados: {} // { 'YYYY-MM': {fecha, incompleto} } — informes mensuales ya descargados
+    informesDescargados: {}, // { 'YYYY-MM': {fecha, incompleto} } — informes mensuales ya descargados
+    bajas: []              // [{id, inicio, fin|null, diasLaborables|null, finPrevisto|null}] — fin/finPrevisto = último día de baja
   };
 }
 
@@ -507,11 +546,8 @@ function loadData(){
     // Fusión defensiva por si faltan campos (versiones futuras / datos parciales)
     const def = defaultData();
     const cfg = Object.assign({}, def.config, parsed.config || {});
-    const diasGuardados = (parsed.config && parsed.config.dias) || {};
-    cfg.dias = {};
-    for(const dow of Object.keys(def.config.dias)){
-      cfg.dias[dow] = Object.assign({}, def.config.dias[dow], diasGuardados[dow] || {});
-    }
+    cfg.dias = normalizarDias(parsed.config && parsed.config.dias);
+    cfg.periodos = normalizarPeriodos(cfg.periodos);
     const idsValidos = COLUMNAS_EXPORT.map(c => c.id);
     const columnasGuardadas = Array.isArray(cfg.exportColumnas) ? cfg.exportColumnas.filter(id => idsValidos.includes(id)) : [];
     cfg.exportColumnas = columnasGuardadas.length ? columnasGuardadas : idsValidos;
@@ -526,7 +562,8 @@ function loadData(){
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
       comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
-      informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {}
+      informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {},
+      bajas: Array.isArray(parsed.bajas) ? parsed.bajas : []
     };
   }catch(e){
     console.error('Error cargando datos, se usará configuración por defecto.', e);
@@ -571,6 +608,8 @@ const UI = {
   resumen: { periodo: 'semana', mesRef: todayStr(), semanaRef: todayStr(), mesResumenRef: todayStr() },
   bannerDismissed: false,
   avisoDescartadoFecha: null,
+  ajustesAvanzado: null, // sección "Configuración avanzada" desplegada (null = abierta solo si hay tramos)
+
   informeMensual: null // { anio, seleccionados: Set<clave> } — estado del modal "Informe mensual", se resetea cada vez que se abre
 };
 
@@ -635,9 +674,17 @@ function sumIntervals(list, now){
   return total;
 }
 
+// Tramos ordenados por fecha de inicio: si dos se solapan, gana el que empieza antes.
+function periodosOrdenados(){
+  return (DATA.config.periodos || []).slice().sort((a,b) => a.desde.localeCompare(b.desde));
+}
+function periodoParaFecha(fechaStr){
+  return periodosOrdenados().find(p => fechaStr >= p.desde && fechaStr <= p.hasta) || null;
+}
 function diaConfigFor(fechaStr){
   const dow = parseDateLocal(fechaStr).getDay();
-  return DATA.config.dias[dow] || null;
+  const periodo = periodoParaFecha(fechaStr);
+  return (periodo ? periodo.dias : DATA.config.dias)[dow] || null;
 }
 function jornadaNormalMsForFecha(fechaStr){
   const dia = diaConfigFor(fechaStr);
@@ -695,6 +742,38 @@ function bancoHorasCompensadoMs(hastaFecha){
   return total;
 }
 function bancoHorasSaldoMs(hastaFecha){ return bancoHorasGeneradoMs(hastaFecha) - bancoHorasCompensadoMs(hastaFecha); }
+
+/* ----------------------------- Bajas ------------------------------------ */
+// Día laborable = activo en la jornada de ese día (según su tramo) y no festivo.
+function esDiaLaborable(fecha){
+  const dia = diaConfigFor(fecha);
+  if(!dia || dia.activo === false) return false;
+  const marca = diaCalendarioLaboral(fecha);
+  return !(marca && marca.tipo === 'festivo');
+}
+// Último día de una baja de "n" días laborables que empieza en "inicio"
+// (el propio día de inicio cuenta si es laborable).
+function finPrevistoBaja(inicio, n){
+  let f = inicio, cuenta = 0;
+  for(let i = 0; i < 3660; i++){ // tope de ~10 años por si no hay ningún día laborable configurado
+    if(esDiaLaborable(f) && ++cuenta >= n) return f;
+    f = addDays(f, 1);
+  }
+  return f;
+}
+function contarLaborables(desde, hasta){
+  let n = 0;
+  for(let f = desde; f <= hasta; f = addDays(f, 1)) if(esDiaLaborable(f)) n++;
+  return n;
+}
+// Baja en curso, o null. Si tenía duración y ya pasó su último día, se da por
+// cerrada aquí mismo: así al día siguiente se vuelve a fichar sin hacer nada.
+function bajaActual(){
+  const b = DATA.bajas.find(x => !x.fin);
+  if(!b) return null;
+  if(b.finPrevisto && todayStr() > b.finPrevisto){ b.fin = b.finPrevisto; save(); return null; }
+  return b;
+}
 
 const FESTIVOS_NAVARRA = {
   2026: [
@@ -899,6 +978,7 @@ function confirmDialog(message, okLabel = 'Eliminar', danger = true){
 
 /* ----------------------------- Acciones: fichaje -------------------------- */
 function accionFicharEntrada(){
+  if(bajaActual()){ toast('Estás de baja: el fichaje está desactivado.'); return; }
   if(jornadaAbierta()){ toast('Ya tienes un fichaje abierto.'); return; }
   const now = Date.now();
   DATA.jornadas.push({
@@ -1173,6 +1253,7 @@ function debeAvisarFichaje(){
   const cfg = DATA.config;
   if(!cfg.avisoEntradaActivo) return false;
   if(UI.avisoDescartadoFecha === todayStr()) return false;
+  if(bajaActual()) return false;
   const dia = diaConfigFor(todayStr());
   if(!dia || dia.activo === false) return false;
   if(diaCalendarioLaboral(todayStr())) return false;
@@ -1244,9 +1325,127 @@ function confirmarSalidaManualAbierto(id){
   renderAll();
 }
 
+/* ----------------------------- Baja: acciones y pantalla ----------------- */
+function abrirFormBaja(){
+  if(jornadaAbierta()){ toast('Ficha la salida antes de activar la baja.'); return; }
+  const hoy = todayStr();
+  openModal(`
+    <div class="modal-head"><h3>🤒 Activar baja</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Mientras estés de baja no podrás fichar ni marcar nada en la pestaña Hoy.</p>
+    <div class="field"><label>Primer día de baja</label><input type="date" id="frmBajaInicio" value="${hoy}" max="${hoy}"></div>
+    <div class="field">
+      <label>Duración en días laborables (opcional)</label>
+      <input type="number" id="frmBajaDias" min="1" step="1" placeholder="Sin fecha de fin">
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Si indicas la duración, al día siguiente del último día de baja podrás volver a fichar automáticamente. Si la dejas vacía, la baja dura hasta que pulses «Ya no estoy de baja».</p>
+    <button class="btn btn-danger btn-lg" data-action="confirmar-baja">Activar baja</button>
+  `);
+}
+function leerDiasBaja(id){
+  const txt = document.getElementById(id).value.trim();
+  if(!txt) return { dias: null };
+  const n = Math.floor(Number(txt));
+  return n >= 1 ? { dias: n } : { error: true };
+}
+function confirmarBaja(){
+  const hoy = todayStr();
+  const inicio = document.getElementById('frmBajaInicio').value;
+  if(!inicio || inicio > hoy){ toast('Indica un primer día de baja válido (hoy o anterior).'); return; }
+  const { dias, error } = leerDiasBaja('frmBajaDias');
+  if(error){ toast('La duración debe ser de al menos 1 día laborable.'); return; }
+  const finPrevisto = dias ? finPrevistoBaja(inicio, dias) : null;
+  if(finPrevisto && finPrevisto < hoy){ toast('Con esa duración la baja ya habría terminado antes de hoy.'); return; }
+  DATA.bajas.push({ id: uid(), inicio, fin: null, diasLaborables: dias, finPrevisto });
+  save();
+  closeModal();
+  toast('Baja activada');
+  renderAll();
+}
+function abrirFormDuracionBaja(){
+  const b = bajaActual();
+  if(!b) return;
+  openModal(`
+    <div class="modal-head"><h3>Duración de la baja</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field">
+      <label>Días laborables desde el ${esc(fmtDateShort(b.inicio))}</label>
+      <input type="number" id="frmBajaDuracion" min="1" step="1" value="${b.diasLaborables || ''}" placeholder="Sin fecha de fin">
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Déjalo vacío para que la baja no tenga fecha de fin.</p>
+    <button class="btn btn-primary btn-lg" data-action="guardar-duracion-baja">Guardar</button>
+  `);
+}
+function guardarDuracionBaja(){
+  const b = bajaActual();
+  if(!b) return;
+  const { dias, error } = leerDiasBaja('frmBajaDuracion');
+  if(error){ toast('La duración debe ser de al menos 1 día laborable.'); return; }
+  b.diasLaborables = dias;
+  b.finPrevisto = dias ? finPrevistoBaja(b.inicio, dias) : null;
+  save();
+  closeModal();
+  // Si la nueva duración ya ha terminado, bajaActual() la cierra en el render.
+  toast(bajaActual() ? 'Duración actualizada' : 'La baja ha terminado: ya puedes fichar');
+  renderAll();
+}
+async function finalizarBaja(){
+  const b = bajaActual();
+  if(!b) return;
+  const hoy = todayStr();
+  const ok = await confirmDialog('¿Ya no estás de baja? Podrás volver a fichar desde hoy.', 'Finalizar baja', false);
+  if(!ok) return;
+  // Hoy ya es día de trabajo: el último día de baja fue ayer. Si la baja
+  // empezaba hoy mismo, no llegó a haber ningún día de baja y se descarta.
+  if(b.inicio >= hoy) DATA.bajas = DATA.bajas.filter(x => x.id !== b.id);
+  else b.fin = addDays(hoy, -1);
+  save();
+  toast('Baja finalizada. ¡Bienvenido de vuelta!');
+  renderAll();
+}
+function renderPantallaBaja(b){
+  const hoy = todayStr();
+  const diasNaturales = Math.round((parseDateLocal(hoy) - parseDateLocal(b.inicio)) / 86400000) + 1;
+  let detalle;
+  if(b.finPrevisto){
+    const transcurridos = contarLaborables(b.inicio, hoy);
+    const restantes = Math.max(0, b.diasLaborables - transcurridos);
+    detalle = `
+      <div class="hero-sub">
+        <div class="item"><b>${transcurridos} / ${b.diasLaborables}</b><small>Días laborables de baja</small></div>
+        <div class="item"><b>${restantes}</b><small>Laborables restantes</small></div>
+        <div class="item"><b>${esc(fmtDateShort(b.finPrevisto))}</b><small>Último día de baja</small></div>
+        <div class="item"><b>${esc(fmtDateShort(addDays(b.finPrevisto, 1)))}</b><small>Vuelves a poder fichar</small></div>
+      </div>`;
+  } else {
+    detalle = `
+      <div class="hero-sub">
+        <div class="item"><b>${esc(fmtDateShort(b.inicio))}</b><small>Inicio de la baja</small></div>
+        <div class="item"><b>Sin fecha</b><small>Fin de la baja</small></div>
+      </div>`;
+  }
+  return `
+    <div class="hero estado-baja">
+      <div class="hero-top">
+        <span class="badge-estado"><span class="dot"></span>DE BAJA</span>
+        <span class="hero-fecha">${esc(fmtDateHuman(hoy))}</span>
+      </div>
+      <div class="hero-timer">${diasNaturales}</div>
+      <div class="hero-timer-label">${diasNaturales === 1 ? 'día' : 'días'} de baja · desde el ${esc(fmtDateHuman(b.inicio))}</div>
+      ${detalle}
+      <p style="font-size:12.5px;opacity:.9;margin-top:14px;">El fichaje está desactivado mientras estás de baja. Recupérate pronto.</p>
+    </div>
+    <div class="btn-row single" style="margin-bottom:10px;">
+      <button class="btn btn-lg btn-alta" data-action="finalizar-baja">✅ YA NO ESTOY DE BAJA</button>
+    </div>
+    <div class="btn-row single">
+      <button class="btn btn-soft" data-action="abrir-duracion-baja">✎ ${b.finPrevisto ? 'Cambiar duración' : 'Indicar duración en días laborables'}</button>
+    </div>`;
+}
+
 /* ----------------------------- Render: pestaña HOY ------------------------ */
 function renderHoy(){
   const el = document.getElementById('tab-hoy');
+  const baja = bajaActual();
+  if(baja){ el.innerHTML = renderPantallaBaja(baja); return; }
   const now = Date.now();
   const j = jornadaAbierta();
   const estado = estadoActual();
@@ -1426,11 +1625,15 @@ function renderHoy(){
       ${sinComidaSeccion}
     </div>` : ''}
     ${detalle}
+    <button class="fab-baja" data-action="abrir-form-baja" title="Activar baja">🤒 Estoy de baja</button>
   `;
 }
 
 /* Actualiza sólo los números en vivo cada segundo, sin re-renderizar todo */
 function tickLive(){
+  // Si cambia el día o termina una baja con la app abierta, se repinta todo
+  // (contador de días, desbloqueo del fichaje al acabar la baja).
+  if(UI.claveBaja !== claveEstadoBaja()) renderAll();
   renderBanner();
   if(UI.tab !== 'hoy') return;
   const j = jornadaAbierta();
@@ -3086,21 +3289,96 @@ function confirmarExportar(tipo){
   if(tipo === 'xlsx') exportarXLSX(ini, fin, columnas); else exportarCSV(ini, fin, columnas);
 }
 
+/* ----------------------------- Tramos de horario (configuración avanzada) -- */
+function getPeriodo(pid){ return (DATA.config.periodos || []).find(p => p.id === pid) || null; }
+// Horas por día que se están editando: las del tramo "pid" o, sin pid, las habituales.
+function diasConfigDe(pid){
+  if(!pid) return DATA.config.dias;
+  const p = getPeriodo(pid);
+  return p ? p.dias : null;
+}
+function ajustesAvanzadoAbierto(){
+  return UI.ajustesAvanzado != null ? UI.ajustesAvanzado : DATA.config.periodos.length > 0;
+}
+function agregarPeriodo(){
+  const periodos = DATA.config.periodos;
+  // El nuevo tramo empieza justo después del último existente (o hoy) y
+  // llega hasta final de ese año; parte de una copia del horario habitual.
+  const ultimoFin = periodos.reduce((max, p) => p.hasta > max ? p.hasta : max, '');
+  const desde = ultimoFin ? addDays(ultimoFin, 1) : todayStr();
+  const hasta = `${desde.slice(0, 4)}-12-31`;
+  periodos.push({
+    id: uid(),
+    nombre: `Tramo ${periodos.length + 1}`,
+    desde, hasta,
+    dias: JSON.parse(JSON.stringify(DATA.config.dias))
+  });
+  UI.ajustesAvanzado = true;
+  save(); renderAll();
+}
+async function eliminarPeriodo(pid){
+  const p = getPeriodo(pid);
+  if(!p) return;
+  const ok = await confirmDialog(`¿Eliminar el tramo «${p.nombre || 'sin nombre'}»? Sus días pasarán a usar el horario habitual.`, 'Eliminar', true);
+  if(!ok) return;
+  DATA.config.periodos = DATA.config.periodos.filter(x => x.id !== pid);
+  save(); renderAll();
+}
+
 /* ----------------------------- Render: pestaña AJUSTES -------------------- */
 function renderAjustes(){
   const el = document.getElementById('tab-ajustes');
   const c = DATA.config;
-  const diasFilas = [1,2,3,4,5,6,0].map(dow => {
-    const d = c.dias[dow];
+  // pid vacío = horario habitual (c.dias); si no, el tramo con ese id.
+  const filasDias = (dias, pid = '') => [1,2,3,4,5,6,0].map(dow => {
+    const d = dias[dow];
     return `
     <div class="dia-row">
-      <input type="checkbox" data-action="toggle-dia-activo" data-dow="${dow}" ${d.activo?'checked':''}>
+      <input type="checkbox" data-action="toggle-dia-activo" data-dow="${dow}" data-pid="${pid}" ${d.activo?'checked':''}>
       <span class="dname">${DOW_SHORT[dow]}</span>
-      <input type="number" min="0" step="0.25" data-field="horas" data-dow="${dow}" value="${d.horas}" ${d.activo?'':'disabled'}>
+      <input type="number" min="0" step="0.25" data-field="horas" data-dow="${dow}" data-pid="${pid}" value="${d.horas}" ${d.activo?'':'disabled'}>
       <span class="dunit">h</span>
-      <button type="button" class="dia-comida-btn ${d.comida!==false?'on':''}" data-action="toggle-dia-comida" data-dow="${dow}" title="¿Paras a comer este día?" ${d.activo?'':'disabled'}>🍽</button>
+      <button type="button" class="dia-comida-btn ${d.comida!==false?'on':''}" data-action="toggle-dia-comida" data-dow="${dow}" data-pid="${pid}" title="¿Paras a comer este día?" ${d.activo?'':'disabled'}>🍽</button>
     </div>`;
   }).join('');
+  const diasFilas = filasDias(c.dias);
+  const totalSemana = dias => Object.values(dias).reduce((s,d) => s + (d.activo ? Number(d.horas)||0 : 0), 0);
+
+  const periodos = periodosOrdenados();
+  const periodoHoy = periodoParaFecha(todayStr());
+  const tramosHtml = periodos.map((p, idx) => {
+    const solapa = periodos.some((q, j) => j !== idx && q.desde <= p.hasta && p.desde <= q.hasta);
+    return `
+    <div class="periodo-card">
+      <div class="periodo-head">
+        <input type="text" class="periodo-nombre" data-field="periodo-nombre" data-pid="${p.id}" value="${esc(p.nombre)}" placeholder="Nombre del tramo (p.ej. Verano)">
+        ${periodoHoy && periodoHoy.id === p.id ? '<span class="periodo-badge">Vigente hoy</span>' : ''}
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Desde</label><input type="date" data-field="periodo-desde" data-pid="${p.id}" value="${p.desde}"></div>
+        <div class="field"><label>Hasta</label><input type="date" data-field="periodo-hasta" data-pid="${p.id}" value="${p.hasta}"></div>
+      </div>
+      ${solapa ? `<p class="periodo-aviso">⚠ Se solapa con otro tramo. En los días compartidos se aplica el que empieza antes.</p>` : ''}
+      ${filasDias(p.dias, p.id)}
+      <div class="periodo-foot">
+        <span>Total semanal: <b>${fmtHM(totalSemana(p.dias) * 3600000)}</b></span>
+        <button class="btn btn-sm btn-outline" data-action="eliminar-periodo" data-pid="${p.id}" style="color:var(--danger);border-color:var(--danger)">Eliminar tramo</button>
+      </div>
+    </div>`;
+  }).join('');
+  const avanzadoAbierto = ajustesAvanzadoAbierto();
+  const seccionAvanzada = `
+    <div class="avanzado-sep">
+      <button type="button" class="avanzado-toggle" data-action="toggle-ajustes-avanzado">
+        <span>⚙ Configuración avanzada: horarios por tramos del año</span><span>${avanzadoAbierto ? '▾' : '▸'}</span>
+      </button>
+      ${avanzadoAbierto ? `
+      <p style="font-size:12.5px;color:var(--muted);margin:10px 0 12px;">Define tramos de fechas con una distribución de horas distinta (p.ej. horario de verano). Los días que no caigan en ningún tramo usan el horario habitual de arriba.
+        ${periodos.length ? `Hoy se aplica: <b>${periodoHoy ? esc(periodoHoy.nombre || 'tramo sin nombre') : 'horario habitual'}</b>.` : ''}</p>
+      ${tramosHtml}
+      <button class="btn btn-soft" data-action="agregar-periodo">+ Añadir tramo</button>
+      ` : ''}
+    </div>`;
 
   el.innerHTML = `
     <div class="card">
@@ -3117,6 +3395,7 @@ function renderAjustes(){
       <h2>Jornada por día de la semana</h2>
       <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">No hace falta fijar una hora de entrada y salida: en cuanto fichas la entrada, la app cuenta las horas de esa jornada a partir de ese momento. Aquí solo indicas cuántas horas normales tiene cada día. El icono 🍽 indica si ese día paras a comer (si lo desactivas, ese día no se descuenta ni se pide registrar comida).</p>
       ${diasFilas}
+      ${seccionAvanzada}
     </div>
 
     <div class="card">
@@ -3217,18 +3496,15 @@ function importarBackupSeleccionado(file){
     const ok = await confirmDialog('Vas a sobrescribir TODOS los datos actuales con los de esta copia de seguridad. ¿Continuar?', 'Restaurar', true);
     if(!ok) return;
     const def = defaultData();
-    const diasGuardados = parsed.config.dias || {};
-    const diasFusionados = {};
-    for(const dow of Object.keys(def.config.dias)){
-      diasFusionados[dow] = Object.assign({}, def.config.dias[dow], diasGuardados[dow] || {});
-    }
+    const diasFusionados = normalizarDias(parsed.config.dias);
+    const periodos = normalizarPeriodos(parsed.config.periodos);
     const idsValidos = COLUMNAS_EXPORT.map(c => c.id);
     const columnasGuardadas = Array.isArray(parsed.config.exportColumnas) ? parsed.config.exportColumnas.filter(id => idsValidos.includes(id)) : [];
     // Las copias de seguridad antiguas (con "trayectos") se aceptan igualmente;
     // esos viajes en coche ya no existen como función y se descartan.
     DATA = {
       version: 1,
-      config: Object.assign({}, def.config, parsed.config, {dias: diasFusionados, exportColumnas: columnasGuardadas.length ? columnasGuardadas : idsValidos}),
+      config: Object.assign({}, def.config, parsed.config, {dias: diasFusionados, periodos, exportColumnas: columnasGuardadas.length ? columnasGuardadas : idsValidos}),
       jornadas: parsed.jornadas,
       perfil: parsed.perfil || null,
       sesionAbierta: !!parsed.sesionAbierta,
@@ -3237,7 +3513,8 @@ function importarBackupSeleccionado(file){
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
       comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
-      informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {}
+      informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {},
+      bajas: Array.isArray(parsed.bajas) ? parsed.bajas : []
     };
     save();
     toast('Copia de seguridad restaurada');
@@ -3400,6 +3677,9 @@ function arrancarAppPrincipal(){
   if(tabInicial === 'equipo' && !esDirectivo()) tabInicial = 'hoy';
   setTab(tabInicial);
   renderAll();
+  // Aquí (y no solo en init) para que un acceso directo abierto con la sesión
+  // cerrada se procese igualmente justo después de iniciar sesión.
+  procesarAccesoDirecto();
 }
 
 /*
@@ -3410,6 +3690,8 @@ function arrancarAppPrincipal(){
 function procesarAccesoDirecto(){
   const params = new URLSearchParams(window.location.search);
   const accion = params.get('accion');
+  // Se muestra la pestaña Hoy para ver el resultado del fichaje.
+  if(accion === 'entrada' || accion === 'salida') setTab('hoy');
   if(accion === 'entrada') accionFicharEntrada();
   else if(accion === 'salida') accionFicharSalida();
   if(accion){
@@ -3441,7 +3723,10 @@ function setTab(tab){
   renderTabContent(tab);
   window.scrollTo(0,0);
 }
+function claveEstadoBaja(){ return `${todayStr()}|${bajaActual() ? 'baja' : ''}`; }
 function renderTabContent(tab){
+  // En baja, la vista Hoy se pone entera en rojo.
+  document.body.classList.toggle('modo-baja', tab === 'hoy' && !!bajaActual());
   if(tab === 'hoy') renderHoy();
   else if(tab === 'historico') renderHistorico();
   else if(tab === 'resumen') renderResumen();
@@ -3449,6 +3734,7 @@ function renderTabContent(tab){
   else if(tab === 'ajustes') renderAjustes();
 }
 function renderAll(){
+  UI.claveBaja = claveEstadoBaja();
   renderBanner();
   renderTabContent(UI.tab);
   document.getElementById('headerClock').textContent = fmtDateHuman(todayStr()) + ' · ' + fmtTimeHM(Date.now());
@@ -3464,6 +3750,11 @@ document.addEventListener('click', async (e) => {
   switch(a){
     case 'fichar-entrada': accionFicharEntrada(); break;
     case 'fichar-salida': accionFicharSalida(); break;
+    case 'abrir-form-baja': abrirFormBaja(); break;
+    case 'confirmar-baja': confirmarBaja(); break;
+    case 'finalizar-baja': await finalizarBaja(); break;
+    case 'abrir-duracion-baja': abrirFormDuracionBaja(); break;
+    case 'guardar-duracion-baja': guardarDuracionBaja(); break;
     case 'iniciar-descanso': accionIniciarDescanso(); break;
     case 'finalizar-descanso': accionFinalizarDescanso(); break;
     case 'iniciar-comida': accionIniciarComida(); break;
@@ -3568,10 +3859,19 @@ document.addEventListener('click', async (e) => {
       break;
 
     case 'toggle-dia-activo': break; // manejado en 'change'
-    case 'toggle-dia-comida':
-      DATA.config.dias[d.dow].comida = DATA.config.dias[d.dow].comida === false;
+    case 'toggle-dia-comida': {
+      const dias = diasConfigDe(d.pid);
+      if(!dias) break;
+      dias[d.dow].comida = dias[d.dow].comida === false;
       save(); renderAll();
       break;
+    }
+    case 'toggle-ajustes-avanzado':
+      UI.ajustesAvanzado = !ajustesAvanzadoAbierto();
+      renderAjustes();
+      break;
+    case 'agregar-periodo': agregarPeriodo(); break;
+    case 'eliminar-periodo': await eliminarPeriodo(d.pid); break;
     case 'set-modo':
       DATA.config[d.campo] = d.valor;
       save(); renderAll();
@@ -3610,12 +3910,32 @@ document.addEventListener('change', (e) => {
   if(e.target.id === 'rangoIniInput'){ UI.historico.rangoIni = e.target.value; renderHistorico(); }
   if(e.target.id === 'rangoFinInput'){ UI.historico.rangoFin = e.target.value; renderHistorico(); }
   if(e.target.dataset && e.target.dataset.action === 'toggle-dia-activo'){
-    DATA.config.dias[e.target.dataset.dow].activo = e.target.checked;
-    save(); renderAll();
+    const dias = diasConfigDe(e.target.dataset.pid);
+    if(dias){ dias[e.target.dataset.dow].activo = e.target.checked; save(); }
+    renderAll();
   }
   if(e.target.dataset && e.target.dataset.field === 'horas'){
-    DATA.config.dias[e.target.dataset.dow].horas = Math.max(0, Number(e.target.value) || 0);
-    save(); renderAll();
+    const dias = diasConfigDe(e.target.dataset.pid);
+    if(dias){ dias[e.target.dataset.dow].horas = Math.max(0, Number(e.target.value) || 0); save(); }
+    renderAll();
+  }
+  if(e.target.dataset && e.target.dataset.field === 'periodo-nombre'){
+    const p = getPeriodo(e.target.dataset.pid);
+    if(p){ p.nombre = e.target.value.trim(); save(); }
+    renderAll();
+  }
+  if(e.target.dataset && (e.target.dataset.field === 'periodo-desde' || e.target.dataset.field === 'periodo-hasta')){
+    const p = getPeriodo(e.target.dataset.pid);
+    if(p){
+      const campo = e.target.dataset.field === 'periodo-desde' ? 'desde' : 'hasta';
+      const valor = e.target.value;
+      const desde = campo === 'desde' ? valor : p.desde;
+      const hasta = campo === 'hasta' ? valor : p.hasta;
+      if(!valor) toast('Indica una fecha válida.');
+      else if(desde > hasta) toast('La fecha «Desde» no puede ser posterior a «Hasta».');
+      else { p[campo] = valor; save(); }
+    }
+    renderAll();
   }
   if(e.target.id === 'cfgDescansoMin'){
     DATA.config.descansoMin = Math.max(0, Number(e.target.value) || 0);
@@ -3684,7 +4004,6 @@ function init(){
   aplicarTema();
   if(sesionActiva()){
     arrancarAppPrincipal();
-    procesarAccesoDirecto();
   } else {
     document.getElementById('authScreen').classList.remove('hidden');
     renderAuthScreen();

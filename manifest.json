@@ -1,4 +1,5 @@
 {
+  "id": "./index.html",
   "name": "Control Horario",
   "short_name": "Fichaje",
   "description": "Control horario y fichaje de trabajo personal, 100% local.",
@@ -9,12 +10,9 @@
   "background_color": "#f5f3fb",
   "theme_color": "#910048",
   "icons": [
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23910048'/%3E%3Ccircle cx='50' cy='50' r='30' fill='none' stroke='white' stroke-width='7'/%3E%3Cline x1='50' y1='50' x2='50' y2='30' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3Cline x1='50' y1='50' x2='65' y2='58' stroke='white' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
     {
@@ -22,26 +20,14 @@
       "short_name": "Entrada",
       "description": "Registra la hora de entrada al instante",
       "url": "./index.html?accion=entrada",
-      "icons": [
-        {
-          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2316a34a'/%3E%3Cpolygon points='38,28 74,50 38,72' fill='white'/%3E%3C/svg%3E",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
+      "icons": [{ "src": "icons/shortcut-entrada.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Fichar salida",
       "short_name": "Salida",
       "description": "Registra la hora de salida al instante",
       "url": "./index.html?accion=salida",
-      "icons": [
-        {
-          "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23dc2626'/%3E%3Crect x='32' y='32' width='36' height='36' rx='4' fill='white'/%3E%3C/svg%3E",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
+      "icons": [{ "src": "icons/shortcut-salida.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

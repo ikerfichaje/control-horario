@@ -1,5 +1,9 @@
-const CACHE_NAME = 'control-horario-v2';
-const APP_SHELL = ['./index.html', './manifest.json'];
+const CACHE_NAME = 'control-horario-v3';
+const APP_SHELL = [
+  './index.html', './manifest.json',
+  './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png', './icons/shortcut-entrada.png', './icons/shortcut-salida.png'
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -34,6 +38,8 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(event.request))
+      // ignoreSearch: los accesos directos abren "index.html?accion=..." y,
+      // sin conexión, deben servirse con la copia en caché de "index.html".
+      .catch(() => caches.match(event.request, { ignoreSearch: true }))
   );
 });
