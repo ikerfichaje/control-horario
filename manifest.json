@@ -16,18 +16,11 @@
   ],
   "shortcuts": [
     {
-      "name": "Fichar entrada",
-      "short_name": "Entrada",
-      "description": "Registra la hora de entrada al instante",
-      "url": "./index.html?accion=entrada",
-      "icons": [{ "src": "icons/shortcut-entrada.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Fichar salida",
-      "short_name": "Salida",
-      "description": "Registra la hora de salida al instante",
-      "url": "./index.html?accion=salida",
-      "icons": [{ "src": "icons/shortcut-salida.png", "sizes": "192x192", "type": "image/png" }]
+      "name": "Fichar",
+      "short_name": "Fichar",
+      "description": "Ficha la entrada o la salida según corresponda",
+      "url": "./index.html?accion=fichar",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

@@ -29,7 +29,7 @@ No requiere instalación ni build. Basta con abrir `index.html`:
 
 ```
 index.html          La aplicación completa (HTML + CSS + JS)
-manifest.json        Manifiesto PWA (icono, accesos directos de fichar entrada/salida)
+manifest.json        Manifiesto PWA (icono, acceso directo "Fichar" que ficha entrada o salida según corresponda)
 service-worker.js     Cache para que funcione sin conexión
 icons/                Iconos PNG de la app y de los accesos directos (Android exige PNG para instalarla con accesos directos)
 docs/                 Notas y especificación original del proyecto
