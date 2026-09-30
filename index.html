@@ -561,7 +561,8 @@ function defaultData(){
     viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } — días de viaje/instalación
     sinComida: {},         // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
     comidaOverride: {},    // { 'YYYY-MM-DD': {inicio:'HH:MM', fin:'HH:MM'} } — hora de comida modificada solo ese día
-    informesDescargados: {}, // { 'YYYY-MM': {fecha, incompleto} } — informes mensuales ya descargados
+    informesDescargados: {}, // { 'YYYY-MM': {fecha, incompleto, huella} } — informes mensuales ya descargados
+    extraDiaLibre: {},       // { 'YYYY-MM-DD': true|false } — en días libres, si lo trabajado cuenta como hora extra
     bajas: []              // [{id, inicio, fin|null, diasLaborables|null, finPrevisto|null}] — fin/finPrevisto = último día de baja
   };
 }
@@ -591,6 +592,7 @@ function loadData(){
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
       comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
       informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {},
+      extraDiaLibre: (parsed.extraDiaLibre && typeof parsed.extraDiaLibre === 'object') ? parsed.extraDiaLibre : {},
       bajas: Array.isArray(parsed.bajas) ? parsed.bajas : []
     };
   }catch(e){
@@ -666,9 +668,32 @@ function obtenerViaje(fechaStr){
   return Object.assign({}, v, { tipo, motivo: v.motivo || '' });
 }
 function diaEsViaje(fechaStr){ return !!(DATA.viajes[fechaStr] && DATA.viajes[fechaStr].activo); }
-// En un festivo no hay jornada normal: todo lo trabajado cuenta como hora
-// extra, esté o no marcado como viaje/reunión/otros.
-function diaEsFestivo(fechaStr){ return DATA.calendarioLaboral[fechaStr]?.tipo === 'festivo'; }
+/*
+ * Días libres: festivo, vacaciones o día sin jornada en Ajustes (fin de
+ * semana). No tienen jornada normal, así que todo lo trabajado es tiempo "de
+ * más"; solo cuenta como hora extra si el trabajador lo confirma al fichar la
+ * salida (DATA.extraDiaLibre[fecha] = true) o si el día está marcado como
+ * viaje/reunión/otros. Si responde que no, son horas trabajadas no imputables.
+ */
+function tipoDiaLibre(fechaStr){
+  const marca = DATA.calendarioLaboral[fechaStr]?.tipo;
+  if(marca === 'festivo' || marca === 'vacaciones') return marca;
+  const dia = diaConfigFor(fechaStr);
+  if(dia && dia.activo === false) return 'finde';
+  return null;
+}
+// "Hoy es festivo" / "Hoy estás de vacaciones" / "Hoy es fin de semana"...
+function textoDiaLibre(fechaStr){
+  const tipo = tipoDiaLibre(fechaStr);
+  if(tipo === 'festivo') return 'es festivo';
+  if(tipo === 'vacaciones') return 'estás de vacaciones';
+  const dow = parseDateLocal(fechaStr).getDay();
+  return (dow === 0 || dow === 6) ? 'es fin de semana' : 'es un día no laborable';
+}
+function decisionExtraDiaLibre(fechaStr){ return DATA.extraDiaLibre[fechaStr]; } // true / false / undefined (sin decidir)
+function marcarExtraDiaLibre(fechaStr, cuenta){ DATA.extraDiaLibre[fechaStr] = !!cuenta; save(); }
+// Jornada que hay que cumplir ese día para el cálculo de horas extra: 0 en días libres.
+function jornadaExigibleMs(fechaStr){ return tipoDiaLibre(fechaStr) ? 0 : jornadaNormalMsForFecha(fechaStr); }
 function marcarViaje(fechaStr, tipo, lugar, cliente, motivo){
   const t = TIPOS_IMPUTACION.includes(tipo) ? tipo : 'viaje';
   DATA.viajes[fechaStr] = {
@@ -720,7 +745,6 @@ function diaConfigFor(fechaStr){
 function jornadaNormalMsForFecha(fechaStr){
   const dia = diaConfigFor(fechaStr);
   if(dia && dia.activo === false) return 0;
-  if(diaEsFestivo(fechaStr)) return 0;
   const horas = (dia && dia.horas !== '' && dia.horas != null) ? Number(dia.horas) : Number(DATA.config.horasNormales);
   return Math.round((horas || 0) * 3600000);
 }
@@ -870,8 +894,10 @@ function overlapMs(aIni, aFin, bIni, bFin){
  *                      (ver TIPOS_IMPUTACION): el resto de días,
  *                      ese exceso sigue formando parte del tiempo efectivo
  *                      pero no se contabiliza como hora extra ni suma al
- *                      banco de horas. En un FESTIVO la jornada es 0 y
- *                      todo lo trabajado es hora extra, esté marcado o no.
+ *                      banco de horas. En un DÍA LIBRE (festivo, vacaciones
+ *                      o fin de semana) la jornada es 0 y todo lo trabajado
+ *                      es hora extra si además el trabajador lo confirmó al
+ *                      fichar la salida (ver tipoDiaLibre / extraDiaLibre).
  *
  * IMPORTANTE: si un día tiene varios tramos (se ficha entrada/salida más de
  * una vez), el límite "jornadaConfigurada" NO debe aplicarse por separado en
@@ -908,16 +934,17 @@ function calcJornada(j, now = Date.now()){
 
   const efectivoTotal = Math.max(0, bruto - descansosMs - comidasMs);
 
-  const normalMax = jornadaNormalMsForFecha(j.fecha);
+  const normalMax = jornadaExigibleMs(j.fecha);
   const normal = Math.min(efectivoTotal, normalMax);
   const excedente = Math.max(0, efectivoTotal - normalMax);
   const esViaje = diaEsViaje(j.fecha);
-  const esFestivo = diaEsFestivo(j.fecha);
-  const extra = (esViaje || esFestivo) ? excedente : 0;
+  const diaLibre = tipoDiaLibre(j.fecha);
+  const extraConfirmada = !!diaLibre && decisionExtraDiaLibre(j.fecha) === true;
+  const extra = (esViaje || extraConfirmada) ? excedente : 0;
 
   return {
     bruto, descansosMs, comidasMs, efectivoTotal,
-    normalMax, normal, extra, abierta, esViaje, esFestivo,
+    normalMax, normal, extra, abierta, esViaje, diaLibre, extraConfirmada,
     dAbierto: descansoAbierto(j), cAbierta: comidaAbierta(j)
   };
 }
@@ -938,15 +965,16 @@ function calcDia(fecha, now = Date.now()){
   const comidasMs = calcs.reduce((s,c) => s + c.comidasMs, 0);
   const efectivoTotal = calcs.reduce((s,c) => s + c.efectivoTotal, 0);
 
-  const normalMax = jornadaNormalMsForFecha(fecha);
+  const normalMax = jornadaExigibleMs(fecha);
   const normal = Math.min(efectivoTotal, normalMax);
   const excedente = Math.max(0, efectivoTotal - normalMax);
   const esViaje = diaEsViaje(fecha);
-  const esFestivo = diaEsFestivo(fecha);
-  const extra = (esViaje || esFestivo) ? excedente : 0;
+  const diaLibre = tipoDiaLibre(fecha);
+  const extraConfirmada = !!diaLibre && decisionExtraDiaLibre(fecha) === true;
+  const extra = (esViaje || extraConfirmada) ? excedente : 0;
   const abierta = calcs.some(c => c.abierta);
 
-  return { jornadas, calcs, bruto, descansosMs, comidasMs, efectivoTotal, normalMax, normal, extra, abierta, esViaje, esFestivo };
+  return { jornadas, calcs, bruto, descansosMs, comidasMs, efectivoTotal, normalMax, normal, extra, abierta, esViaje, diaLibre, extraConfirmada };
 }
 
 function estadoActual(){
@@ -1003,13 +1031,16 @@ function closeModal(){
   const root = document.getElementById('modalRoot');
   root.innerHTML = '';
 }
-function confirmDialog(message, okLabel = 'Eliminar', danger = true){
+// Resuelve true (aceptar), false (botón de cancelar/"No") o null (cerrado con ✕,
+// sin responder). opts: {titulo, cancelLabel, html} — html sustituye al texto
+// plano del mensaje (ya escapado por quien lo construye).
+function confirmDialog(message, okLabel = 'Eliminar', danger = true, opts = {}){
   return new Promise(resolve => {
     openModal(`
-      <div class="modal-head"><h3>Confirmar</h3><button class="modal-close" data-action="cerrar-confirm">✕</button></div>
-      <p style="margin-bottom:18px;color:var(--muted);font-size:14.5px;line-height:1.5;">${esc(message)}</p>
+      <div class="modal-head"><h3>${esc(opts.titulo || 'Confirmar')}</h3><button class="modal-close" data-action="cerrar-confirm">✕</button></div>
+      ${opts.html || `<p style="margin-bottom:18px;color:var(--muted);font-size:14.5px;line-height:1.5;">${esc(message)}</p>`}
       <div class="btn-row">
-        <button class="btn btn-outline" data-action="cancelar-confirm">Cancelar</button>
+        <button class="btn btn-outline" data-action="cancelar-confirm">${esc(opts.cancelLabel || 'Cancelar')}</button>
         <button class="btn ${danger?'btn-danger':'btn-primary'}" data-action="aceptar-confirm">${esc(okLabel)}</button>
       </div>
     `, {center:true, persistent:true});
@@ -1017,7 +1048,8 @@ function confirmDialog(message, okLabel = 'Eliminar', danger = true){
       const act = e.target.closest('[data-action]');
       if(!act) return;
       if(act.dataset.action === 'aceptar-confirm'){ closeModal(); resolve(true); }
-      else if(act.dataset.action === 'cancelar-confirm' || act.dataset.action === 'cerrar-confirm'){ closeModal(); resolve(false); }
+      else if(act.dataset.action === 'cancelar-confirm'){ closeModal(); resolve(false); }
+      else if(act.dataset.action === 'cerrar-confirm'){ closeModal(); resolve(null); }
     });
   });
 }
@@ -1048,13 +1080,35 @@ async function accionFicharSalida(){
   const calc = calcDia(fecha, now);
   toast(`Salida registrada a las ${fmtTimeHM(now)}` + (calc.extra > 0 ? ` · ${fmtHM(calc.extra)} de horas extra` : ''));
   renderAll();
-
-  // El día puede tener horas por encima de la jornada normal configurada: en
-  // vez de decidir si imputan mientras se trabaja, se pregunta al fichar la
-  // salida (una sola vez por día, mientras no esté ya marcado).
+  await preguntarHorasExtraTrasSalida(fecha);
+}
+/*
+ * Tras cerrar un tramo (fichar salida, o cerrar un fichaje olvidado) se
+ * decide si lo trabajado de más cuenta como hora extra:
+ *  - Día libre (festivo, vacaciones, fin de semana): "Hoy es ... ¿se cuentan
+ *    estas horas como horas extra?" Sí → suman; No → trabajadas, no
+ *    imputables. Se pregunta una vez por día (luego se cambia en el detalle).
+ *  - Día normal con exceso sobre la jornada: si es imputable, se marca como
+ *    viaje/reunión/otros. Se pregunta mientras el día no esté marcado.
+ * Si el día ya está marcado como viaje/reunión/otros no se pregunta nada.
+ */
+async function preguntarHorasExtraTrasSalida(fecha){
+  if(diaEsViaje(fecha)) return;
+  const calc = calcDia(fecha, Date.now());
+  if(calc.diaLibre){
+    if(calc.efectivoTotal <= 0 || decisionExtraDiaLibre(fecha) !== undefined) return;
+    const cuenta = await confirmDialog(
+      `Hoy ${textoDiaLibre(fecha)}. Has trabajado ${fmtHM(calc.efectivoTotal)}. ¿Se cuentan estas horas como horas extra?`,
+      'Sí, contar como extra', false, { titulo: 'Horas extra', cancelLabel: 'No' }
+    );
+    if(cuenta === null) return; // cerrado sin responder: se volverá a preguntar
+    marcarExtraDiaLibre(fecha, cuenta);
+    toast(cuenta ? `${fmtHM(calc.efectivoTotal)} sumadas como horas extra` : 'Horas registradas como trabajadas, sin contar como extra');
+    renderAll();
+    return;
+  }
   const excedente = Math.max(0, calc.efectivoTotal - calc.normalMax);
-  // En un festivo no se pregunta: ahí todo cuenta ya como hora extra.
-  if(excedente > 0 && !diaEsViaje(fecha) && !diaEsFestivo(fecha)){
+  if(excedente > 0){
     const imputable = await confirmDialog(
       `Has trabajado ${fmtHM(excedente)} por encima de tu jornada normal de hoy. ¿Estas horas extra son imputables?`,
       'Sí, imputar', false
@@ -1347,6 +1401,7 @@ function fichajeAbiertoCerrarAhora(id){
   save();
   toast('Salida registrada a las ' + fmtTimeHM(j.salida));
   renderAll();
+  preguntarHorasExtraTrasSalida(j.fecha);
 }
 function fichajeAbiertoManual(id){
   const j = getJornada(id);
@@ -1370,6 +1425,7 @@ function confirmarSalidaManualAbierto(id){
   closeModal();
   toast('Salida registrada a las ' + fmtTimeHM(ts));
   renderAll();
+  preguntarHorasExtraTrasSalida(j.fecha);
 }
 
 /* ----------------------------- Baja: acciones y pantalla ----------------- */
@@ -1529,11 +1585,17 @@ function renderHoy(){
         : `En comida (horario ${comidaHorarioTextoFecha(j.fecha)})`;
     }
 
-    progressPct = calc.normalMax > 0 ? clamp((calc.efectivoTotal/calc.normalMax)*100, 0, 100) : 0;
+    progressPct = calc.normalMax > 0 ? clamp((calc.efectivoTotal/calc.normalMax)*100, 0, 100) : (calc.extra > 0 ? 100 : 0);
     progressExtra = calc.extra > 0;
     progressLabel = `${fmtHM(calc.efectivoTotal)} / ${fmtHM(calc.normalMax)}`;
 
-    const excedenteSinViaje = !calc.esViaje && !calc.esFestivo && calc.efectivoTotal > calc.normalMax;
+    const excedenteSinViaje = !calc.esViaje && !calc.extraConfirmada && calc.efectivoTotal > calc.normalMax;
+    const decisionLibre = calc.diaLibre ? decisionExtraDiaLibre(j.fecha) : undefined;
+    const avisoSinExtra = !calc.diaLibre
+      ? 'Hoy no está marcado como viaje, reunión ni otros: el tiempo de más no cuenta como hora extra.'
+      : decisionLibre === false
+        ? `Hoy ${textoDiaLibre(j.fecha)}: has indicado que estas horas no cuentan como extra (puedes cambiarlo en el detalle del día).`
+        : `Hoy ${textoDiaLibre(j.fecha)}: al fichar la salida podrás decidir si estas horas cuentan como horas extra.`;
     extraBlock = `
       <div class="hero-extra">
         <div>
@@ -1541,7 +1603,7 @@ function renderHoy(){
           <span>HORAS EXTRA${calc.extra>0 ? ' · en aumento' : ''}</span>
         </div>
       </div>
-      ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">Hoy no está marcado como viaje, reunión ni otros: el tiempo de más no cuenta como hora extra.</p>` : ''}`;
+      ${excedenteSinViaje ? `<p style="font-size:11.5px;opacity:.85;margin-top:6px;">${esc(avisoSinExtra)}</p>` : ''}`;
 
     const restante = Math.max(0, calc.normalMax - calc.efectivoTotal);
     // Si la comida es de horario fijo y todavía no ha terminado, se suma el
@@ -1712,7 +1774,7 @@ function tickLive(){
   if(liveEfectivo) liveEfectivo.textContent = fmtHM(calc.efectivoTotal);
   if(liveRestante) liveRestante.textContent = calc.extra>0 ? '00:00' : fmtHM(Math.max(0, calc.normalMax-calc.efectivoTotal));
   if(progressFill){
-    const pct = calc.normalMax>0 ? clamp((calc.efectivoTotal/calc.normalMax)*100,0,100) : 0;
+    const pct = calc.normalMax>0 ? clamp((calc.efectivoTotal/calc.normalMax)*100,0,100) : (calc.extra>0 ? 100 : 0);
     progressFill.style.width = pct+'%';
     progressFill.classList.toggle('extra', calc.extra>0);
   }
@@ -1720,7 +1782,9 @@ function tickLive(){
   // Aviso al alcanzar la jornada prevista (una sola vez)
   if(calc.extra > 0 && !j._avisoExtraDado){
     j._avisoExtraDado = true;
-    toast('Has completado tu jornada normal. Estás acumulando horas extra.');
+    toast(calc.diaLibre
+      ? `Hoy ${textoDiaLibre(j.fecha)}: estas horas cuentan como horas extra.`
+      : 'Has completado tu jornada normal. Estás acumulando horas extra.');
   }
   renderBanner();
 }
@@ -1810,7 +1874,7 @@ function renderHistorico(){
         : `<span class="pill viaje">Viaje</span>`)
       : '';
     const sinComidaPill = sinComida ? `<span class="pill sincomida">Sin comida</span>` : '';
-    const extraStat = (esViaje || calc?.esFestivo) ? `<span>Extra compensable <b style="color:var(--extra)">${calc?fmtHM(calc.extra):'00:00'}</b></span>` : '';
+    const extraStat = (esViaje || calc?.extraConfirmada) ? `<span>Extra compensable <b style="color:var(--extra)">${calc?fmtHM(calc.extra):'00:00'}</b></span>` : '';
     return `
     <div class="day-item ${esViaje?'es-viaje':''}" data-action="ver-dia" data-fecha="${f}">
       <div class="di-top">
@@ -1914,8 +1978,24 @@ function verDia(fecha){
       </div>
     </div>`;
     })() : `
-    <p style="color:var(--muted);font-size:13px;">Este día no está marcado como viaje, reunión ni otros: las horas extra no cuentan.</p>
+    <p style="color:var(--muted);font-size:13px;">${tipoDiaLibre(fecha)
+      ? 'Este día no está marcado como viaje, reunión ni otros (al ser día libre, lo decide la opción de arriba).'
+      : 'Este día no está marcado como viaje, reunión ni otros: las horas extra no cuentan.'}</p>
     <button class="btn btn-soft btn-sm" data-action="abrir-form-viaje" data-fecha="${fecha}">🧳 Marcar horas extra imputables</button>`}
+  `;
+
+  // Día libre trabajado: decisión de si esas horas cuentan como extra.
+  const libreDia = jornadas.length ? tipoDiaLibre(fecha) : null;
+  const decisionDia = libreDia ? decisionExtraDiaLibre(fecha) : undefined;
+  const diaLibreHtml = !libreDia ? '' : `
+    <div class="section-title">Día libre: ¿cuentan como horas extra?</div>
+    ${(viajeDia && viajeDia.activo)
+      ? `<p style="color:var(--muted);font-size:13px;">Está marcado como viaje, reunión u otros: todas las horas cuentan ya como extra.</p>`
+      : `<p style="color:var(--muted);font-size:13px;">${decisionDia === true ? 'Estas horas se cuentan como horas extra.' : decisionDia === false ? 'Estas horas se cuentan como trabajadas, pero no como extra.' : 'Todavía no se ha decidido: de momento no cuentan como extra.'}</p>
+    <div class="seg">
+      <button data-action="extra-dia-libre" data-valor="si" data-fecha="${fecha}" class="${decisionDia === true ? 'active' : ''}">Sí, contar como extra</button>
+      <button data-action="extra-dia-libre" data-valor="no" data-fecha="${fecha}" class="${decisionDia === false ? 'active' : ''}">No</button>
+    </div>`}
   `;
 
   const diaCfgDia = diaConfigFor(fecha);
@@ -1931,6 +2011,7 @@ function verDia(fecha){
   openModal(`
     <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
     ${seccionFichaje}
+    ${diaLibreHtml}
     ${viajeHtml}
     ${sinComidaHtml}
   `);
@@ -2269,6 +2350,8 @@ function renderResumen(){
   const bancoSaldo = bancoHorasSaldoMs();
   const bancoGenerado = bancoHorasGeneradoMs();
   const bancoCompensado = bancoHorasCompensadoMs();
+  const desactualizados = mesesDescargadosDesactualizados();
+  const reenviar = mesesAReenviar(desactualizados);
 
   el.innerHTML = `
     <div class="card">
@@ -2347,6 +2430,12 @@ function renderResumen(){
 
     <div class="card">
       <h2>Informe mensual</h2>
+      ${desactualizados.length ? `
+      <div class="banner" style="margin-bottom:12px;">
+        <b>⚠️ Has cambiado datos de meses que ya descargaste</b>
+        <p style="font-size:13px;margin:0;">Han cambiado: ${esc(desactualizados.map(etiquetaMesClave).join(', '))}. El informe que tiene el directivo ya no coincide con tus datos y no le dejará importar los meses siguientes. Vuelve a descargarlos y envíaselos (en un solo Excel, junto con los meses posteriores que ya descargaste).</p>
+        <div class="btn-row single"><button class="btn btn-primary btn-sm" data-action="descargar-informes-desactualizados">📊 Descargar actualizado: ${esc(reenviar.map(etiquetaMesClave).join(', '))}</button></div>
+      </div>` : ''}
       <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel día a día de un mes, coloreado por tipo de día (viaje en verde, reunión en lila, otros en rosa, baja en rojo, vacaciones en azul, festivo en amarillo, compensación en naranja), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
       <button class="btn btn-primary btn-lg" data-action="abrir-informe-mensual">🗓️ Informe mensual</button>
     </div>
@@ -2426,9 +2515,13 @@ function construirFilasExportacion(ini, fin, columnas){
     } else if(jornadasDia.length){
       const c = calcDia(f, Date.now());
       const obs = jornadasDia.map(j => j.observaciones).filter(Boolean);
-      // Si se trabajó un día marcado en el calendario, se indica la marca.
+      // Si se trabajó un día marcado en el calendario (o un día libre), el
+      // comentario ya incluye la marca y si esas horas cuentan como extra.
       if(['festivo','vacaciones','compensacion'].includes(tipo)) obs.unshift(comentario);
+      else if(tipo === 'normal' && comentario) obs.splice(0, obs.length, comentario);
       filas.push({ ...base, ...vacio, ...datosViaje, ...compensadas,
+        // Día libre confirmado como extra: sus horas también son imputables.
+        ...(c.extraConfirmada ? { diaViaje: 'Sí' } : {}),
         horaEntrada: jornadasDia.map(j => fmtTimeHM(j.entrada)).join(', '),
         horaSalida: jornadasDia.map(j => j.salida ? fmtTimeHM(j.salida) : '(abierto)').join(', '),
         tiempoBruto: sumar('tiempoBruto', c.bruto), descansos: sumar('descansos', c.descansosMs), comida: sumar('comida', c.comidasMs),
@@ -2800,6 +2893,12 @@ function clasificarDia(fecha, jornadasDia = jornadasDeFecha(fecha)){
   else if(tipo === 'otros') comentario = [viaje.motivo, viaje.cliente].filter(Boolean).join(' · ') || 'Otros';
   else comentario = jornadasDia.map(j => j.observaciones).filter(Boolean).join(' · ');
 
+  // Día libre trabajado sin marca de viaje: se deja constancia de la decisión.
+  if(tipo !== 'baja' && jornadasDia.length && tipoDiaLibre(fecha) && !(viaje && viaje.activo)){
+    const nota = decisionExtraDiaLibre(fecha) === true ? 'horas contadas como extra' : 'horas no contadas como extra';
+    comentario = [comentario, nota].filter(Boolean).join(' · ');
+  }
+
   return { tipo, marca, viaje, horasBajaMs, horasCompensadasMs, comentario };
 }
 // Arma las columnas del informe mensual coloreado a partir de los datos ya
@@ -2887,11 +2986,13 @@ function abrirModalInformeMensual(){
   `).join('');
 
   const mesesAnio = meses.filter(m => m.anio === UI.informeMensual.anio).sort((a,b) => a.mesIdx - b.mesIdx);
+  const desactualizados = new Set(mesesDescargadosDesactualizados());
   const mesesHtml = mesesAnio.map(m => {
     const info = DATA.informesDescargados[m.clave];
-    const badge = info
-      ? `<span class="mes-card-badge" title="Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}${info.incompleto ? ' (incompleto)' : ''}">✅ Descargado${info.incompleto ? ' · incompleto' : ''}</span>`
-      : '';
+    const badge = !info ? ''
+      : desactualizados.has(m.clave)
+        ? `<span class="mes-card-badge" style="color:var(--danger)" title="Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}, pero sus datos han cambiado después">⚠️ Cambiado: vuelve a descargarlo</span>`
+        : `<span class="mes-card-badge" title="Descargado el ${esc(fmtDateShort(todayStr(new Date(info.fecha))))}${info.incompleto ? ' (incompleto)' : ''}">✅ Descargado${info.incompleto ? ' · incompleto' : ''}</span>`;
     const checked = UI.informeMensual.seleccionados.has(m.clave) ? 'checked' : '';
     return `
     <label class="mes-card">
@@ -2920,24 +3021,50 @@ function confirmarInformeMensual(){
 
 // Genera un único Excel con una tabla (hoja) por cada mes elegido, y anota
 // cada mes como "ya descargado" (el mes en curso, como incompleto).
+function etiquetaMesClave(clave){ const [a, m] = clave.split('-').map(Number); return `${MONTH_NAMES[m-1]} ${a}`; }
+// Todo lo que va en el informe de un mes ("YYYY-MM"), tal y como se exporta.
+function datosInformeMes(clave){
+  const [anioStr, mesStr] = clave.split('-');
+  const anio = Number(anioStr), mesIdx = Number(mesStr) - 1;
+  const mesIni = `${clave}-01`;
+  const totalDias = new Date(anio, mesIdx+1, 0).getDate();
+  const esActual = clave === todayStr().slice(0, 7);
+  const mesFin = esActual ? todayStr() : `${clave}-${pad2(totalDias)}`;
+  const saldoInicio = bancoHorasSaldoMs(addDays(mesIni, -1));
+  const saldoFin = bancoHorasSaldoMs(mesFin);
+  const filas = construirFilasInformeMensual(anio, mesIdx);
+  const mesLabel = `${MONTH_NAMES[mesIdx]} ${anio}` + (esActual ? ' (incompleto, hasta hoy)' : '');
+  return { clave, anio, mesIdx, esActual, mesLabel, saldoInicio, filas, saldoFin };
+}
+// Huella del contenido de un informe (lo que ve el directivo al importarlo:
+// saldos y filas ya formateadas). Si cambia tras descargarlo, el informe que
+// tiene el directivo ha quedado desactualizado.
+function huellaInformeMes(d){
+  const texto = JSON.stringify([fmtHMSigned(d.saldoInicio), fmtHMSigned(d.saldoFin), d.filas]);
+  let h = 5381;
+  for(let i = 0; i < texto.length; i++) h = ((h * 33) ^ texto.charCodeAt(i)) >>> 0;
+  return h.toString(36) + '-' + texto.length.toString(36);
+}
+// Meses completos ya descargados cuyo contenido ha cambiado desde la descarga.
+// (Los descargados como "incompletos" cambian a diario por definición: no se avisan.)
+function mesesDescargadosDesactualizados(){
+  return Object.entries(DATA.informesDescargados)
+    .filter(([, info]) => info && info.huella && !info.incompleto)
+    .map(([clave]) => clave)
+    .filter(clave => huellaInformeMes(datosInformeMes(clave)) !== DATA.informesDescargados[clave].huella)
+    .sort();
+}
+// Lo que hay que volver a enviar: desde el primer mes cambiado, todos los ya
+// descargados (también el mes en curso si se descargó incompleto), porque el
+// saldo de horas extra se arrastra de un mes al siguiente.
+function mesesAReenviar(cambiados = mesesDescargadosDesactualizados()){
+  if(!cambiados.length) return [];
+  return Object.keys(DATA.informesDescargados).filter(c => c >= cambiados[0]).sort();
+}
 function generarInformesMensuales(claves){
   const nombreTrabajador = DATA.perfil ? DATA.perfil.nombre : '';
-  const claveHoy = todayStr().slice(0, 7);
   const clavesOrdenadas = [...claves].sort();
-
-  const datos = clavesOrdenadas.map(clave => {
-    const [anioStr, mesStr] = clave.split('-');
-    const anio = Number(anioStr), mesIdx = Number(mesStr) - 1;
-    const mesIni = `${clave}-01`;
-    const totalDias = new Date(anio, mesIdx+1, 0).getDate();
-    const esActual = clave === claveHoy;
-    const mesFin = esActual ? todayStr() : `${clave}-${pad2(totalDias)}`;
-    const saldoInicio = bancoHorasSaldoMs(addDays(mesIni, -1));
-    const saldoFin = bancoHorasSaldoMs(mesFin);
-    const filas = construirFilasInformeMensual(anio, mesIdx);
-    const mesLabel = `${MONTH_NAMES[mesIdx]} ${anio}` + (esActual ? ' (incompleto, hasta hoy)' : '');
-    return { clave, anio, mesIdx, esActual, mesLabel, saldoInicio, filas, saldoFin };
-  });
+  const datos = clavesOrdenadas.map(datosInformeMes);
 
   const nombresHoja = nombresHojaUnicos(datos.map(d => `${MONTH_NAMES[d.mesIdx]} ${d.anio}`));
   const sheets = datos.map((d,i) => ({
@@ -2950,7 +3077,7 @@ function generarInformesMensuales(claves){
   const sufijoMeses = clavesOrdenadas.length === 1 ? clavesOrdenadas[0].replace('-','_') : `${clavesOrdenadas[0].replace('-','_')}_a_${clavesOrdenadas[clavesOrdenadas.length-1].replace('-','_')}`;
   descargarBlob(blob, `informe_mensual${sufijoNombre}_${sufijoMeses}.xlsx`, 'Informe mensual exportado');
 
-  datos.forEach(d => { DATA.informesDescargados[d.clave] = { fecha: Date.now(), incompleto: d.esActual }; });
+  datos.forEach(d => { DATA.informesDescargados[d.clave] = { fecha: Date.now(), incompleto: d.esActual, huella: huellaInformeMes(d) }; });
   save();
   if(UI.tab === 'resumen') renderResumen();
 }
@@ -3186,6 +3313,65 @@ function mostrarDescuadreSaldos(descuadres){
     <button class="btn btn-primary btn-lg" data-action="cerrar-modal">Entendido</button>
   `, {center: true});
 }
+/*
+ * Diferencias entre un informe ya importado (viejo) y el que se va a
+ * importar (nuevo) del mismo mes: totales, saldos y los días que cambian.
+ */
+const CAMPOS_DIF_TOTALES = [
+  ['horasEfectivasMs', 'Horas efectivas'], ['horasExtraMs', 'Horas extra'],
+  ['horasCompensadasMs', 'Horas compensadas'], ['horasBajaMs', 'Horas de baja']
+];
+const CAMPOS_DIF_DIA = [
+  ['tipo', 'Tipo'], ['horaInicio', 'Entrada'], ['horaFin', 'Salida'], ['horasEfectivas', 'Efectivas'],
+  ['horasExtra', 'Extra'], ['horasCompensadas', 'Compensadas'], ['horasBaja', 'Baja'], ['comentario', 'Comentario']
+];
+function diferenciasInforme(viejo, nuevo){
+  const resumen = [];
+  if((viejo.mesLabel || '') !== (nuevo.mesLabel || '')) resumen.push(`Mes: ${viejo.mesLabel || '—'} → ${nuevo.mesLabel || '—'}`);
+  if(viejo.saldoInicioMs !== nuevo.saldoInicioMs) resumen.push(`Horas extra acumuladas al inicio: ${fmtHMSigned(viejo.saldoInicioMs)} → ${fmtHMSigned(nuevo.saldoInicioMs)}`);
+  if(viejo.saldoFinMs !== nuevo.saldoFinMs) resumen.push(`Horas extra acumuladas al final: ${fmtHMSigned(viejo.saldoFinMs)} → ${fmtHMSigned(nuevo.saldoFinMs)}`);
+  CAMPOS_DIF_TOTALES.forEach(([k, et]) => {
+    const a = viejo.totales?.[k] || 0, b = nuevo.totales?.[k] || 0;
+    if(a !== b) resumen.push(`${et}: ${fmtHM(a)} → ${fmtHM(b)}`);
+  });
+  const diasA = viejo.totales?.dias || 0, diasB = nuevo.totales?.dias || 0;
+  if(diasA !== diasB) resumen.push(`Días con fichaje: ${diasA} → ${diasB}${diasB < diasA ? ' ⚠️ el nuevo tiene menos' : ''}`);
+
+  const porFecha = new Map((viejo.filas || []).map(f => [f.fecha, f]));
+  const valor = (f, k) => {
+    if(!f) return '';
+    return k === 'tipo' ? (INFORME_MENSUAL_TIPO_LABEL[f.tipo] || f.tipo || '') : String(f[k] ?? '');
+  };
+  const dias = [];
+  const fechas = [...new Set([...(viejo.filas || []).map(f => f.fecha), ...(nuevo.filas || []).map(f => f.fecha)])].sort();
+  fechas.forEach(fecha => {
+    const a = porFecha.get(fecha), b = (nuevo.filas || []).find(f => f.fecha === fecha);
+    const cambiosDia = CAMPOS_DIF_DIA
+      .filter(([k]) => valor(a, k) !== valor(b, k))
+      .map(([k, et]) => `${et} ${valor(a, k) || '—'} → ${valor(b, k) || '—'}`);
+    if(cambiosDia.length) dias.push({ fecha, cambios: cambiosDia });
+  });
+  return { resumen, dias, hayCambios: resumen.length > 0 || dias.length > 0 };
+}
+function htmlDiferenciasImportacion(nombre, cambios){
+  const MAX_DIAS = 12;
+  const bloques = cambios.map(({ b, existente, dif }) => {
+    const titulo = esc(b.mesLabel || b.claveMes);
+    if(!existente) return `<div class="section-title">${titulo}</div><p style="font-size:13px;margin:0 0 8px;">Nuevo: se añadirá.</p>`;
+    if(!dif.hayCambios) return `<div class="section-title">${titulo}</div><p style="font-size:13px;color:var(--muted);margin:0 0 8px;">Sin cambios.</p>`;
+    const resumen = dif.resumen.length ? `<ul style="font-size:13px;margin:0 0 6px 18px;padding:0;">${dif.resumen.map(r => `<li>${esc(r)}</li>`).join('')}</ul>` : '';
+    const dias = dif.dias.length ? `
+      <p style="font-size:12.5px;margin:4px 0 2px;"><b>Días que cambian (${dif.dias.length}):</b></p>
+      <ul style="font-size:12.5px;margin:0 0 8px 18px;padding:0;color:var(--muted);">
+        ${dif.dias.slice(0, MAX_DIAS).map(d => `<li><b>${esc(fmtDateShort(d.fecha))}</b>: ${esc(d.cambios.join(' · '))}</li>`).join('')}
+        ${dif.dias.length > MAX_DIAS ? `<li>… y ${dif.dias.length - MAX_DIAS} días más.</li>` : ''}
+      </ul>` : '';
+    return `<div class="section-title">${titulo}</div>${resumen}${dias}`;
+  }).join('');
+  return `
+    <p style="font-size:13.5px;margin-bottom:6px;">Ya tenías informes de <b>${esc(nombre)}</b> para algunos de estos meses. Esto es lo que cambiaría si los sobrescribes con este archivo:</p>
+    <div style="max-height:45vh;overflow:auto;margin-bottom:14px;">${bloques}</div>`;
+}
 async function confirmarImportarEquipo(){
   const nombre = document.getElementById('impNombreTrabajador').value.trim();
   if(!nombre){ toast('Escribe el nombre del trabajador.'); return; }
@@ -3234,24 +3420,21 @@ async function confirmarImportarEquipo(){
   });
 
   if(existentesPorClave.size){
-    // Si el archivo nuevo trae MENOS días con fichaje que el informe que ya
-    // teníamos de ese mes (p.ej. se reimporta por error una versión vieja o
-    // incompleta encima de una ya completa), se avisa explícitamente para no
-    // perder datos sin darse cuenta; sustituir un mes incompleto por su
-    // versión completa (con más días) no lleva aviso, es el caso normal.
-    const meses = bloques.filter(b => existentesPorClave.has(b.claveMes)).map(b => {
-      const existente = existentesPorClave.get(b.claveMes);
-      const diasNuevo = b.datos.totales.dias, diasViejo = existente.totales.dias;
-      const etiqueta = b.mesLabel || b.claveMes;
-      return diasNuevo < diasViejo
-        ? `${etiqueta} (⚠️ el que ya tienes tiene más días con fichaje: ${diasViejo} frente a ${diasNuevo})`
-        : etiqueta;
-    }).join(', ');
-    const ok = await confirmDialog(
-      bloques.length === 1
-        ? `Ya habías importado un informe de ${nombre} para ${meses}. ¿Quieres sustituirlo por este archivo nuevo?`
-        : `Ya habías importado informes de ${nombre} para: ${meses}. Se sustituirán por los de este archivo${bloques.length > existentesPorClave.size ? ' (el resto de meses se añadirán nuevos)' : ''}. ¿Continuar?`,
-      'Sustituir', true);
+    // Antes de sobrescribir se enseña qué cambia exactamente respecto a lo ya
+    // importado (totales, saldos y día a día). Si no cambia nada, no se toca.
+    const cambios = bloques.map(b => ({ b, existente: existentesPorClave.get(b.claveMes) }))
+      .map(x => ({ ...x, dif: x.existente ? diferenciasInforme(x.existente, x.b.datos) : null }));
+    const nuevos = cambios.filter(x => !x.existente);
+    const conCambios = cambios.filter(x => x.dif && x.dif.hayCambios);
+    if(!nuevos.length && !conCambios.length){
+      closeModal();
+      toast(`Ya tienes ${bloques.length === 1 ? 'este informe' : 'estos informes'} de ${nombre} exactamente igual: no hay nada que actualizar.`);
+      return;
+    }
+    const ok = await confirmDialog('', 'Sobrescribir', true, {
+      titulo: 'Cambios respecto a lo ya importado', cancelLabel: 'Cancelar',
+      html: htmlDiferenciasImportacion(nombre, cambios)
+    });
     if(!ok) return;
   }
 
@@ -3296,19 +3479,29 @@ function agruparEquipo(){
 // Totales de un trabajador a partir de sus informes importados. El saldo
 // pendiente es el que el propio trabajador tenía al final de su informe más
 // reciente ("Horas extra acumuladas después de este mes"): así incluye las
-// horas arrastradas de meses que no se han importado. La diferencia con
-// extra - compensadas de los meses importados se muestra aparte.
+// horas arrastradas de meses que no se han importado.
+// El saldo arrastrado se saca de los propios saldos de los informes (saldo al
+// inicio del primero + huecos entre meses no consecutivos), NO restando
+// extra - compensadas: esas sumas vienen de filas redondeadas a minutos y
+// darían ±1 min de "arrastrado" falso.
 function totalesTrabajadorEquipo(w){
   const suma = k => w.informes.reduce((s,i) => s + (i.totales[k] || 0), 0);
   const totalExtra = suma('horasExtraMs'), totalCompensado = suma('horasCompensadasMs');
-  const masReciente = w.informes.slice().sort((a,b) => (b.fechaMin||'').localeCompare(a.fechaMin||''))[0];
-  const saldoPendiente = masReciente && typeof masReciente.saldoFinMs === 'number'
-    ? masReciente.saldoFinMs
-    : totalExtra - totalCompensado;
+  const porFecha = w.informes.slice().sort((a,b) => (a.fechaMin||'').localeCompare(b.fechaMin||''));
+  const conSaldos = porFecha.every(i => typeof i.saldoInicioMs === 'number' && typeof i.saldoFinMs === 'number');
+  let saldoPendiente, saldoArrastrado;
+  if(porFecha.length && conSaldos){
+    saldoPendiente = porFecha[porFecha.length - 1].saldoFinMs;
+    saldoArrastrado = porFecha[0].saldoInicioMs;
+    for(let k = 1; k < porFecha.length; k++) saldoArrastrado += porFecha[k].saldoInicioMs - porFecha[k-1].saldoFinMs;
+  } else {
+    saldoPendiente = totalExtra - totalCompensado;
+    saldoArrastrado = 0;
+  }
   return {
     totalEfectivo: suma('horasEfectivasMs'), totalExtra, totalCompensado,
     totalBaja: suma('horasBajaMs'), totalDias: suma('dias'),
-    saldoPendiente, saldoArrastrado: saldoPendiente - (totalExtra - totalCompensado)
+    saldoPendiente, saldoArrastrado
   };
 }
 function renderEquipo(){
@@ -3713,6 +3906,7 @@ function importarBackupSeleccionado(file){
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
       comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
       informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {},
+      extraDiaLibre: (parsed.extraDiaLibre && typeof parsed.extraDiaLibre === 'object') ? parsed.extraDiaLibre : {},
       bajas: Array.isArray(parsed.bajas) ? parsed.bajas : []
     };
     save();
@@ -4091,6 +4285,16 @@ document.addEventListener('click', async (e) => {
     case 'importar-backup': document.getElementById('fileImportBackup').click(); break;
     case 'instalar-app': await instalarApp(); break;
 
+    case 'descargar-informes-desactualizados': {
+      const claves = mesesAReenviar();
+      if(claves.length) generarInformesMensuales(claves);
+      break;
+    }
+    case 'extra-dia-libre':
+      marcarExtraDiaLibre(d.fecha, d.valor === 'si');
+      toast(d.valor === 'si' ? 'Horas del día contadas como extra' : 'Horas del día sin contar como extra');
+      refrescarTrasEditarDia(d.fecha);
+      break;
     case 'elegir-rol': {
       // Se repinta la pantalla para marcar el rol, pero sin perder lo ya escrito.
       const ids = ['authNombre','authPass','authPass2'];
