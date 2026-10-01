@@ -1072,8 +1072,12 @@ async function accionFicharSalida(){
   if(!j){ toast('No hay ningún fichaje abierto.'); return; }
   if(descansoAbierto(j)){ toast('Finaliza el descanso antes de fichar la salida.'); return; }
   if(comidaAbierta(j)){ toast('Finaliza la comida antes de fichar la salida.'); return; }
+  // Fichaje de un día anterior (salida olvidada o turno de noche): nunca se
+  // cierra directamente con la hora actual, se pide la salida real.
+  if(j.fecha !== todayStr()){ fichajeAbiertoManual(j.id); return; }
   const now = Date.now();
   if(now < j.entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
+  if(!(await confirmarTramoLargo(j.entrada, now))){ fichajeAbiertoManual(j.id); return; }
   j.salida = now;
   save();
   const fecha = j.fecha;
@@ -1340,6 +1344,41 @@ function accionQuitarComidaOverride(fecha){
 }
 
 /* ----------------------------- Fichaje abierto de días anteriores -------- */
+// Un tramo seguido más largo que esto casi seguro es una salida olvidada:
+// antes de guardarlo se pide confirmación.
+const TRAMO_LARGO_MS = 14 * 3600000;
+async function confirmarTramoLargo(entrada, salida){
+  if(salida - entrada <= TRAMO_LARGO_MS) return true;
+  const fe = todayStr(new Date(entrada)), fs = todayStr(new Date(salida));
+  const ok = await confirmDialog(
+    `Este tramo dura ${fmtHM(salida - entrada)} seguidas: desde el ${fmtDateShort(fe)} a las ${fmtTimeHM(entrada)} hasta el ${fmtDateShort(fs)} a las ${fmtTimeHM(salida)}. ¿Es correcto?`,
+    'Sí, es correcto', false, { titulo: 'Tramo muy largo', cancelLabel: 'Corregir' }
+  );
+  return ok === true;
+}
+/*
+ * Hora de salida sugerida para un tramo que empieza en "entrada": la que
+ * completa, en horas EFECTIVAS (ya descontadas comida/descanso automáticos),
+ * la jornada de ese día (8h si no tiene), o lo que falte de ella si ya hay
+ * otros tramos cerrados ese día (mínimo 1h). excluirId: el propio tramo, si
+ * ya existe (fichaje abierto que se va a cerrar).
+ */
+function salidaSugerida(fecha, entrada, excluirId){
+  const jornadaMs = jornadaExigibleMs(fecha) || 8*3600000;
+  const hecho = jornadasDeFecha(fecha)
+    .filter(x => x.id !== excluirId && x.salida != null)
+    .reduce((s, x) => s + calcJornada(x).efectivoTotal, 0);
+  const objetivo = hecho > 0 ? Math.max(3600000, jornadaMs - hecho) : jornadaMs;
+  // Se recalcula con calcJornada hasta que cuadra (la franja de comida puede
+  // quedar dentro del tramo o no).
+  let salida = entrada + objetivo;
+  for(let i = 0; i < 4; i++){
+    const ef = calcJornada({ fecha, entrada, salida, descansos: [], comidas: [] }).efectivoTotal;
+    if(ef >= objetivo) break;
+    salida += objetivo - ef;
+  }
+  return salida;
+}
 function jornadaAbiertaDeAyer(){
   const j = jornadaAbierta();
   if(!j) return null;
@@ -1371,13 +1410,11 @@ function renderBanner(){
     el.innerHTML = `
       <div class="banner">
         <b>⚠️ Tienes un fichaje abierto desde el ${esc(fmtDateShort(j.fecha))} (${esc(fmtTimeHM(j.entrada))})</b>
-        Elige qué quieres hacer. No se cerrará ni se inventará ninguna hora automáticamente.
+        Indica a qué hora saliste de verdad. No se cerrará ni se inventará ninguna hora automáticamente.
         <div class="btn-row">
-          <button class="btn btn-primary btn-sm" data-action="fichaje-abierto-cerrar-ahora" data-id="${j.id}">Fichar salida ahora</button>
-          <button class="btn btn-outline btn-sm" data-action="fichaje-abierto-manual" data-id="${j.id}">Indicar hora manual</button>
+          <button class="btn btn-primary btn-sm" data-action="fichaje-abierto-manual" data-id="${j.id}">Indicar hora de salida</button>
+          <button class="btn btn-soft btn-sm" data-action="fichaje-abierto-continuar">Continuar trabajando</button>
         </div>
-        <div class="gap8"></div>
-        <button class="btn btn-soft btn-sm" data-action="fichaje-abierto-continuar">Continuar trabajando</button>
       </div>`;
     return;
   }
@@ -1394,32 +1431,37 @@ function renderBanner(){
   }
   el.innerHTML = '';
 }
-function fichajeAbiertoCerrarAhora(id){
+/*
+ * Cierre de un fichaje abierto indicando la salida real. Se propone la hora
+ * actual solo si el tramo hasta ahora es plausible (p.ej. un turno de noche);
+ * si no, la hora con la que se cumple la jornada de ese día, para que una
+ * salida olvidada nunca se cierre por defecto con todas las horas de más.
+ * valorSalida (opcional): lo que ya se había escrito, al volver de "Corregir".
+ */
+function fichajeAbiertoManual(id, valorSalida){
   const j = getJornada(id);
   if(!j) return;
-  j.salida = Date.now();
-  save();
-  toast('Salida registrada a las ' + fmtTimeHM(j.salida));
-  renderAll();
-  preguntarHorasExtraTrasSalida(j.fecha);
-}
-function fichajeAbiertoManual(id){
-  const j = getJornada(id);
-  if(!j) return;
+  const now = Date.now();
+  const propuestaAhora = now - j.entrada <= TRAMO_LARGO_MS;
+  const salida = valorSalida ?? (propuestaAhora ? now : salidaSugerida(j.fecha, j.entrada, j.id));
   openModal(`
     <div class="modal-head"><h3>Indicar hora real de salida</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <p style="color:var(--muted);font-size:13.5px;margin-bottom:12px;">Entrada: ${esc(fmtDateShort(j.fecha))} a las ${esc(fmtTimeHM(j.entrada))}.${!valorSalida && !propuestaAhora ? ' Se propone la hora con la que se cumple la jornada de ese día: cámbiala por la hora real a la que saliste.' : ''}</p>
     <div class="field">
       <label>Fecha y hora de salida</label>
-      <input type="datetime-local" id="frmSalidaManual" value="${toDatetimeLocalValue(Date.now())}">
+      <input type="datetime-local" id="frmSalidaManual" value="${toDatetimeLocalValue(salida)}">
     </div>
     <button class="btn btn-primary btn-lg" data-action="confirmar-salida-manual-abierto" data-id="${j.id}">Guardar salida</button>
   `);
 }
-function confirmarSalidaManualAbierto(id){
+async function confirmarSalidaManualAbierto(id){
   const j = getJornada(id);
+  if(!j) return;
   const ts = fromDatetimeLocalValue(document.getElementById('frmSalidaManual').value);
   if(ts == null){ toast('Fecha inválida.'); return; }
-  if(ts < j.entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
+  if(ts <= j.entrada){ toast('La salida debe ser posterior a la entrada.'); return; }
+  if(ts > Date.now()){ toast('La salida no puede ser posterior a la hora actual.'); return; }
+  if(!(await confirmarTramoLargo(j.entrada, ts))){ fichajeAbiertoManual(id, ts); return; }
   j.salida = ts;
   save();
   closeModal();
@@ -1503,6 +1545,79 @@ async function finalizarBaja(){
   save();
   toast('Baja finalizada. ¡Bienvenido de vuelta!');
   renderAll();
+}
+/*
+ * Bajas pasadas, marcadas a mano desde el calendario (pestaña Resumen): se
+ * guardan como una baja ya cerrada {inicio, fin}. Solo días anteriores a hoy
+ * (una baja que sigue hoy se activa desde la pestaña Hoy). Un día de baja no
+ * puede tener fichajes, y una baja no puede solaparse con otra; si queda
+ * pegada a otra baja cerrada, se unen en una sola.
+ */
+function finBajaEfectivo(b){ return b.fin || b.finPrevisto || todayStr(); }
+function abrirFormBajaPasada(fecha){
+  const ayer = addDays(todayStr(), -1);
+  openModal(`
+    <div class="modal-head"><h3>🤒 Marcar baja</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field-row">
+      <div class="field"><label>Primer día de baja</label><input type="date" id="frmBajaPasIni" value="${fecha}" max="${ayer}"></div>
+      <div class="field"><label>Último día de baja</label><input type="date" id="frmBajaPasFin" value="${fecha}" max="${ayer}"></div>
+    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Solo días anteriores a hoy. Si la baja sigue hoy, actívala con «Estoy de baja» en la pestaña Hoy.</p>
+    <button class="btn btn-danger btn-lg" data-action="confirmar-baja-pasada" data-fecha="${fecha}">Marcar baja</button>
+  `);
+}
+function confirmarBajaPasada(fechaOrigen){
+  const hoy = todayStr();
+  const ini = document.getElementById('frmBajaPasIni').value;
+  const fin = document.getElementById('frmBajaPasFin').value;
+  if(!ini || !fin){ toast('Indica el primer y el último día de baja.'); return; }
+  if(fin < ini){ toast('El último día no puede ser anterior al primero.'); return; }
+  if(fin >= hoy){ toast('Solo se pueden marcar días anteriores a hoy.'); return; }
+  bajaActual(); // cierra una baja con duración que ya haya terminado
+  const solapada = DATA.bajas.find(b => ini <= finBajaEfectivo(b) && fin >= b.inicio);
+  if(solapada){ toast(`Esas fechas se solapan con otra baja (del ${fmtDateShort(solapada.inicio)} al ${fmtDateShort(finBajaEfectivo(solapada))}).`); return; }
+  const conFichaje = [...new Set(DATA.jornadas.filter(j => j.fecha >= ini && j.fecha <= fin).map(j => j.fecha))].sort();
+  if(conFichaje.length){
+    const lista = conFichaje.slice(0, 3).map(fmtDateShort).join(', ') + (conFichaje.length > 3 ? '…' : '');
+    toast(`Hay fichajes en esas fechas (${lista}). Elimínalos antes de marcar la baja.`, 4500);
+    return;
+  }
+  const previa = DATA.bajas.find(b => b.fin && addDays(b.fin, 1) === ini);
+  const siguiente = DATA.bajas.find(b => b.fin && b.inicio === addDays(fin, 1));
+  DATA.bajas = DATA.bajas.filter(b => b !== previa && b !== siguiente);
+  DATA.bajas.push({
+    id: uid(), inicio: previa ? previa.inicio : ini, fin: siguiente ? siguiente.fin : fin,
+    diasLaborables: null, finPrevisto: null
+  });
+  save();
+  toast(ini === fin ? 'Día marcado como baja' : `Baja marcada del ${fmtDateShort(ini)} al ${fmtDateShort(fin)}`);
+  renderAll();
+  abrirDiaCalendario(fechaOrigen);
+}
+async function quitarDiaBaja(fecha){
+  const b = bajaDeFecha(fecha);
+  if(!b || !b.fin) return;
+  const ok = await confirmDialog(
+    b.inicio === b.fin
+      ? `¿Quitar la baja del ${fmtDateShort(fecha)}?`
+      : `¿Quitar el ${fmtDateShort(fecha)} de la baja del ${fmtDateShort(b.inicio)} al ${fmtDateShort(b.fin)}? El resto de días seguirán de baja.`,
+    'Quitar', true
+  );
+  if(!ok){ abrirDiaCalendario(fecha); return; }
+  const finOriginal = b.fin;
+  b.diasLaborables = null; b.finPrevisto = null;
+  if(b.inicio === finOriginal) DATA.bajas = DATA.bajas.filter(x => x !== b);
+  else if(fecha === b.inicio) b.inicio = addDays(fecha, 1);
+  else if(fecha === finOriginal) b.fin = addDays(fecha, -1);
+  else {
+    // Día intermedio: la baja se parte en dos.
+    b.fin = addDays(fecha, -1);
+    DATA.bajas.push({ id: uid(), inicio: addDays(fecha, 1), fin: finOriginal, diasLaborables: null, finPrevisto: null });
+  }
+  save();
+  toast('Día quitado de la baja');
+  renderAll();
+  abrirDiaCalendario(fecha);
 }
 function renderPantallaBaja(b){
   const hoy = todayStr();
@@ -2037,6 +2152,21 @@ function abrirDiaCalendario(fecha){
   const saldoActual = bancoHorasSaldoMs();
   const horasCompensacion = horasCompensacionFor(fecha);
 
+  // Baja: en días pasados se puede marcar (o quitar) a mano; la baja en curso
+  // se gestiona desde la pestaña Hoy.
+  bajaActual(); // cierra una baja con duración que ya haya terminado
+  const baja = bajaDeFecha(fecha);
+  const bajaHtml = baja ? `
+    <div class="section-title">Baja</div>
+    <p style="color:var(--muted);font-size:13.5px;margin-bottom:8px;">De baja ${baja.fin
+      ? (baja.inicio === baja.fin ? 'este día' : `del ${esc(fmtDateShort(baja.inicio))} al ${esc(fmtDateShort(baja.fin))}`)
+      : `desde el ${esc(fmtDateShort(baja.inicio))} (baja en curso: se gestiona desde la pestaña Hoy)`}.</p>
+    ${baja.fin ? `<button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" data-action="quitar-dia-baja" data-fecha="${fecha}">Quitar este día de la baja</button>` : ''}
+  ` : fecha < todayStr() ? `
+    <div class="section-title">Baja</div>
+    <button class="btn btn-soft btn-sm" data-action="abrir-form-baja-pasada" data-fecha="${fecha}">🤒 Marcar como baja</button>
+  ` : '';
+
   openModal(`
     <div class="modal-head"><h3>${esc(fmtDateHuman(fecha))}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
     ${resumenFichaje}
@@ -2064,6 +2194,8 @@ function abrirDiaCalendario(fecha){
     <p style="font-size:12px;color:var(--muted);">Son las horas normales establecidas en Ajustes para este día de la semana: no se pueden editar a mano, para que un día de compensación descuente siempre lo mismo que ese día suma al banco.</p>
     <p style="font-size:12px;color:var(--muted);">Saldo actual del banco de horas (ya con esta compensación aplicada si está guardada): <b>${fmtHM(Math.abs(saldoActual))}${saldoActual<0?' (negativo)':''}</b>.</p>
     ` : ''}
+
+    ${bajaHtml}
   `);
 }
 
@@ -2140,44 +2272,74 @@ function exportarCalendarioPDF(){
   setTimeout(() => window.print(), 50);
 }
 
-function crearJornadaManual(fecha){
-  const d = parseDateLocal(fecha);
-  d.setHours(8,0,0,0);
-  DATA.jornadas.push({ id: uid(), fecha, entrada: d.getTime(), salida: null, descansos:[], comidas:[], observaciones:'' });
-  save();
-  closeModal();
-  toast('Fichaje creado, edítalo con los datos correctos.');
-  renderAll();
-  verDia(fecha);
-}
-// Añade un tramo MÁS a un día que ya tiene al menos un fichaje (p.ej. se
-// entra y sale, y más tarde se vuelve a entrar). Se coloca 1h después de que
-// terminase el último tramo para que no se solape visualmente por defecto;
-// el usuario lo ajusta con los datos reales a continuación.
-function agregarTramoDia(fecha){
+/*
+ * Alta manual de un fichaje (o de un tramo más en un día que ya tiene alguno):
+ * se pide entrada Y salida a la vez en un formulario, para que nunca quede un
+ * fichaje manual "abierto" sin salida (contaría horas hasta ahora mismo e
+ * inflaría los resúmenes). Los valores por defecto son solo una sugerencia:
+ * entrada a las 8:00 (o 1h después del último tramo del día) y la salida con
+ * la que se cumple, en horas efectivas, la jornada configurada para ese día
+ * (8h si no hay), o lo que falte de ella si es un tramo extra.
+ */
+// valores (opcional): {entrada, salida} para volver a abrir el formulario con
+// lo que ya se había escrito (p.ej. tras pulsar "Corregir" en el aviso de
+// tramo demasiado largo).
+function abrirFormJornadaManual(fecha, esTramo, valores){
+  if(bajaDeFecha(fecha)){ toast('Ese día está de baja: quítalo de la baja antes de añadir fichajes.'); return; }
   const existentes = jornadasDeFecha(fecha);
   const ultima = existentes[existentes.length-1];
-  const base = ultima ? (ultima.salida ?? ultima.entrada) + 3600000 : (() => {
+  const entrada = valores ? valores.entrada : (esTramo && ultima) ? (ultima.salida ?? ultima.entrada) + 3600000 : (() => {
     const d = parseDateLocal(fecha); d.setHours(8,0,0,0); return d.getTime();
   })();
-  DATA.jornadas.push({ id: uid(), fecha, entrada: base, salida: null, descansos:[], comidas:[], observaciones:'' });
+  const salida = valores ? valores.salida : salidaSugerida(fecha, entrada);
+  openModal(`
+    <div class="modal-head"><h3>${esTramo ? 'Añadir tramo' : 'Añadir fichaje'}</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
+    <div class="field"><label>Fecha y hora de entrada</label><input type="datetime-local" id="frmManEntrada" value="${toDatetimeLocalValue(entrada)}"></div>
+    <div class="field"><label>Fecha y hora de salida</label><input type="datetime-local" id="frmManSalida" value="${toDatetimeLocalValue(salida)}"></div>
+    <button class="btn btn-primary btn-lg" data-action="confirmar-jornada-manual" data-tramo="${esTramo ? '1' : ''}">Guardar</button>
+  `);
+}
+async function confirmarJornadaManual(esTramo){
+  const entrada = fromDatetimeLocalValue(document.getElementById('frmManEntrada').value);
+  const salida = fromDatetimeLocalValue(document.getElementById('frmManSalida').value);
+  if(entrada == null || salida == null){ toast('Indica la fecha y hora de entrada y de salida.'); return; }
+  if(salida <= entrada){ toast('La salida debe ser posterior a la entrada.'); return; }
+  const fecha = todayStr(new Date(entrada));
+  if(bajaDeFecha(fecha)){ toast(`El ${fmtDateShort(fecha)} está de baja: no se pueden añadir fichajes ese día.`); return; }
+  if(!(await confirmarTramoLargo(entrada, salida))){ abrirFormJornadaManual(fecha, esTramo, { entrada, salida }); return; }
+  DATA.jornadas.push({ id: uid(), fecha, entrada, salida, descansos:[], comidas:[], observaciones:'' });
   save();
-  toast('Tramo añadido, edítalo con los datos correctos.');
+  toast(esTramo ? 'Tramo añadido' : 'Fichaje creado');
   renderAll();
   verDia(fecha);
 }
-function guardarJornadaEditada(id){
+async function guardarJornadaEditada(id){
   const j = getJornada(id);
   if(!j) return;
-  const entrada = fromDatetimeLocalValue(document.getElementById(`edJEntrada-${id}`).value);
+  const entradaVal = document.getElementById(`edJEntrada-${id}`).value;
   const salidaVal = document.getElementById(`edJSalida-${id}`).value;
+  const obs = document.getElementById(`edJObs-${id}`).value;
+  const entrada = fromDatetimeLocalValue(entradaVal);
   const salida = salidaVal ? fromDatetimeLocalValue(salidaVal) : null;
   if(entrada == null){ toast('Fecha de entrada inválida.'); return; }
+  // Solo el fichaje en curso (aún sin salida) puede guardarse sin salida: a uno
+  // ya cerrado no se le puede quitar, para no dejarlo abierto a medias.
+  if(salida == null && j.salida != null){ toast('Indica la fecha y hora de salida.'); return; }
   if(salida != null && salida < entrada){ toast('La salida no puede ser anterior a la entrada.'); return; }
+  const nuevaFecha = todayStr(new Date(entrada));
+  if(nuevaFecha !== j.fecha && bajaDeFecha(nuevaFecha)){ toast(`El ${fmtDateShort(nuevaFecha)} está de baja: no se puede mover el fichaje a ese día.`); return; }
+  if(salida != null && !(await confirmarTramoLargo(entrada, salida))){
+    // "Corregir": se vuelve al detalle del día con lo que se había escrito.
+    verDia(j.fecha);
+    document.getElementById(`edJEntrada-${id}`).value = entradaVal;
+    document.getElementById(`edJSalida-${id}`).value = salidaVal;
+    document.getElementById(`edJObs-${id}`).value = obs;
+    return;
+  }
   j.entrada = entrada;
   j.salida = salida;
   j.fecha = todayStr(new Date(entrada));
-  j.observaciones = document.getElementById(`edJObs-${id}`).value.trim();
+  j.observaciones = obs.trim();
   save();
   toast('Jornada actualizada');
   renderAll();
@@ -4169,9 +4331,11 @@ document.addEventListener('click', async (e) => {
     case 'guardar-comida-hoy': guardarComidaHoy(d.fecha, d.jid, d.cid); break;
     case 'quitar-comida-override': accionQuitarComidaOverride(d.fecha); break;
 
-    case 'fichaje-abierto-cerrar-ahora': fichajeAbiertoCerrarAhora(d.id); break;
+    case 'abrir-form-baja-pasada': abrirFormBajaPasada(d.fecha); break;
+    case 'confirmar-baja-pasada': confirmarBajaPasada(d.fecha); break;
+    case 'quitar-dia-baja': await quitarDiaBaja(d.fecha); break;
     case 'fichaje-abierto-manual': fichajeAbiertoManual(d.id); break;
-    case 'confirmar-salida-manual-abierto': confirmarSalidaManualAbierto(d.id); break;
+    case 'confirmar-salida-manual-abierto': await confirmarSalidaManualAbierto(d.id); break;
     case 'fichaje-abierto-continuar': UI.bannerDismissed = true; renderBanner(); break;
     case 'aviso-fichaje-descartar-hoy': UI.avisoDescartadoFecha = todayStr(); renderBanner(); break;
     case 'toggle-aviso-entrada':
@@ -4188,9 +4352,10 @@ document.addEventListener('click', async (e) => {
       renderHistorico();
       break;
     case 'ver-dia': verDia(d.fecha); break;
-    case 'crear-jornada-manual': crearJornadaManual(d.fecha); break;
-    case 'agregar-tramo-dia': agregarTramoDia(d.fecha); break;
-    case 'guardar-jornada-editada': guardarJornadaEditada(d.id); break;
+    case 'crear-jornada-manual': abrirFormJornadaManual(d.fecha, false); break;
+    case 'agregar-tramo-dia': abrirFormJornadaManual(d.fecha, true); break;
+    case 'confirmar-jornada-manual': await confirmarJornadaManual(d.tramo === '1'); break;
+    case 'guardar-jornada-editada': await guardarJornadaEditada(d.id); break;
     case 'eliminar-jornada': await eliminarJornada(d.id); break;
     case 'agregar-intervalo': agregarIntervalo(d.tipo, d.jid); break;
     case 'editar-intervalo': editarIntervalo(d.tipo, d.jid, d.iid); break;
