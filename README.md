@@ -7,11 +7,11 @@ Aplicación de control horario / fichaje de trabajo, pensada para el móvil, **1
 - **Fichaje** de entrada/salida, descansos y comidas con un toque.
 - **Horas extra imputables (viaje o reunión)**: solo se contabilizan (y suman al banco de horas) los días marcados explícitamente como imputables. Al fichar la salida, si ese día se han trabajado horas por encima de la jornada normal, la app pregunta si son imputables y, de ser así, si es un viaje (con lugar y cliente) o una reunión (con cliente).
 - **Banco de horas**: horas extra generadas menos horas ya compensadas, con saldo disponible.
-- **Calendario laboral**: marca días como festivo, vacaciones o compensación de horas (horas fijas: 8,5 h de lunes a jueves, 6 h los viernes) directamente sobre el calendario del banco de horas.
+- **Calendario laboral**: marca días como festivo, vacaciones o compensación de horas (horas fijas: 8,5 h de lunes a jueves, 6 h los viernes) directamente sobre el calendario del banco de horas. Los días no laborables (fines de semana) no se pueden marcar como vacaciones.
 - **Histórico** filtrable y buscable, con edición manual de cualquier fichaje, descanso, comida o marca de viaje.
-- **Informe mensual coloreado**: exporta un `.xlsx` día a día (viaje en verde, reunión en lila, vacaciones en azul, festivo en amarillo, compensación en naranja) con el saldo del banco de horas al inicio y al final del mes.
-- **Exportación** genérica a Excel/CSV con columnas configurables, para cualquier periodo.
-- **Perfil directivo**: importa los informes mensuales de cada trabajador y descárgalos todos juntos en un único Excel (una hoja por informe) para reenviarlos.
+- **Informe mensual coloreado**: exporta un `.xlsx` día a día (viaje, reunión y otros en azul, vacaciones en verde, baja en rojo, compensación en amarillo, festivo en morado; sábados y domingos en gris claro, o en un tono más oscuro de su color si tienen marca) con el saldo del banco de horas al inicio y al final del mes. Cada mes va en una tabla con contorno negro y líneas horizontales finas.
+- **Exportación** genérica a Excel (con los mismos colores) o CSV (texto plano) con columnas configurables, para cualquier periodo.
+- **Perfil directivo**: importa los informes mensuales de cada trabajador y descárgalos todos juntos en un único Excel (una hoja de resumen y una por trabajador con todos sus meses y el día de la semana) para reenviarlos.
 - **Modo claro/oscuro/automático**, copia de seguridad (exportar/importar JSON) y aviso configurable si se te olvida fichar.
 - Funciona **sin conexión** y puede instalarse como app (PWA) en la pantalla de inicio.
 

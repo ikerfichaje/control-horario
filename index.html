@@ -102,6 +102,8 @@ body.modo-baja{background:#fee2e2;}
 .hero-sub .item{background:rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;}
 .hero-sub .item b{display:block;font-size:17px;font-variant-numeric:tabular-nums;}
 .hero-sub .item small{font-size:11px;opacity:.85;}
+.hero-toggle{display:block;width:100%;margin-top:14px;padding:10px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.55);background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+.hero-toggle.active{background:#fff;border-color:#fff;color:var(--primary-dark);}
 
 /* Progress bar */
 .progress-wrap{margin-top:16px;}
@@ -218,6 +220,8 @@ body.modo-baja{background:#fee2e2;}
 [data-theme="dark"] .pill.otros{background:#3f1d1d;color:#fca5a5;}
 .pill.sincomida{background:#fce7e7;color:#9f1239;}
 [data-theme="dark"] .pill.sincomida{background:#3f1620;color:#fda4af;}
+.pill.fueraoficina{background:#e0f2fe;color:#075985;}
+[data-theme="dark"] .pill.fueraoficina{background:#0c2d48;color:#7dd3fc;}
 
 .informe-meses-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
 .mes-card{display:flex;flex-wrap:wrap;align-items:center;gap:5px 8px;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface-2);cursor:pointer;font-size:13.5px;}
@@ -476,6 +480,7 @@ const COLUMNAS_EXPORT = [
   {id:'lugarViaje',  label:'Lugar del viaje'},
   {id:'motivoViaje', label:'Motivo (otros)'},
   {id:'clienteViaje', label:'Cliente / distribuidor'},
+  {id:'fueraOficina', label:'Fuera de oficina'},
   {id:'horasBaja',   label:'Horas de baja'},
   {id:'horasCompensadas', label:'Horas compensadas'},
   {id:'observaciones', label:'Observaciones'}
@@ -560,6 +565,7 @@ function defaultData(){
     calendarioLaboral: {}, // { 'YYYY-MM-DD': {tipo:'festivo'|'vacaciones'|'compensacion', nombre?, horas?} }
     viajes: {},            // { 'YYYY-MM-DD': {activo:true, lugar, cliente} } — días de viaje/instalación
     sinComida: {},         // { 'YYYY-MM-DD': true } — días en los que se avisó "no he comido"
+    fueraOficina: {},      // { 'YYYY-MM-DD': true } — días trabajados fuera de la oficina (solo informativo, no genera extra)
     comidaOverride: {},    // { 'YYYY-MM-DD': {inicio:'HH:MM', fin:'HH:MM'} } — hora de comida modificada solo ese día
     informesDescargados: {}, // { 'YYYY-MM': {fecha, incompleto, huella} } — informes mensuales ya descargados
     extraDiaLibre: {},       // { 'YYYY-MM-DD': true|false } — en días libres, si lo trabajado cuenta como hora extra
@@ -590,6 +596,7 @@ function loadData(){
       calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
+      fueraOficina: (parsed.fueraOficina && typeof parsed.fueraOficina === 'object') ? parsed.fueraOficina : {},
       comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
       informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {},
       extraDiaLibre: (parsed.extraDiaLibre && typeof parsed.extraDiaLibre === 'object') ? parsed.extraDiaLibre : {},
@@ -708,6 +715,12 @@ function quitarViaje(fechaStr){ delete DATA.viajes[fechaStr]; save(); }
 function diaSinComida(fechaStr){ return !!DATA.sinComida[fechaStr]; }
 function marcarSinComida(fechaStr){ DATA.sinComida[fechaStr] = true; save(); }
 function quitarSinComida(fechaStr){ delete DATA.sinComida[fechaStr]; save(); }
+// "Fuera de la oficina": solo deja constancia de que ese día se trabajó fuera
+// (los fichajes pueden caer fuera del horario normal). A diferencia de
+// viaje/reunión/otros, NO convierte el excedente en hora extra.
+function diaFueraOficina(fechaStr){ return !!DATA.fueraOficina[fechaStr]; }
+function marcarFueraOficina(fechaStr){ DATA.fueraOficina[fechaStr] = true; save(); }
+function quitarFueraOficina(fechaStr){ delete DATA.fueraOficina[fechaStr]; save(); }
 
 // Hora de comida modificada solo para un día concreto (modo "horario"): no
 // toca la franja fija configurada en Ajustes, solo la sustituye ese día.
@@ -1254,6 +1267,16 @@ function accionQuitarSinComida(fecha){
   toast('Se volverá a descontar la comida este día');
   refrescarTrasEditarDia(fecha);
 }
+function accionMarcarFueraOficina(fecha){
+  marcarFueraOficina(fecha);
+  toast('Día marcado como fuera de la oficina');
+  refrescarTrasEditarDia(fecha);
+}
+function accionQuitarFueraOficina(fecha){
+  quitarFueraOficina(fecha);
+  toast('Quitada la marca de fuera de la oficina');
+  refrescarTrasEditarDia(fecha);
+}
 
 /*
  * Formulario para fijar manualmente la hora de comida de un día (desde la
@@ -1403,11 +1426,27 @@ function debeAvisarFichaje(){
   limite.setHours(h, m, 0, 0);
   return Date.now() >= limite.getTime();
 }
+/*
+ * Se llama cada segundo (tickLive), así que solo se reescribe el HTML si ha
+ * cambiado: si se sustituyeran los botones en cada tic, un toque que coincida
+ * con el cambio (pulsar sobre un botón y soltar sobre su sustituto) no llega a
+ * ser un "click" y el aviso parece no responder, sobre todo en el móvil. La
+ * hora del aviso se actualiza aparte, con textContent.
+ */
+let _bannerHtml = null;
 function renderBanner(){
-  const el = document.getElementById('bannerAbierto');
+  const html = htmlBanner();
+  if(html !== _bannerHtml){
+    document.getElementById('bannerAbierto').innerHTML = html;
+    _bannerHtml = html;
+  }
+  const hora = document.getElementById('avisoFichajeHora');
+  if(hora) hora.textContent = fmtTimeHM(Date.now());
+}
+function htmlBanner(){
   const j = jornadaAbiertaDeAyer();
   if(j && !UI.bannerDismissed){
-    el.innerHTML = `
+    return `
       <div class="banner">
         <b>⚠️ Tienes un fichaje abierto desde el ${esc(fmtDateShort(j.fecha))} (${esc(fmtTimeHM(j.entrada))})</b>
         Indica a qué hora saliste de verdad. No se cerrará ni se inventará ninguna hora automáticamente.
@@ -1416,20 +1455,18 @@ function renderBanner(){
           <button class="btn btn-soft btn-sm" data-action="fichaje-abierto-continuar">Continuar trabajando</button>
         </div>
       </div>`;
-    return;
   }
   if(debeAvisarFichaje()){
-    el.innerHTML = `
+    return `
       <div class="banner">
-        <b>⏰ Son las ${esc(fmtTimeHM(Date.now()))} y todavía no has fichado entrada</b>
+        <b>⏰ Son las <span id="avisoFichajeHora"></span> y todavía no has fichado entrada</b>
         <div class="btn-row" style="margin-top:10px;">
           <button class="btn btn-primary btn-sm" data-action="fichar-entrada">▶ Fichar entrada ahora</button>
           <button class="btn btn-soft btn-sm" data-action="aviso-fichaje-descartar-hoy">No avisar más hoy</button>
         </div>
       </div>`;
-    return;
   }
-  el.innerHTML = '';
+  return '';
 }
 /*
  * Cierre de un fichaje abierto indicando la salida real. Se propone la hora
@@ -1762,7 +1799,10 @@ function renderHoy(){
       <div class="progress-wrap">
         <div class="progress-track"><div class="progress-fill ${progressExtra?'extra':''}" id="progressFill" style="width:${progressPct}%"></div></div>
         <div class="progress-text"><span id="progressLabel">${progressLabel}</span><span>${progressExtra?'⚡ Horas extra':''}</span></div>
-      </div>` : ''}
+      </div>
+      ${diaFueraOficina(j.fecha)
+        ? `<button class="hero-toggle active" data-action="quitar-fuera-oficina" data-fecha="${j.fecha}">✓ 🏢 Fuera de la oficina</button>`
+        : `<button class="hero-toggle" data-action="marcar-fuera-oficina" data-fecha="${j.fecha}">🏢 Fuera de la oficina</button>`}` : ''}
     </div>`;
 
   // Botones de acción principal
@@ -1943,7 +1983,7 @@ function diasEnRango(ini, fin){
 function statsDia(fecha){
   const jornadas = jornadasDeFecha(fecha);
   const calc = jornadas.length ? calcDia(fecha, Date.now()) : null;
-  return { jornadas, calc, esViaje: diaEsViaje(fecha), viaje: obtenerViaje(fecha), sinComida: diaSinComida(fecha) };
+  return { jornadas, calc, esViaje: diaEsViaje(fecha), viaje: obtenerViaje(fecha), sinComida: diaSinComida(fecha), fueraOficina: diaFueraOficina(fecha) };
 }
 // Texto compacto "08:00–12:00, 13:00–17:30" con todos los tramos de un día
 // (o "en curso" en el tramo todavía abierto).
@@ -1981,7 +2021,7 @@ function renderHistorico(){
   }
 
   const items = fechas.length ? fechas.map(f => {
-    const {jornadas, calc, esViaje, viaje, sinComida} = statsDia(f);
+    const {jornadas, calc, esViaje, viaje, sinComida, fueraOficina} = statsDia(f);
     const openPill = calc && calc.abierta ? `<span class="pill open">En curso</span>` : '';
     const viajePill = esViaje
       ? (viaje.tipo === 'reunion' ? `<span class="pill reunion">Reunión</span>`
@@ -1989,12 +2029,13 @@ function renderHistorico(){
         : `<span class="pill viaje">Viaje</span>`)
       : '';
     const sinComidaPill = sinComida ? `<span class="pill sincomida">Sin comida</span>` : '';
+    const fueraOficinaPill = fueraOficina ? `<span class="pill fueraoficina">Fuera de oficina</span>` : '';
     const extraStat = (esViaje || calc?.extraConfirmada) ? `<span>Extra compensable <b style="color:var(--extra)">${calc?fmtHM(calc.extra):'00:00'}</b></span>` : '';
     return `
     <div class="day-item ${esViaje?'es-viaje':''}" data-action="ver-dia" data-fecha="${f}">
       <div class="di-top">
         <div class="di-date">${esc(fmtDateHuman(f))}<small>${esc(fmtDateShort(f))}</small></div>
-        <div class="di-pills">${openPill}${viajePill}${sinComidaPill}</div>
+        <div class="di-pills">${openPill}${viajePill}${fueraOficinaPill}${sinComidaPill}</div>
       </div>
       <div class="di-stats">
         <span>${jornadas.length>1?'Tramos':'Horario'} <b>${esc(formatTramosDia(jornadas))}</b></span>
@@ -2113,6 +2154,14 @@ function verDia(fecha){
     </div>`}
   `;
 
+  const fueraOficinaHtml = !jornadas.length ? '' : `
+    <div class="section-title">Fuera de la oficina</div>
+    ${diaFueraOficina(fecha) ? `
+    <p style="color:var(--muted);font-size:13px;">Marcado como trabajado fuera de la oficina (no cambia las horas extra).</p>
+    <button class="btn btn-soft btn-sm" data-action="quitar-fuera-oficina" data-fecha="${fecha}">↩ Quitar marca</button>` : `
+    <button class="btn btn-soft btn-sm" data-action="marcar-fuera-oficina" data-fecha="${fecha}">🏢 Trabajé fuera de la oficina</button>`}
+  `;
+
   const diaCfgDia = diaConfigFor(fecha);
   const puedeSinComidaDia = diaCfgDia?.comida !== false;
   const sinComidaHtml = puedeSinComidaDia ? `
@@ -2128,6 +2177,7 @@ function verDia(fecha){
     ${seccionFichaje}
     ${diaLibreHtml}
     ${viajeHtml}
+    ${fueraOficinaHtml}
     ${sinComidaHtml}
   `);
 }
@@ -2598,7 +2648,7 @@ function renderResumen(){
         <p style="font-size:13px;margin:0;">Han cambiado: ${esc(desactualizados.map(etiquetaMesClave).join(', '))}. El informe que tiene el directivo ya no coincide con tus datos y no le dejará importar los meses siguientes. Vuelve a descargarlos y envíaselos (en un solo Excel, junto con los meses posteriores que ya descargaste).</p>
         <div class="btn-row single"><button class="btn btn-primary btn-sm" data-action="descargar-informes-desactualizados">📊 Descargar actualizado: ${esc(reenviar.map(etiquetaMesClave).join(', '))}</button></div>
       </div>` : ''}
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel día a día de un mes, coloreado por tipo de día (viaje en verde, reunión en lila, otros en rosa, baja en rojo, vacaciones en azul, festivo en amarillo, compensación en naranja), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">Excel día a día de un mes, coloreado por tipo de día (viaje, reunión y otros en azul, vacaciones en verde, baja en rojo, compensación en amarillo, festivo en morado y sábados y domingos en gris claro), con tu nombre y el saldo del banco de horas al principio y al final del mes.</p>
       <button class="btn btn-primary btn-lg" data-action="abrir-informe-mensual">🗓️ Informe mensual</button>
     </div>
 
@@ -2662,8 +2712,10 @@ function construirFilasExportacion(ini, fin, columnas){
     const jornadasDia = jornadasDeFecha(f);
     const { tipo, viaje, horasBajaMs, horasCompensadasMs, comentario } = clasificarDia(f, jornadasDia);
     const base = {
+      _tipo: tipo, // no es una columna: sirve para colorear la fila en el Excel
       trabajador: nombreTrabajador, fecha: f, diaSemana: DOW_NAMES[parseDateLocal(f).getDay()],
-      tipoDia: INFORME_MENSUAL_TIPO_LABEL[tipo] || INFORME_MENSUAL_TIPO_LABEL.normal
+      tipoDia: INFORME_MENSUAL_TIPO_LABEL[tipo] || INFORME_MENSUAL_TIPO_LABEL.normal,
+      fueraOficina: (tipo !== 'baja' && diaFueraOficina(f)) ? 'Sí' : ''
     };
     const datosViaje = (viaje && viaje.activo)
       ? { diaViaje: 'Sí', tipoViaje: INFORME_MENSUAL_TIPO_LABEL[viaje.tipo] || 'Viaje',
@@ -2698,13 +2750,16 @@ function construirFilasExportacion(ini, fin, columnas){
   });
   const headers = colsDef.map(c => c.label);
   const rows = filas.map(obj => colsDef.map(c => obj[c.id]));
+  // Tipo de celda de cada fila para el Excel (mismos colores que el informe mensual).
+  const tiposFila = filas.map(obj => estiloFilaDia(obj._tipo, obj.fecha));
   // Fila final de totales del periodo (la etiqueta va en la primera columna).
   if(rows.length){
     const total = colsDef.map(c => COLS_SUMA.includes(c.id) ? hoursDecimal(totalesMs[c.id]) : '');
     if(!COLS_SUMA.includes(colsDef[0].id)) total[0] = 'TOTAL';
     rows.push(total);
+    tiposFila.push(null); // fuera del cuadro, en negrita
   }
-  return { headers, rows };
+  return { headers, rows, tiposFila };
 }
 
 function nombreArchivo(ini, fin, ext){
@@ -2820,20 +2875,35 @@ function buildZipStore(files){
 }
 function escXml(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;'); }
 function colName(n){ let s=''; n++; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26); } return s; }
-function buildSheetXml(headers, rows){
-  const headerCells = headers.map((h,i)=>`<c r="${colName(i)}1" t="inlineStr" s="1"><is><t xml:space="preserve">${escXml(h)}</t></is></c>`).join('');
+// Hoja simple: cabecera en la fila 1 y una fila por elemento de "rows", en un
+// cuadro con el aspecto de tabla de buildStylesXmlInformeMensual.
+// "tiposFila" (opcional): tipo de celda (CELDA_*) de cada fila; por defecto
+// CELDA_NORMAL. Un null deja la fila fuera del cuadro, en negrita (p.ej. la
+// fila de TOTAL, que siempre va al final).
+function buildSheetXml(headers, rows, tiposFila){
+  const numCols = headers.length;
+  const tipoDe = ri => (tiposFila && ri < tiposFila.length) ? tiposFila[ri] : CELDA_NORMAL;
+  let ultimaFilaTabla = -1;
+  rows.forEach((_, ri) => { if(tipoDe(ri) !== null) ultimaFilaTabla = ri; });
+  const posCabecera = ultimaFilaTabla < 0 ? FILA_UNICA : FILA_ARRIBA;
+  const headerCells = headers.map((h,i)=>`<c r="${colName(i)}1" t="inlineStr" s="${estiloCeldaTabla(CELDA_CABECERA, i, numCols, posCabecera)}"><is><t xml:space="preserve">${escXml(h)}</t></is></c>`).join('');
   let xml = `<row r="1">${headerCells}</row>`;
   rows.forEach((row, ri) => {
     const r = ri+2;
+    const tipoCelda = tipoDe(ri);
+    const filaPos = ri === ultimaFilaTabla ? FILA_ABAJO : FILA_MEDIO;
     const cells = row.map((val, ci) => {
       const ref = colName(ci)+r;
-      if(typeof val === 'number' && isFinite(val)) return `<c r="${ref}"><v>${val}</v></c>`;
+      const sAttr = ` s="${tipoCelda === null ? ESTILO_NEGRITA : estiloCeldaTabla(tipoCelda, ci, numCols, filaPos)}"`;
+      if(typeof val === 'number' && isFinite(val)) return `<c r="${ref}"${sAttr}><v>${val}</v></c>`;
       const s = val==null ? '' : String(val);
-      return `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${escXml(s)}</t></is></c>`;
+      return `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${escXml(s)}</t></is></c>`;
     }).join('');
     xml += `<row r="${r}">${cells}</row>`;
   });
-  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${xml}</sheetData></worksheet>`;
+  // Ancho de columna según la cabecera, para que no quede cortada.
+  const colsXml = `<cols>${headers.map((h,i) => `<col min="${i+1}" max="${i+1}" width="${Math.max(11, String(h).length + 3)}" customWidth="1"/>`).join('')}</cols>`;
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${colsXml}<sheetData>${xml}</sheetData></worksheet>`;
 }
 /* Empaqueta un .xlsx mínimo (ZIP sin compresión + Open XML) a partir de una o
  * varias hojas ya construidas y de los estilos compartidos. Reutilizado por
@@ -2877,56 +2947,108 @@ function nombresHojaUnicos(nombresDeseados){
     return nombre;
   });
 }
-const XLSX_ESTILOS_BASICOS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs></styleSheet>`;
 function buildXlsxBlob(sheetName, headers, rows){
-  const sheet = buildSheetXml(headers, rows);
-  return buildXlsxPackage(sheetName, sheet, XLSX_ESTILOS_BASICOS);
+  return buildXlsxPackage(sheetName, buildSheetXml(headers, rows), buildStylesXmlInformeMensual());
 }
 function exportarXLSX(ini, fin, columnas){
-  const { headers, rows } = construirFilasExportacion(ini, fin, columnas);
-  const blob = buildXlsxBlob('Fichajes', headers, rows);
+  const { headers, rows, tiposFila } = construirFilasExportacion(ini, fin, columnas);
+  const blob = buildXlsxPackage('Fichajes', buildSheetXml(headers, rows, tiposFila), buildStylesXmlInformeMensual());
   descargarBlob(blob, nombreArchivo(ini, fin, 'xlsx'), 'Excel exportado');
 }
 
 /* ---- Informe mensual coloreado (día a día, por trabajador) ------------ */
 /*
- * Estilos: 0 normal, 1 negrita (títulos/cabecera), 2 negrita grande (nombre),
- * 3 relleno verde (viaje), 4 relleno azul claro (vacaciones),
- * 5 relleno amarillo (festivo), 6 relleno naranja (compensación),
- * 7 relleno lila (reunión), 8 relleno rojo claro (otros), 9 relleno rojo (baja).
+ * Colores de fila por tipo de día: [color entre semana, color en sábado/domingo
+ * (el mismo tono, más oscuro, para que se vea que es fin de semana pero
+ * contabilizado como ese tipo)]. Un fin de semana sin marca va en gris claro.
  */
-const INFORME_MENSUAL_ESTILO_POR_TIPO = { viaje:3, vacaciones:4, festivo:5, compensacion:6, reunion:7, otros:8, baja:9 };
+const INFORME_MENSUAL_COLORES = [
+  { tipos: ['vacaciones'],               rgb: ['FFC6EFCE', 'FF8ACB98'] }, // verde
+  { tipos: ['viaje','reunion','otros'],  rgb: ['FFBDD7EE', 'FF83B1DC'] }, // azul
+  { tipos: ['baja'],                     rgb: ['FFFF7C80', 'FFD9474D'] }, // rojo
+  { tipos: ['compensacion'],             rgb: ['FFFFEB84', 'FFE0BE3A'] }, // amarillo
+  { tipos: ['festivo'],                  rgb: ['FFE5D4F5', 'FFB794DE'] }  // morado
+];
+const COLOR_FIN_DE_SEMANA = 'FFEDEDED';
+const COLOR_CABECERA_TABLA = 'FF1F4E78';
+// Estilos sueltos, fuera de las tablas.
+const ESTILO_NEGRITA = 1;
+const ESTILO_NOMBRE = 2;
+const ESTILO_TITULO_MES = 3;
+/*
+ * Celdas de tabla. Cada tabla es un cuadro con contorno negro algo más grueso;
+ * dentro solo hay líneas horizontales finas grises (sin verticales). Por eso
+ * cada "tipo de celda" existe en todas las posiciones del cuadro: columna
+ * (primera / intermedia / última) × fila (FILA_*). Ver estiloCeldaTabla.
+ * Tipos: [fontId, fillId, ¿líneas horizontales finas?]. Fuentes: 0 normal,
+ * 1 negrita, 2 negrita 24 (nombre), 3 negrita blanca, 4 negrita 16 (mes).
+ * Rellenos: 2 cabecera, 3 fin de semana y, desde el 4, los colores por tipo.
+ */
+const CELDA_CABECERA = 0, CELDA_NORMAL = 1, CELDA_FIN_DE_SEMANA = 2;
+const TIPOS_CELDA_TABLA = [
+  [3, 2, true],  // cabecera de columnas
+  [0, 0, true],  // día normal
+  [0, 3, true],  // fin de semana sin marca
+  ...INFORME_MENSUAL_COLORES.flatMap((_, i) => [[0, 4 + 2*i, true], [0, 5 + 2*i, true]]) // colores (entre semana / finde)
+];
+const FILA_ARRIBA = 0, FILA_MEDIO = 1, FILA_ABAJO = 2, FILA_UNICA = 3;
+const NUM_ESTILOS_SUELTOS = 4;
+function estiloCeldaTabla(tipoCelda, colIdx, numCols, filaPos){
+  const colPos = colIdx === 0 ? 0 : (colIdx === numCols - 1 ? 2 : 1);
+  return NUM_ESTILOS_SUELTOS + (tipoCelda * 3 + colPos) * 4 + filaPos;
+}
+function esFinDeSemana(fecha){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha || '')) return false;
+  const dow = parseDateLocal(fecha).getDay();
+  return dow === 0 || dow === 6;
+}
+// Tipo de celda de la fila de un día según su tipo y si cae en sábado o domingo.
+function estiloFilaDia(tipo, fecha){
+  const finde = esFinDeSemana(fecha);
+  const i = INFORME_MENSUAL_COLORES.findIndex(c => c.tipos.includes(tipo));
+  if(i < 0) return finde ? CELDA_FIN_DE_SEMANA : CELDA_NORMAL;
+  return CELDA_FIN_DE_SEMANA + 1 + i * 2 + (finde ? 1 : 0);
+}
+// Hoja de estilos de todos los Excel que genera la app: informe mensual, Excel
+// combinado del equipo, resúmenes y exportación genérica.
 function buildStylesXmlInformeMensual(){
+  const solido = rgb => `<fill><patternFill patternType="solid"><fgColor rgb="${rgb}"/><bgColor indexed="64"/></patternFill></fill>`;
+  const rellenos = [COLOR_CABECERA_TABLA, COLOR_FIN_DE_SEMANA, ...INFORME_MENSUAL_COLORES.flatMap(c => c.rgb)]; // fillId desde el 2
+  const fina = `style="thin"><color rgb="FF7F7F7F"/>`;     // líneas horizontales interiores
+  const gruesa = `style="medium"><color rgb="FF000000"/>`; // contorno del cuadro
+  const lado = (nombre, estilo) => estilo ? `<${nombre} ${estilo}</${nombre}>` : `<${nombre}/>`;
+  // borderId = 1 + (horizontales * 3 + colPos) * 4 + filaPos (mismo orden que estiloCeldaTabla).
+  const bordes = [];
+  [false, true].forEach(horizontales => [0, 1, 2].forEach(colPos => [FILA_ARRIBA, FILA_MEDIO, FILA_ABAJO, FILA_UNICA].forEach(filaPos => {
+    const arriba = filaPos === FILA_ARRIBA || filaPos === FILA_UNICA;
+    const abajo = filaPos === FILA_ABAJO || filaPos === FILA_UNICA;
+    bordes.push(`<border>${lado('left', colPos === 0 ? gruesa : '')}${lado('right', colPos === 2 ? gruesa : '')}` +
+      `${lado('top', arriba ? gruesa : (horizontales ? fina : ''))}${lado('bottom', abajo ? gruesa : (horizontales ? fina : ''))}<diagonal/></border>`);
+  })));
+  const xfsTabla = TIPOS_CELDA_TABLA.flatMap(([fontId, fillId, horizontales]) =>
+    [0, 1, 2].flatMap(colPos => [0, 1, 2, 3].map(filaPos =>
+      `<xf numFmtId="0" fontId="${fontId}" fillId="${fillId}" borderId="${1 + ((horizontales ? 1 : 0) * 3 + colPos) * 4 + filaPos}" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>`))).join('');
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
-    `<fonts count="3">` +
+    `<fonts count="5">` +
       `<font><sz val="11"/><name val="Calibri"/></font>` +
       `<font><b/><sz val="11"/><name val="Calibri"/></font>` +
-      `<font><b/><sz val="18"/><name val="Calibri"/></font>` +
+      `<font><b/><sz val="24"/><name val="Calibri"/></font>` +
+      `<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>` +
+      `<font><b/><sz val="16"/><name val="Calibri"/></font>` +
     `</fonts>` +
-    `<fills count="9">` +
+    `<fills count="${2 + rellenos.length}">` +
       `<fill><patternFill patternType="none"/></fill>` +
       `<fill><patternFill patternType="gray125"/></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFBDD7EE"/><bgColor indexed="64"/></patternFill></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFFFD9B3"/><bgColor indexed="64"/></patternFill></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFE5D4F5"/><bgColor indexed="64"/></patternFill></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill>` +
-      `<fill><patternFill patternType="solid"><fgColor rgb="FFFF7C80"/><bgColor indexed="64"/></patternFill></fill>` +
+      rellenos.map(solido).join('') +
     `</fills>` +
-    `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>` +
+    `<borders count="${1 + bordes.length}"><border><left/><right/><top/><bottom/><diagonal/></border>${bordes.join('')}</borders>` +
     `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
-    `<cellXfs count="10">` +
+    `<cellXfs count="${NUM_ESTILOS_SUELTOS + TIPOS_CELDA_TABLA.length * 12}">` +
       `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
-      `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
-      `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
-      `<xf numFmtId="0" fontId="0" fillId="2" borderId="0" xfId="0" applyFill="1"/>` +
-      `<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/>` +
-      `<xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/>` +
-      `<xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/>` +
-      `<xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/>` +
-      `<xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/>` +
-      `<xf numFmtId="0" fontId="0" fillId="8" borderId="0" xfId="0" applyFill="1"/>` +
+      `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>` + // negrita
+      `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>` + // nombre
+      `<xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>` + // mes
+      xfsTabla + // celdas de tabla, ver estiloCeldaTabla
     `</cellXfs>` +
   `</styleSheet>`;
 }
@@ -2938,8 +3060,10 @@ const INFORME_MENSUAL_TIPO_DESDE_LABEL = Object.fromEntries(Object.entries(INFOR
 
 // Cabeceras/estilos/anchos comunes a cualquier hoja de "informe mensual"
 // (tanto si lleva un único mes como si lleva varios apilados en la misma hoja).
+// La columna "Día" (día de la semana) va en ambos; el importador localiza
+// las columnas por su cabecera, así que la ignora sin problema.
 function contextoHojaInformeMensual(){
-  const headers = ['Fecha','Hora inicio','Hora fin','Horas efectivas','Horas extra','Horas compensadas','Horas de baja','Comentario','Tipo'];
+  const headers = ['Fecha', 'Día', 'Hora inicio','Hora fin','Horas efectivas','Horas extra','Horas compensadas','Horas de baja','Fuera de oficina','Comentario','Tipo'];
   const NUM_COLS = headers.length;
   const ULTIMA_COL = colName(NUM_COLS - 1);
   const cellXml = (colIdx, rowIdx, value, styleId) => {
@@ -2949,31 +3073,37 @@ function contextoHojaInformeMensual(){
     const s = value == null ? '' : String(value);
     return `<c r="${ref}"${sAttr} t="inlineStr"><is><t xml:space="preserve">${escXml(s)}</t></is></c>`;
   };
+  // Fila de una tabla: una celda por columna con el estilo según su posición en el cuadro.
+  const filaTabla = (rowIdx, valores, tipoCelda, filaPos) =>
+    `<row r="${rowIdx}">${valores.map((v, i) => cellXml(i, rowIdx, v, estiloCeldaTabla(tipoCelda, i, NUM_COLS, filaPos))).join('')}</row>`;
+  // Fila de título fusionada, fuera de la tabla (texto en la primera celda).
   const filaMerged = (rowIdx, texto, styleId) => `<row r="${rowIdx}">${cellXml(0, rowIdx, texto, styleId)}</row>`;
   const colsXml = `<cols><col min="1" max="${NUM_COLS-2}" width="15" customWidth="1"/><col min="${NUM_COLS-1}" max="${NUM_COLS-1}" width="34" customWidth="1"/><col min="${NUM_COLS}" max="${NUM_COLS}" width="15" customWidth="1"/></cols>`;
-  return { headers, ULTIMA_COL, cellXml, filaMerged, colsXml };
+  return { headers, ULTIMA_COL, filaTabla, filaMerged, colsXml };
 }
 // Escribe el bloque de un único mes (etiqueta + saldo inicial + cabecera +
 // filas día a día + saldo final) a partir de la fila "r0", devolviendo el XML
 // generado, sus fusiones de celdas y la fila siguiente libre.
 function construirBloqueMesInforme(ctx, r0, mesLabel, saldoInicioMs, filas, saldoFinMs){
-  const { headers, ULTIMA_COL, cellXml, filaMerged } = ctx;
+  const { headers, ULTIMA_COL, filaTabla, filaMerged } = ctx;
   let r = r0;
   let xml = '';
   const merges = [];
 
-  xml += filaMerged(r, 'Mes: ' + mesLabel, 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
-  xml += filaMerged(r, 'Horas extra acumuladas a inicio de mes: ' + fmtHMSigned(saldoInicioMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  // Solo "junio 2026", en grande (el importador acepta también el antiguo "Mes: junio 2026").
+  xml += filaMerged(r, mesLabel, ESTILO_TITULO_MES); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  xml += filaMerged(r, 'Horas extra acumuladas a inicio de mes: ' + fmtHMSigned(saldoInicioMs), ESTILO_NEGRITA); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   r++; // fila en blanco
 
-  xml += `<row r="${r}">${headers.map((h,i) => cellXml(i, r, h, 1)).join('')}</row>`;
+  // La tabla del mes: cabecera y un día por fila, dentro de un cuadro.
+  xml += filaTabla(r, headers, CELDA_CABECERA, filas.length ? FILA_ARRIBA : FILA_UNICA);
   r++;
 
-  filas.forEach(f => {
-    const styleId = INFORME_MENSUAL_ESTILO_POR_TIPO[f.tipo] || 0;
+  filas.forEach((f, k) => {
     const tipoLabel = INFORME_MENSUAL_TIPO_LABEL[f.tipo] || INFORME_MENSUAL_TIPO_LABEL.normal;
-    const valores = [f.fecha, f.horaInicio, f.horaFin, f.horasEfectivas, f.horasExtra, f.horasCompensadas, f.horasBaja || '', f.comentario, tipoLabel];
-    xml += `<row r="${r}">${valores.map((v,i) => cellXml(i, r, v, styleId)).join('')}</row>`;
+    const diaSemana = /^\d{4}-\d{2}-\d{2}$/.test(f.fecha || '') ? DOW_NAMES[parseDateLocal(f.fecha).getDay()] : '';
+    const valores = [f.fecha, diaSemana, f.horaInicio, f.horaFin, f.horasEfectivas, f.horasExtra, f.horasCompensadas, f.horasBaja || '', f.fueraOficina || '', f.comentario, tipoLabel];
+    xml += filaTabla(r, valores, estiloFilaDia(f.tipo, f.fecha), k === filas.length - 1 ? FILA_ABAJO : FILA_MEDIO);
     r++;
   });
 
@@ -2984,11 +3114,11 @@ function construirBloqueMesInforme(ctx, r0, mesLabel, saldoInicioMs, filas, sald
   const totalBajaMs = filas.reduce((s, f) => s + parseHMTexto(f.horasBaja || ''), 0);
   const diasBaja = filas.filter(f => f.tipo === 'baja').length;
   r++; // fila en blanco
-  xml += filaMerged(r, 'Total horas efectivas del mes: ' + fmtHM(totalEfectivoMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  xml += filaMerged(r, 'Total horas efectivas del mes: ' + fmtHM(totalEfectivoMs), ESTILO_NEGRITA); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   if(diasBaja){
-    xml += filaMerged(r, `Total horas de baja del mes: ${fmtHM(totalBajaMs)} (${diasBaja} ${diasBaja === 1 ? 'día' : 'días'} de baja)`, 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+    xml += filaMerged(r, `Total horas de baja del mes: ${fmtHM(totalBajaMs)} (${diasBaja} ${diasBaja === 1 ? 'día' : 'días'} de baja)`, ESTILO_NEGRITA); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
   }
-  xml += filaMerged(r, 'Horas extra acumuladas después de este mes: ' + fmtHMSigned(saldoFinMs), 1); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
+  xml += filaMerged(r, 'Horas extra acumuladas después de este mes: ' + fmtHMSigned(saldoFinMs), ESTILO_NEGRITA); merges.push(`A${r}:${ULTIMA_COL}${r}`); r++;
 
   return { xml, merges, r };
 }
@@ -2998,7 +3128,8 @@ function buildSheetXmlInformeMensual(nombre, mesLabel, saldoInicioMs, filas, sal
   let xml = '';
   const merges = [];
 
-  xml += ctx.filaMerged(r, nombre || 'Trabajador', 2); merges.push(`A${r}:${ctx.ULTIMA_COL}${r}`); r++;
+  xml += ctx.filaMerged(r, nombre || 'Trabajador', ESTILO_NOMBRE); merges.push(`A${r}:${ctx.ULTIMA_COL}${r}`); r++;
+  r++; // fila en blanco tras el nombre (no tiene <row>: el importador no la ve)
   const bloque = construirBloqueMesInforme(ctx, r, mesLabel, saldoInicioMs, filas, saldoFinMs);
   xml += bloque.xml; merges.push(...bloque.merges); r = bloque.r;
 
@@ -3014,7 +3145,7 @@ function buildSheetXmlInformeMensualEmpleado(nombre, meses){
   let xml = '';
   const merges = [];
 
-  xml += ctx.filaMerged(r, nombre || 'Trabajador', 2); merges.push(`A${r}:${ctx.ULTIMA_COL}${r}`); r++;
+  xml += ctx.filaMerged(r, nombre || 'Trabajador', ESTILO_NOMBRE); merges.push(`A${r}:${ctx.ULTIMA_COL}${r}`); r++;
   r++; // fila en blanco tras el nombre
 
   meses.forEach(m => {
@@ -3086,6 +3217,9 @@ function construirFilasInformeMensual(anio, mesIdx){
       horasExtra: calc && calc.extra > 0 ? fmtHM(calc.extra) : '',
       horasCompensadas: tipo === 'compensacion' ? fmtHM(horasCompensadasMs) : '',
       horasBaja: horasBajaMs ? fmtHM(horasBajaMs) : '',
+      // Solo se añade si está marcado: así la huella de los meses ya
+      // descargados sin días fuera de la oficina no cambia.
+      ...((tipo !== 'baja' && diaFueraOficina(fecha)) ? { fueraOficina: 'Sí' } : {}),
       comentario
     });
   }
@@ -3166,7 +3300,7 @@ function abrirModalInformeMensual(){
 
   openModal(`
     <div class="modal-head"><h3>Informe mensual</h3><button class="modal-close" data-action="cerrar-modal">✕</button></div>
-    <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Elige uno o varios meses: viaje en verde, reunión en lila, otros en rosa, baja en rojo, vacaciones en azul, festivo en amarillo y compensación en naranja. Si eliges varios, el Excel llevará una tabla separada por cada mes. El mes en curso se descarga marcado como incompleto (solo hasta hoy).</p>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px;">Elige uno o varios meses: viaje, reunión y otros en azul, vacaciones en verde, baja en rojo, compensación en amarillo y festivo en morado; los sábados y domingos van en gris claro (o en un tono más oscuro de su color si tienen marca). Si eliges varios, el Excel llevará una tabla separada por cada mes. El mes en curso se descarga marcado como incompleto (solo hasta hoy).</p>
     <p style="color:var(--muted);font-size:12px;margin-bottom:8px;">Toca un año para ver sus meses. Vuelve a tocar el año activo para marcar (o desmarcar) todos sus meses.</p>
     <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">${aniosHtml}</div>
     <div class="informe-meses-grid">${mesesHtml || '<p style="color:var(--muted);font-size:13px;">No hay meses con datos en este año.</p>'}</div>
@@ -3345,6 +3479,7 @@ function parseHojaInformeMensual(filas){
   const cFecha = colIdx('Fecha'), cIni = colIdx('Hora inicio'), cFin = colIdx('Hora fin'),
         cEfec = colIdx('Horas efectivas'), cExtra = colIdx('Horas extra'), cComp = colIdx('Horas compensadas'),
         cBaja = colIdx('Horas de baja'), // no existe en informes anteriores a las bajas
+        cFuera = colIdx('Fuera de oficina'), // tampoco en los anteriores a esa marca
         cCom = colIdx('Comentario'), cTipo = colIdx('Tipo');
   if(cFecha < 0 || cTipo < 0){
     throw new Error('El archivo no tiene el formato esperado. Importa el "Informe mensual" descargado desde la pestaña Resumen.');
@@ -3370,6 +3505,7 @@ function parseHojaInformeMensual(filas){
       horasExtra: String(fila[cExtra] ?? ''),
       horasCompensadas: String(fila[cComp] ?? ''),
       horasBaja: cBaja >= 0 ? String(fila[cBaja] ?? '') : '',
+      fueraOficina: cFuera >= 0 ? String(fila[cFuera] ?? '') : '',
       comentario: String(fila[cCom] ?? '')
     });
   }
@@ -3485,7 +3621,7 @@ const CAMPOS_DIF_TOTALES = [
 ];
 const CAMPOS_DIF_DIA = [
   ['tipo', 'Tipo'], ['horaInicio', 'Entrada'], ['horaFin', 'Salida'], ['horasEfectivas', 'Efectivas'],
-  ['horasExtra', 'Extra'], ['horasCompensadas', 'Compensadas'], ['horasBaja', 'Baja'], ['comentario', 'Comentario']
+  ['horasExtra', 'Extra'], ['horasCompensadas', 'Compensadas'], ['horasBaja', 'Baja'], ['fueraOficina', 'Fuera de oficina'], ['comentario', 'Comentario']
 ];
 function diferenciasInforme(viejo, nuevo){
   const resumen = [];
@@ -3777,7 +3913,7 @@ function exportarTodosInformesEquipo(){
             fecha: f.fecha||'', tipo: f.tipo||'normal',
             horaInicio: f.horaInicio||'', horaFin: f.horaFin||'',
             horasEfectivas: f.horasEfectivas||'', horasExtra: f.horasExtra||'',
-            horasCompensadas: f.horasCompensadas||'', horasBaja: f.horasBaja||'', comentario: f.comentario||''
+            horasCompensadas: f.horasCompensadas||'', horasBaja: f.horasBaja||'', fueraOficina: f.fueraOficina||'', comentario: f.comentario||''
           }))
         }));
       return { name: nombresHoja[i+1], sheetXml: buildSheetXmlInformeMensualEmpleado(emp.nombre, meses) };
@@ -4066,6 +4202,7 @@ function importarBackupSeleccionado(file){
       calendarioLaboral: (parsed.calendarioLaboral && typeof parsed.calendarioLaboral === 'object') ? parsed.calendarioLaboral : {},
       viajes: (parsed.viajes && typeof parsed.viajes === 'object') ? parsed.viajes : {},
       sinComida: (parsed.sinComida && typeof parsed.sinComida === 'object') ? parsed.sinComida : {},
+      fueraOficina: (parsed.fueraOficina && typeof parsed.fueraOficina === 'object') ? parsed.fueraOficina : {},
       comidaOverride: (parsed.comidaOverride && typeof parsed.comidaOverride === 'object') ? parsed.comidaOverride : {},
       informesDescargados: (parsed.informesDescargados && typeof parsed.informesDescargados === 'object') ? parsed.informesDescargados : {},
       extraDiaLibre: (parsed.extraDiaLibre && typeof parsed.extraDiaLibre === 'object') ? parsed.extraDiaLibre : {},
@@ -4327,6 +4464,8 @@ document.addEventListener('click', async (e) => {
     case 'quitar-viaje': await accionQuitarViaje(d.fecha); break;
     case 'marcar-sin-comida': accionMarcarSinComida(d.fecha); break;
     case 'quitar-sin-comida': accionQuitarSinComida(d.fecha); break;
+    case 'marcar-fuera-oficina': accionMarcarFueraOficina(d.fecha); break;
+    case 'quitar-fuera-oficina': accionQuitarFueraOficina(d.fecha); break;
     case 'abrir-form-comida-hoy': abrirFormularioComidaHoy(d.fecha); break;
     case 'guardar-comida-hoy': guardarComidaHoy(d.fecha, d.jid, d.cid); break;
     case 'quitar-comida-override': accionQuitarComidaOverride(d.fecha); break;
@@ -4383,6 +4522,12 @@ document.addEventListener('click', async (e) => {
     }
     case 'abrir-dia-calendario': abrirDiaCalendario(d.fecha); break;
     case 'marcar-dia': {
+      // Un día no laborable (fin de semana o día inactivo en Ajustes) no se
+      // puede coger de vacaciones.
+      if(d.tipo === 'vacaciones' && diaConfigFor(d.fecha)?.activo === false){
+        toast('Este día no es laborable: no se puede marcar como vacaciones.');
+        break;
+      }
       const marcaActual = diaCalendarioLaboral(d.fecha);
       if(d.tipo === 'normal') quitarMarcaCalendarioLaboral(d.fecha);
       // Si ya estaba en ese mismo tipo, no se vuelve a marcar: evita perder
