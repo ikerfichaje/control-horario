@@ -1,6 +1,6 @@
-const CACHE_NAME = 'control-horario-v4';
+const CACHE_NAME = 'control-horario-v5';
 const APP_SHELL = [
-  './index.html', './manifest.json',
+  './index.html', './manifest.json', './ImagenCorp2.png',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
   './icons/apple-touch-icon.png', './icons/shortcut-entrada.png', './icons/shortcut-salida.png'
 ];

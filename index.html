@@ -48,11 +48,12 @@ button{font-family:inherit;}
 .hidden{display:none !important;}
 
 /* Header */
+.corp-bar{display:flex;justify-content:center;padding:2px 0 12px;margin-bottom:6px;border-bottom:1px solid var(--border);}
+.corp-bar img{display:block;height:27px;width:auto;}
+/* El logo es granate sobre transparente: en oscuro va sobre una pastilla clara para que se lea */
+[data-theme="dark"] .corp-bar img{background:#fff;border-radius:8px;padding:5px 10px;box-sizing:content-box;}
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 16px;}
-.app-header .brand{display:flex;align-items:center;gap:10px;}
-.app-header .brand-logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--accent-blue));color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.app-header h1{font-size:17px;font-weight:700;}
-.header-date{font-size:12px;color:var(--muted);}
+.header-date{font-size:18px;font-weight:700;}
 
 /* Tabs container */
 .tab-panel{display:none;animation:fade .18s ease;}
@@ -92,7 +93,6 @@ body.modo-baja{background:#fee2e2;}
 .badge-estado{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.02em;}
 .badge-estado .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse 1.6s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
-.hero-fecha{font-size:12.5px;opacity:.85;}
 .hero-timer{font-size:44px;font-weight:800;letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1;margin:4px 0 2px;}
 .hero-timer-label{font-size:12.5px;opacity:.85;margin-bottom:14px;}
 .hero-extra{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px;margin-top:6px;}
@@ -345,14 +345,9 @@ a.link{color:var(--primary);text-decoration:none;font-weight:600;}
   <div id="authScreen" class="hidden"></div>
 
   <div id="mainApp" class="hidden">
+    <div class="corp-bar"><img src="ImagenCorp2.png" alt="Denodl" width="139" height="27"></div>
     <div class="app-header">
-      <div class="brand">
-        <div class="brand-logo">⏱</div>
-        <div>
-          <h1>Control Horario</h1>
-          <div class="header-date" id="headerClock">--</div>
-        </div>
-      </div>
+      <div class="header-date" id="headerClock">--</div>
       <button class="icon-btn" id="themeQuickToggle" title="Cambiar tema">🌓</button>
     </div>
 
@@ -521,6 +516,10 @@ function defaultConfig(){
     tema: 'auto',             // 'claro' | 'oscuro' | 'auto'
     avisoEntradaActivo: true,
     avisoEntradaHora: '08:30',
+    // Franja flexible de entrada de la empresa: marca cuándo el descanso de
+    // 12 h retrasa la entrada del día siguiente (ver descansoEntreJornadas).
+    entradaFlexDesde: '07:30',
+    entradaFlexHasta: '08:30',
     exportColumnas: COLUMNAS_EXPORT.map(c => c.id),
     // La jornada normal de cada día se cuenta a partir de la hora real de
     // fichaje de entrada (no de un horario fijo de entrada/salida).
@@ -699,8 +698,14 @@ function textoDiaLibre(fechaStr){
 }
 function decisionExtraDiaLibre(fechaStr){ return DATA.extraDiaLibre[fechaStr]; } // true / false / undefined (sin decidir)
 function marcarExtraDiaLibre(fechaStr, cuenta){ DATA.extraDiaLibre[fechaStr] = !!cuenta; save(); }
-// Jornada que hay que cumplir ese día para el cálculo de horas extra: 0 en días libres.
-function jornadaExigibleMs(fechaStr){ return tipoDiaLibre(fechaStr) ? 0 : jornadaNormalMsForFecha(fechaStr); }
+// Jornada del día según Ajustes: 0 en días libres. No tiene en cuenta el
+// descanso de 12 h entre jornadas (ver jornadaExigibleMs).
+function jornadaExigibleBaseMs(fechaStr){ return tipoDiaLibre(fechaStr) ? 0 : jornadaNormalMsForFecha(fechaStr); }
+// Jornada que hay que cumplir ese día para el cálculo de horas extra: la del
+// día menos lo que se compensa por respetar el descanso de 12 h.
+function jornadaExigibleMs(fechaStr, now = Date.now()){
+  return Math.max(0, jornadaExigibleBaseMs(fechaStr) - compensacionDescansoMs(fechaStr, now));
+}
 function marcarViaje(fechaStr, tipo, lugar, cliente, motivo){
   const t = TIPOS_IMPUTACION.includes(tipo) ? tipo : 'viaje';
   DATA.viajes[fechaStr] = {
@@ -770,6 +775,128 @@ function horasCompensacionFor(fechaStr){
   return jornadaNormalMsForFecha(fechaStr) / 3600000;
 }
 
+/* ----------------------------- Descanso de 12 h entre jornadas ----------- */
+/*
+ * Entre el final de una jornada y el comienzo de la siguiente debe haber al
+ * menos 12 h (art. 34.3 ET). La empresa tiene una franja flexible de entrada
+ * (config.entradaFlexDesde–entradaFlexHasta, 07:30–08:30). Si un día que
+ * imputa horas extra (viaje/reunión/otros o día libre confirmado) se sale
+ * tan tarde que al día siguiente no se puede entrar al inicio de la franja
+ * (después de las 19:30), al día siguiente se puede entrar de salida + 12 h
+ * a salida + 12 h + (duración de la franja, 1 h) compensando las horas:
+ *  - Solo se compensa el RETRASO de la entrada respecto al final de la
+ *    franja normal (08:30), nunca el salir antes: si falta más jornada, esa
+ *    parte es del trabajador.
+ *  - Si entra más tarde del margen, solo se compensa hasta el final del
+ *    margen (de 08:30 a salida + 12 h + 1 h); el resto lo tiene que recuperar.
+ *  - Si entra dentro de la franja normal, o antes de cumplir las 12 h, no se compensa.
+ *  - Si decide hacer igualmente la jornada completa, no le falta nada y
+ *    conserva las horas extra del día anterior.
+ * Lo compensado se descuenta de la bolsa de horas extra.
+ */
+const DESCANSO_ENTRE_JORNADAS_MS = 12 * 3600000;
+// Franja flexible de entrada de ese día como timestamps.
+function franjaEntradaFlex(fecha){
+  const cfg = DATA.config;
+  const desde = timeStrEnFecha(fecha, cfg.entradaFlexDesde) ?? timeStrEnFecha(fecha, '07:30');
+  const hasta = timeStrEnFecha(fecha, cfg.entradaFlexHasta) ?? timeStrEnFecha(fecha, '08:30');
+  return { desde, hasta: Math.max(desde, hasta) };
+}
+// El día cuenta sus horas de más como extra (y por tanto alimenta la bolsa).
+function diaImputaExtra(fecha){
+  return diaEsViaje(fecha) || (!!tipoDiaLibre(fecha) && decisionExtraDiaLibre(fecha) === true);
+}
+function ultimoTramoAntesDe(fecha){
+  let ultimo = null;
+  for(const j of DATA.jornadas){
+    if(j.fecha < fecha && j.salida != null && (ultimo == null || j.salida > ultimo.salida)) ultimo = j;
+  }
+  return ultimo;
+}
+// Franja en la que se puede entrar el día "fecha" tras salir a las
+// "ultimaSalida", o null si esa salida no retrasa la entrada de ese día.
+function franjaEntradaTrasDescanso(fecha, ultimaSalida){
+  const flex = franjaEntradaFlex(fecha);
+  const desde = ultimaSalida + DESCANSO_ENTRE_JORNADAS_MS;
+  if(desde <= flex.desde) return null;
+  return { desde, hasta: desde + (flex.hasta - flex.desde), flex };
+}
+// null si ese día no hay nada que compensar por el descanso; si no, la
+// última salida, la primera entrada, la franja permitida y el retraso
+// compensable (horas efectivas entre el fin de la franja normal y la entrada).
+function descansoEntreJornadas(fecha){
+  if(!jornadaExigibleBaseMs(fecha) || bajaDeFecha(fecha)) return null;
+  if(diaCalendarioLaboral(fecha)?.tipo === 'compensacion') return null;
+  const primeraEntrada = jornadasDeFecha(fecha)[0]?.entrada;
+  const anterior = ultimoTramoAntesDe(fecha);
+  if(primeraEntrada == null || !anterior || !diaImputaExtra(anterior.fecha)) return null;
+  const franja = franjaEntradaTrasDescanso(fecha, anterior.salida);
+  if(!franja || primeraEntrada < franja.desde) return null;
+  // Dentro del margen se compensa hasta la entrada; si entra más tarde, solo
+  // hasta el final del margen (salida + 12 h + 1 h): el resto lo recupera.
+  const finCompensable = Math.min(primeraEntrada, franja.hasta);
+  let retrasoMs = Math.max(0, finCompensable - franja.flex.hasta);
+  if(DATA.config.modoComida === 'horario' && diaConfigFor(fecha)?.comida !== false && !diaSinComida(fecha)){
+    const comida = comidaHorarioParaFecha(fecha);
+    retrasoMs -= overlapMs(franja.flex.hasta, finCompensable, comida.inicio, comida.fin);
+  }
+  if(retrasoMs <= 0) return null;
+  return { ultimaSalida: anterior.salida, primeraEntrada, franja, finCompensable, retrasoMs };
+}
+// Horas que se descuentan de la bolsa ese día: el retraso compensable, pero
+// solo en la medida en que falte jornada (si la completa igualmente, nada).
+// Solo con el día cerrado: mientras trabaja aún puede completar la jornada.
+function compensacionDescansoMs(fecha, now = Date.now()){
+  const d = descansoEntreJornadas(fecha);
+  if(!d) return 0;
+  const tiempos = jornadasDeFecha(fecha).map(j => tiemposTramo(j, now));
+  if(tiempos.some(t => t.abierta)) return 0;
+  const efectivo = tiempos.reduce((s, t) => s + t.efectivoTotal, 0);
+  return Math.max(0, Math.min(d.retrasoMs, jornadaExigibleBaseMs(fecha) - efectivo));
+}
+function textoSalidaAnterior(fecha, ultimaSalida){
+  const diaSalida = todayStr(new Date(ultimaSalida));
+  return diaSalida === addDays(fecha, -1) ? `el día anterior a las ${fmtTimeHM(ultimaSalida)}`
+    : diaSalida === fecha ? `ese mismo día a las ${fmtTimeHM(ultimaSalida)}`
+    : `el ${fmtDateShort(diaSalida)} a las ${fmtTimeHM(ultimaSalida)}`;
+}
+function textoCompensacionDescanso(fecha, compMs){
+  const d = descansoEntreJornadas(fecha);
+  if(!d) return '';
+  return `Descanso de 12 h (saliste ${textoSalidaAnterior(fecha, d.ultimaSalida)}, podías entrar de ` +
+    `${fmtTimeHM(d.franja.desde)} a ${fmtTimeHM(d.franja.hasta)}): se descuentan ${fmtHM(compMs)} de la bolsa de horas extra ` +
+    `por el retraso de las ${fmtTimeHM(d.franja.flex.hasta)} a las ${fmtTimeHM(d.finCompensable)}.`;
+}
+// Observación de los informes para el día en que se entró más tarde por el
+// descanso de 12 h ('' si no aplica). Lo descontado de la bolsa ya sale en
+// «Horas compensadas», y la salida anterior en la fila del día anterior.
+function notaEntradaTardiaDescanso(fecha, tipo){
+  if(tipo === 'baja' || tipo === 'compensacion' || fecha > todayStr()) return '';
+  return descansoEntreJornadas(fecha) ? 'Entrada tardía por descanso de 12 h' : '';
+}
+// Aviso al cerrar un día que imputa horas extra con una salida que retrasa la
+// entrada del siguiente día laborable. Solo si ese día aún no ha pasado.
+async function avisarDescansoTrasSalida(fecha){
+  if(!diaImputaExtra(fecha)) return;
+  const tramos = jornadasDeFecha(fecha);
+  if(!tramos.length || tramos.some(j => j.salida == null)) return;
+  const salida = Math.max(...tramos.map(j => j.salida));
+  const siguiente = todayStr(new Date(salida + DESCANSO_ENTRE_JORNADAS_MS));
+  if(siguiente <= fecha || siguiente < todayStr() || !jornadaExigibleBaseMs(siguiente)) return;
+  const franja = franjaEntradaTrasDescanso(siguiente, salida);
+  if(!franja) return;
+  const cuando = siguiente === addDays(todayStr(), 1) ? 'mañana' : siguiente === todayStr() ? 'hoy' : `el ${fmtDateShort(siguiente)}`;
+  await confirmDialog(
+    `Para cumplir con el descanso de 12 h, ${cuando} podrás entrar de ${fmtTimeHM(franja.desde)} a ${fmtTimeHM(franja.hasta)} compensándote las horas.`,
+    'Entendido', false, { titulo: 'Descanso entre jornadas', cancelLabel: 'Cerrar' }
+  );
+}
+// Días (hasta "hastaFecha" inclusive) con horas descontadas por el descanso.
+function fechasConDescansoEntreJornadas(hastaFecha){
+  const fechas = new Set(DATA.jornadas.map(j => j.fecha).filter(f => f <= hastaFecha));
+  return [...fechas].filter(f => compensacionDescansoMs(f) > 0);
+}
+
 /* ----------------------------- Calendario laboral (festivos / vacaciones / banco de horas) ---- */
 function diaCalendarioLaboral(fechaStr){ return DATA.calendarioLaboral[fechaStr] || null; }
 function marcarDiaCalendarioLaboral(fechaStr, tipo, nombre){
@@ -808,6 +935,8 @@ function bancoHorasCompensadoMs(hastaFecha){
     if(hastaFecha && fecha > hastaFecha) return;
     total += (Number(e.horas)||0) * 3600000;
   });
+  // Horas de jornada no exigidas por el descanso de 12 h entre jornadas.
+  fechasConDescansoEntreJornadas(hastaFecha || todayStr()).forEach(fecha => { total += compensacionDescansoMs(fecha); });
   return total;
 }
 function bancoHorasSaldoMs(hastaFecha){ return bancoHorasGeneradoMs(hastaFecha) - bancoHorasCompensadoMs(hastaFecha); }
@@ -918,7 +1047,9 @@ function overlapMs(aIni, aFin, bIni, bFin){
  * represente un DÍA completo, usar calcDia(fecha), que suma los tramos y
  * aplica el límite una sola vez.
  */
-function calcJornada(j, now = Date.now()){
+// Tiempos de un tramo (bruto, descansos, comida, efectivo), sin la parte de
+// jornada/extra: así se puede usar desde jornadaExigibleMs sin recursión.
+function tiemposTramo(j, now = Date.now()){
   const entrada = j.entrada;
   const salidaReal = j.salida;
   const abierta = salidaReal == null;
@@ -946,8 +1077,12 @@ function calcJornada(j, now = Date.now()){
   }
 
   const efectivoTotal = Math.max(0, bruto - descansosMs - comidasMs);
+  return { bruto, descansosMs, comidasMs, efectivoTotal, abierta };
+}
+function calcJornada(j, now = Date.now()){
+  const { bruto, descansosMs, comidasMs, efectivoTotal, abierta } = tiemposTramo(j, now);
 
-  const normalMax = jornadaExigibleMs(j.fecha);
+  const normalMax = jornadaExigibleMs(j.fecha, now);
   const normal = Math.min(efectivoTotal, normalMax);
   const excedente = Math.max(0, efectivoTotal - normalMax);
   const esViaje = diaEsViaje(j.fecha);
@@ -978,7 +1113,7 @@ function calcDia(fecha, now = Date.now()){
   const comidasMs = calcs.reduce((s,c) => s + c.comidasMs, 0);
   const efectivoTotal = calcs.reduce((s,c) => s + c.efectivoTotal, 0);
 
-  const normalMax = jornadaExigibleMs(fecha);
+  const normalMax = jornadaExigibleMs(fecha, now);
   const normal = Math.min(efectivoTotal, normalMax);
   const excedente = Math.max(0, efectivoTotal - normalMax);
   const esViaje = diaEsViaje(fecha);
@@ -986,8 +1121,10 @@ function calcDia(fecha, now = Date.now()){
   const extraConfirmada = !!diaLibre && decisionExtraDiaLibre(fecha) === true;
   const extra = (esViaje || extraConfirmada) ? excedente : 0;
   const abierta = calcs.some(c => c.abierta);
+  // Parte de la jornada no exigida por el descanso de 12 h (ya restada de normalMax).
+  const compDescanso = compensacionDescansoMs(fecha, now);
 
-  return { jornadas, calcs, bruto, descansosMs, comidasMs, efectivoTotal, normalMax, normal, extra, abierta, esViaje, diaLibre, extraConfirmada };
+  return { jornadas, calcs, bruto, descansosMs, comidasMs, efectivoTotal, normalMax, normal, extra, abierta, esViaje, diaLibre, extraConfirmada, compDescanso };
 }
 
 function estadoActual(){
@@ -1110,10 +1247,11 @@ async function accionFicharSalida(){
  * Si el día ya está marcado como viaje/reunión/otros no se pregunta nada.
  */
 async function preguntarHorasExtraTrasSalida(fecha){
-  if(diaEsViaje(fecha)) return;
+  if(diaEsViaje(fecha)){ await avisarDescansoTrasSalida(fecha); return; }
   const calc = calcDia(fecha, Date.now());
   if(calc.diaLibre){
-    if(calc.efectivoTotal <= 0 || decisionExtraDiaLibre(fecha) !== undefined) return;
+    if(calc.efectivoTotal <= 0) return;
+    if(decisionExtraDiaLibre(fecha) !== undefined){ await avisarDescansoTrasSalida(fecha); return; }
     const cuenta = await confirmDialog(
       `Hoy ${textoDiaLibre(fecha)}. Has trabajado ${fmtHM(calc.efectivoTotal)}. ¿Se cuentan estas horas como horas extra?`,
       'Sí, contar como extra', false, { titulo: 'Horas extra', cancelLabel: 'No' }
@@ -1122,6 +1260,7 @@ async function preguntarHorasExtraTrasSalida(fecha){
     marcarExtraDiaLibre(fecha, cuenta);
     toast(cuenta ? `${fmtHM(calc.efectivoTotal)} sumadas como horas extra` : 'Horas registradas como trabajadas, sin contar como extra');
     renderAll();
+    await avisarDescansoTrasSalida(fecha);
     return;
   }
   const excedente = Math.max(0, calc.efectivoTotal - calc.normalMax);
@@ -1245,6 +1384,9 @@ function confirmarMarcarViaje(fecha){
   const etiquetaTipo = tipo === 'viaje' ? 'viaje' : (tipo === 'otros' ? 'otros' : 'reunión');
   toast(`Día marcado como ${etiquetaTipo}: sus horas extra ya se contabilizan`);
   refrescarTrasEditarDia(fecha);
+  // Al imputar extra justo después de fichar la salida (sin el detalle del
+  // día abierto) se avisa de cuándo se podrá entrar al día siguiente.
+  if(!document.getElementById('activeModalOverlay')) avisarDescansoTrasSalida(fecha);
 }
 async function accionQuitarViaje(fecha){
   // confirmDialog reemplaza el modal actual (incluido el detalle del día, si
@@ -1387,7 +1529,7 @@ async function confirmarTramoLargo(entrada, salida){
  * ya existe (fichaje abierto que se va a cerrar).
  */
 function salidaSugerida(fecha, entrada, excluirId){
-  const jornadaMs = jornadaExigibleMs(fecha) || 8*3600000;
+  const jornadaMs = jornadaExigibleBaseMs(fecha) || 8*3600000;
   const hecho = jornadasDeFecha(fecha)
     .filter(x => x.id !== excluirId && x.salida != null)
     .reduce((s, x) => s + calcJornada(x).efectivoTotal, 0);
@@ -1681,7 +1823,6 @@ function renderPantallaBaja(b){
     <div class="hero estado-baja">
       <div class="hero-top">
         <span class="badge-estado"><span class="dot"></span>DE BAJA</span>
-        <span class="hero-fecha">${esc(fmtDateHuman(hoy))}</span>
       </div>
       <div class="hero-timer">${diasNaturales}</div>
       <div class="hero-timer-label">${diasNaturales === 1 ? 'día' : 'días'} de baja · desde el ${esc(fmtDateHuman(b.inicio))}</div>
@@ -1789,7 +1930,6 @@ function renderHoy(){
     <div class="hero ${heroClass}" id="heroBox">
       <div class="hero-top">
         <span class="badge-estado"><span class="dot"></span>${heroLabel}</span>
-        <span class="hero-fecha">${esc(fmtDateHuman(todayStr()))}</span>
       </div>
       <div class="hero-timer" id="heroTimer">${heroTimerValue}</div>
       <div class="hero-timer-label">${esc(heroTimerLabel)}</div>
@@ -2115,6 +2255,9 @@ function verDia(fecha){
     <div class="card-row"><span class="label">Horas efectivas</span><span class="value">${fmtHM(calcDiaResult.efectivoTotal)}</span></div>
     <div class="card-row"><span class="label">Jornada laboral</span><span class="value">${fmtHM(calcDiaResult.normal)}</span></div>
     <div class="card-row"><span class="label">Horas extra</span><span class="value" style="color:var(--extra)">${fmtHM(calcDiaResult.extra)}</span></div>
+    ${calcDiaResult.compDescanso > 0 ? `
+    <div class="card-row"><span class="label">Descontadas de la bolsa (descanso de 12 h)</span><span class="value" style="color:var(--compensacion)">${fmtHM(calcDiaResult.compDescanso)}</span></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:4px;">${esc(textoCompensacionDescanso(fecha, calcDiaResult.compDescanso))}</p>` : ''}
     `;
   })() : `<p style="color:var(--muted);font-size:14px;">No hay fichaje de entrada/salida este día.</p>
        <button class="btn btn-soft" data-action="crear-jornada-manual" data-fecha="${fecha}">+ Añadir fichaje para este día</button>`;
@@ -2710,7 +2853,7 @@ function construirFilasExportacion(ini, fin, columnas){
     // Un mismo día puede tener varios tramos fichados: se juntan las horas de
     // entrada/salida de cada uno y se suman sus totales (ver calcDia).
     const jornadasDia = jornadasDeFecha(f);
-    const { tipo, viaje, horasBajaMs, horasCompensadasMs, comentario } = clasificarDia(f, jornadasDia);
+    const { tipo, viaje, horasBajaMs, horasCompensadasMs, comentario, notaDescanso } = clasificarDia(f, jornadasDia);
     const base = {
       _tipo: tipo, // no es una columna: sirve para colorear la fila en el Excel
       trabajador: nombreTrabajador, fecha: f, diaSemana: DOW_NAMES[parseDateLocal(f).getDay()],
@@ -2721,7 +2864,7 @@ function construirFilasExportacion(ini, fin, columnas){
       ? { diaViaje: 'Sí', tipoViaje: INFORME_MENSUAL_TIPO_LABEL[viaje.tipo] || 'Viaje',
           lugarViaje: viaje.lugar||'', motivoViaje: viaje.motivo||'', clienteViaje: viaje.cliente||'' }
       : { diaViaje: 'No', tipoViaje: '', lugarViaje: '', motivoViaje: '', clienteViaje: '' };
-    const compensadas = tipo === 'compensacion' ? { horasCompensadas: sumar('horasCompensadas', horasCompensadasMs) } : {};
+    const compensadas = (tipo === 'compensacion' || horasCompensadasMs > 0) ? { horasCompensadas: sumar('horasCompensadas', horasCompensadasMs) } : {};
     if(tipo === 'baja'){
       // Día de baja: no trabajado, sus horas de jornada cuentan como baja.
       filas.push({ ...base, ...vacio, diaViaje: 'No', tipoViaje: '', lugarViaje: '', motivoViaje: '', clienteViaje: '',
@@ -2733,6 +2876,7 @@ function construirFilasExportacion(ini, fin, columnas){
       // comentario ya incluye la marca y si esas horas cuentan como extra.
       if(['festivo','vacaciones','compensacion'].includes(tipo)) obs.unshift(comentario);
       else if(tipo === 'normal' && comentario) obs.splice(0, obs.length, comentario);
+      else if(notaDescanso) obs.push(notaDescanso);
       filas.push({ ...base, ...vacio, ...datosViaje, ...compensadas,
         // Día libre confirmado como extra: sus horas también son imputables.
         ...(c.extraConfirmada ? { diaViaje: 'Sí' } : {}),
@@ -3078,7 +3222,7 @@ function contextoHojaInformeMensual(){
     `<row r="${rowIdx}">${valores.map((v, i) => cellXml(i, rowIdx, v, estiloCeldaTabla(tipoCelda, i, NUM_COLS, filaPos))).join('')}</row>`;
   // Fila de título fusionada, fuera de la tabla (texto en la primera celda).
   const filaMerged = (rowIdx, texto, styleId) => `<row r="${rowIdx}">${cellXml(0, rowIdx, texto, styleId)}</row>`;
-  const colsXml = `<cols><col min="1" max="${NUM_COLS-2}" width="15" customWidth="1"/><col min="${NUM_COLS-1}" max="${NUM_COLS-1}" width="34" customWidth="1"/><col min="${NUM_COLS}" max="${NUM_COLS}" width="15" customWidth="1"/></cols>`;
+  const colsXml = `<cols><col min="1" max="${NUM_COLS-2}" width="15" customWidth="1"/><col min="${NUM_COLS-1}" max="${NUM_COLS-1}" width="50" customWidth="1"/><col min="${NUM_COLS}" max="${NUM_COLS}" width="15" customWidth="1"/></cols>`;
   return { headers, ULTIMA_COL, filaTabla, filaMerged, colsXml };
 }
 // Escribe el bloque de un único mes (etiqueta + saldo inicial + cabecera +
@@ -3174,7 +3318,10 @@ function clasificarDia(fecha, jornadasDia = jornadasDeFecha(fecha)){
   else if(marca) tipo = marca.tipo;
   else if(viaje && viaje.activo) tipo = TIPOS_IMPUTACION.includes(viaje.tipo) ? viaje.tipo : 'viaje';
   const horasBajaMs = enBaja ? horasBajaMsFor(fecha) : 0;
-  const horasCompensadasMs = tipo === 'compensacion' ? (Number(marca.horas)||0) * 3600000 : 0;
+  // Además de los días de compensación, las horas no exigidas por el descanso
+  // de 12 h entre jornadas también salen del banco (ver descansoEntreJornadas).
+  const horasDescansoMs = (tipo === 'compensacion' || fecha > todayStr()) ? 0 : compensacionDescansoMs(fecha);
+  const horasCompensadasMs = tipo === 'compensacion' ? (Number(marca.horas)||0) * 3600000 : horasDescansoMs;
 
   let comentario = '';
   if(tipo === 'baja') comentario = horasBajaMs ? 'Baja: día no trabajado' : 'Baja (día no laborable)';
@@ -3191,8 +3338,12 @@ function clasificarDia(fecha, jornadasDia = jornadasDeFecha(fecha)){
     const nota = decisionExtraDiaLibre(fecha) === true ? 'horas contadas como extra' : 'horas no contadas como extra';
     comentario = [comentario, nota].filter(Boolean).join(' · ');
   }
+  // Entrada retrasada por el descanso de 12 h: se anota aunque no haya nada
+  // que compensar (p. ej. si hizo igualmente la jornada completa).
+  const notaDescanso = notaEntradaTardiaDescanso(fecha, tipo);
+  comentario = [comentario, notaDescanso].filter(Boolean).join(' · ');
 
-  return { tipo, marca, viaje, horasBajaMs, horasCompensadasMs, comentario };
+  return { tipo, marca, viaje, horasBajaMs, horasCompensadasMs, comentario, notaDescanso };
 }
 // Arma las columnas del informe mensual coloreado a partir de los datos ya
 // guardados (fichajes, marcas de calendario, días de viaje y bajas).
@@ -3215,7 +3366,7 @@ function construirFilasInformeMensual(anio, mesIdx){
       horaFin: jornadasDia.map(j => j.salida ? fmtTimeHM(j.salida) : '(abierto)').join(', '),
       horasEfectivas: calc ? fmtHM(calc.efectivoTotal) : '',
       horasExtra: calc && calc.extra > 0 ? fmtHM(calc.extra) : '',
-      horasCompensadas: tipo === 'compensacion' ? fmtHM(horasCompensadasMs) : '',
+      horasCompensadas: (tipo === 'compensacion' || horasCompensadasMs > 0) ? fmtHM(horasCompensadasMs) : '',
       horasBaja: horasBajaMs ? fmtHM(horasBajaMs) : '',
       // Solo se añade si está marcado: así la huella de los meses ya
       // descargados sin días fuera de la oficina no cambia.
@@ -4089,6 +4240,15 @@ function renderAjustes(){
     </div>
 
     <div class="card">
+      <h2>Horario flexible de entrada</h2>
+      <div class="field-row">
+        <div class="field"><label>Desde</label><input type="time" id="cfgFlexDesde" value="${esc(c.entradaFlexDesde)}"></div>
+        <div class="field"><label>Hasta</label><input type="time" id="cfgFlexHasta" value="${esc(c.entradaFlexHasta)}"></div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);">Para el descanso de 12 h entre jornadas: si un día con horas extra imputadas sales tan tarde que al día siguiente no puedes entrar a las ${esc(c.entradaFlexDesde)}, al fichar la salida se te avisa de cuándo podrás entrar. Si entras dentro de ese margen, el retraso respecto a las ${esc(c.entradaFlexHasta)} se compensa de la bolsa de horas extra.</p>
+    </div>
+
+    <div class="card">
       <h2>Descanso y comida</h2>
       <div class="field">
         <label>Modo del descanso</label>
@@ -4679,6 +4839,11 @@ document.addEventListener('change', (e) => {
   }
   if(e.target.id === 'cfgComidaFin'){
     DATA.config.comidaFin = e.target.value || DATA.config.comidaFin;
+    save(); renderAll();
+  }
+  if(e.target.id === 'cfgFlexDesde' || e.target.id === 'cfgFlexHasta'){
+    const campo = e.target.id === 'cfgFlexDesde' ? 'entradaFlexDesde' : 'entradaFlexHasta';
+    if(/^\d{2}:\d{2}$/.test(e.target.value)) DATA.config[campo] = e.target.value;
     save(); renderAll();
   }
   if(e.target.id === 'cfgAvisoHora'){
