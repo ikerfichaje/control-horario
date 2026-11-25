@@ -3,6 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<script>
+/*
+ * viewport-fit=cover solo se mantiene en iOS (lo necesita la barra de estado
+ * black-translucent). En Android hace que el navegador dibuje la página bajo
+ * la barra de navegación del sistema, y en algunos móviles env(safe-area-inset-bottom)
+ * llega a 0, así que los botones del sistema tapaban la barra de pestañas.
+ * Sin cover, el sistema reserva su propio hueco y la página termina encima.
+ */
+(function(){
+  const esIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if(esIOS) return;
+  document.querySelector('meta[name="viewport"]')
+    .setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1');
+})();
+</script>
 <title>Control Horario</title>
 <meta name="description" content="Control horario y fichaje de trabajo personal, 100% local.">
 <meta name="theme-color" content="#910048">
